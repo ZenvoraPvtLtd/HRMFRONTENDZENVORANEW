@@ -36,10 +36,6 @@ export default function AdminUserManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
 
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
-
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"create" | "edit">("create");
@@ -194,23 +190,7 @@ export default function AdminUserManagement() {
       phoneNumber.includes(searchTerm);
     const matchesRole = roleFilter === "all" || u.role === roleFilter;
     return matchesSearch && matchesRole;
-  }).sort((a, b) => {
-    // Sort by createdAt DESC (newest first)
-    const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-    const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-    const timeA = isNaN(dateA) ? 0 : dateA;
-    const timeB = isNaN(dateB) ? 0 : dateB;
-    return timeB - timeA;
   });
-
-  // Reset pagination to page 1 when search or filter changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, roleFilter]);
-
-  // Pagination calculations
-  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / itemsPerPage));
-  const paginatedUsers = filteredUsers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <div className="p-6 space-y-4">
@@ -265,7 +245,7 @@ export default function AdminUserManagement() {
         <div className="flex justify-center items-center py-20">
           <Loader2 className="w-8 h-8 text-zinc-900 dark:text-zinc-100 animate-spin" />
         </div>
-      ) : paginatedUsers.length === 0 ? (
+      ) : filteredUsers.length === 0 ? (
         <div className="text-center py-20 border rounded-2xl" style={{ borderColor: "var(--border)", background: "var(--bg-secondary)" }}>
           <Users className="w-12 h-12 mx-auto mb-3" style={{ color: "var(--text-secondary)" }} />
           <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>No users found matching filters.</p>
@@ -284,7 +264,7 @@ export default function AdminUserManagement() {
                 </tr>
               </thead>
               <tbody className="divide-y" style={{ borderColor: "var(--border)" }}>
-                {paginatedUsers.map((user) => (
+                {filteredUsers.map((user) => (
                   <tr key={user.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/20 transition">
                     <td className="p-4">
                       <div>
@@ -338,32 +318,6 @@ export default function AdminUserManagement() {
               </tbody>
             </table>
           </div>
-          {/* Pagination Controls */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between px-4 py-3 border-t" style={{ borderColor: "var(--border)", background: "var(--bg-secondary)" }}>
-              <div className="text-sm" style={{ color: "var(--text-secondary)" }}>
-                Showing <span className="font-medium" style={{ color: "var(--text-primary)" }}>{((currentPage - 1) * itemsPerPage) + 1}</span> to <span className="font-medium" style={{ color: "var(--text-primary)" }}>{Math.min(currentPage * itemsPerPage, filteredUsers.length)}</span> of <span className="font-medium" style={{ color: "var(--text-primary)" }}>{filteredUsers.length}</span> results
-              </div>
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className="px-3 py-1.5 text-sm font-medium rounded-lg border transition disabled:opacity-50 disabled:cursor-not-allowed hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer"
-                  style={{ borderColor: "var(--border)", color: "var(--text-primary)" }}
-                >
-                  Previous
-                </button>
-                <button
-                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                  className="px-3 py-1.5 text-sm font-medium rounded-lg border transition disabled:opacity-50 disabled:cursor-not-allowed hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer"
-                  style={{ borderColor: "var(--border)", color: "var(--text-primary)" }}
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       )}
 

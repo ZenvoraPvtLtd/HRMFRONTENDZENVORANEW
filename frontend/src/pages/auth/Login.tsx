@@ -285,9 +285,9 @@ const Login = () => {
 
       {/* Footer */}
       <p className={`text-center mt-6 text-sm ${theme.footerText}`}>
-        Don't have an account?{" "}
+        HR or Admin?{" "}
         <Link to="/register" className={`font-semibold ${theme.signupLink}`}>
-          Sign up here
+          Create an account
         </Link>
       </p>
     </AuthLayout>

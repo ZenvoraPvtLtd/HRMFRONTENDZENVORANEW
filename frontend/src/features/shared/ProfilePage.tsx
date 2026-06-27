@@ -400,16 +400,12 @@ const ProfilePage: React.FC = () => {
 
   const roleFields = getProfileFields(profile.role);
 
-  const isAdmin = profile.role?.toLowerCase() === "admin";
   const TABS = [
     { key: "personal", label: "Personal Info" },
     { key: "documents", label: "Documents" },
     { key: "skills", label: "Skills" },
     { key: "security", label: "Security" },
-  ].filter(tab => {
-    if (isAdmin && (tab.key === "documents" || tab.key === "skills")) return false;
-    return true;
-  });
+  ] as const;
 
   return (
     <div className="w-full animate-fade-in">
@@ -418,7 +414,7 @@ const ProfilePage: React.FC = () => {
         {TABS.map((tab) => (
           <button
             key={tab.key}
-            onClick={() => setActiveTab(tab.key as any)}
+            onClick={() => setActiveTab(tab.key)}
             style={{
               padding: "0.45rem 1rem",
               borderRadius: "0.625rem",
@@ -435,9 +431,8 @@ const ProfilePage: React.FC = () => {
           </button>
         ))}
       </div>
-      {activeTab === "personal" && (
-        <div
-          className="rounded-2xl p-5 sm:p-6"
+      <div
+        className="rounded-2xl p-5 sm:p-6"
         style={{
           background: "var(--bg-secondary)",
           border: "1px solid var(--border)",
@@ -580,8 +575,7 @@ const ProfilePage: React.FC = () => {
             );
           })}
         </div>
-        </div>
-      )}
+      </div>
 
       {activeTab === "emergency" && (
         <div className="rounded-2xl p-5 sm:p-6" style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)" }}>

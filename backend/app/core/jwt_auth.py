@@ -7,11 +7,8 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 from pydantic import BaseModel
-from bson import ObjectId
 
 load_dotenv()
-
-from app.core.database import users_collection
 
 SECRET_KEY = os.getenv("JWT_ACCESS_SECRET") or os.getenv("JWT_SECRET", "ZENVORA_SECRET_KEY_2024")
 ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
@@ -50,26 +47,6 @@ def get_current_user(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid authentication token",
             )
-
-        if users_collection is not None:
-            user = users_collection.find_one({"_id": ObjectId(user_id)})
-            if not user:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Account Deleted by Admin.",
-                )
-            
-            user_status = user.get("status")
-            if user_status == "Deleted":
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Account Deleted by Admin.",
-                )
-            if user_status == "Suspended":
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Your Account is Suspended by Admin.",
-                )
 
         return TokenPayload(sub=str(user_id), role=payload.get("role"))
     except JWTError:

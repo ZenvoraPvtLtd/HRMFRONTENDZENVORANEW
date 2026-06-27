@@ -33,11 +33,11 @@ def get_notifications_for_user(user_id: str, user_role: Optional[str]) -> List[D
     query: Dict[str, Any] = {
         "$or": [
             {"recipientId": ObjectId(user_id)},
+            {"recipientId": {"$exists": False}, "role": {"$exists": False}}
         ]
     }
     if user_role:
-        query["$or"].append({"role": user_role})
-    query["$or"].append({"recipientId": {"$exists": False}, "role": {"$exists": False}})
+        query["$or"].append({"role": user_role, "recipientId": {"$exists": False}})
 
     docs = list(notifications.find(query).sort("createdAt", -1))
     out: List[Dict[str, Any]] = []
@@ -74,11 +74,11 @@ def mark_all_as_read(user_id: str, user_role: Optional[str]) -> int:
     query: Dict[str, Any] = {
         "$or": [
             {"recipientId": ObjectId(user_id)},
+            {"recipientId": {"$exists": False}, "role": {"$exists": False}}
         ]
     }
     if user_role:
-        query["$or"].append({"role": user_role})
-    query["$or"].append({"recipientId": {"$exists": False}, "role": {"$exists": False}})
+        query["$or"].append({"role": user_role, "recipientId": {"$exists": False}})
 
     docs = list(notifications.find(query))
     updated = 0

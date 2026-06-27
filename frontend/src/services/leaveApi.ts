@@ -1,6 +1,5 @@
 import type { LeaveBalance, LeaveRequest } from "../types/leave";
 import { getFastApiBaseUrl } from "../config/fastApiConfig";
-import { getAuthToken } from "../utils/auth";
 
 const FASTAPI_BASE_URL = getFastApiBaseUrl();
 const LOCAL_LEAVE_CACHE_KEY = "zenvora_leave_requests";
@@ -54,7 +53,11 @@ type LocalHrNotification = {
 };
 
 function getAuthHeaders() {
-  const token = getAuthToken();
+  const token =
+    localStorage.getItem("accessToken") ||
+    localStorage.getItem("hr_accessToken") ||
+    localStorage.getItem("manager_accessToken") ||
+    localStorage.getItem("token");
   const userName = currentEmployeeName();
   const userId = currentEmployeeId();
   const userRole = localStorage.getItem("userRole") || localStorage.getItem("hr_userRole") || localStorage.getItem("manager_userRole") || "employee";
@@ -174,7 +177,10 @@ function writeLocalHrNotifications(notifications: LocalHrNotification[]) {
 }
 
 async function createHrNotificationApi(notification: Pick<LocalHrNotification, "title" | "message" | "type">) {
-  const token = getAuthToken();
+  const token =
+    localStorage.getItem("accessToken") ||
+    localStorage.getItem("hr_accessToken") ||
+    localStorage.getItem("token");
 
   try {
     await fetch(`${FASTAPI_BASE_URL}/api/notifications`, {
@@ -467,7 +473,6 @@ export async function updateHrLeaveStatus(leaveId: string, status: "approved" | 
   const response = await fetch(`${FASTAPI_BASE_URL}/api/leaves/${leaveId}/status`, {
     method: "PATCH",
     headers: getAuthHeaders(),
-
     body: JSON.stringify({ status, comment: comment || "" }),
   });
 
@@ -476,7 +481,11 @@ export async function updateHrLeaveStatus(leaveId: string, status: "approved" | 
 }
 
 function getManagerAuthHeaders() {
-  const token = getAuthToken();
+  const token =
+    localStorage.getItem("manager_accessToken") ||
+    localStorage.getItem("hr_accessToken") ||
+    localStorage.getItem("accessToken") ||
+    localStorage.getItem("token");
   const userName = currentEmployeeName();
   const userId = currentEmployeeId();
   const userRole = localStorage.getItem("manager_userRole") || localStorage.getItem("hr_userRole") || localStorage.getItem("userRole") || "manager";

@@ -25,8 +25,8 @@ function SprintCard({ sprint, onClick }: { sprint: Sprint; onClick: () => void }
   const startDate = sprint.start_date
     ? new Date(sprint.start_date).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
     : sprint.created_at
-      ? new Date(sprint.created_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
-      : "";
+    ? new Date(sprint.created_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
+    : "";
   const endDate = sprint.end_date
     ? new Date(sprint.end_date).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
     : "";
@@ -133,7 +133,7 @@ export default function SprintBoardPage() {
   return (
     <>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        {/* <h2 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>Sprint Board</h2> */}
+        <h2 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>Sprint Board</h2>
         {userRole !== "employee" && (
           <button
             onClick={() => setShowCreate(true)}

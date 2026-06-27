@@ -1,5 +1,4 @@
 import { getFastApiBaseUrl } from "../config/fastApiConfig";
-import { getAuthToken } from "../utils/auth";
 
 const FASTAPI_BASE_URL = getFastApiBaseUrl();
 
@@ -63,7 +62,11 @@ export type ProductivityPredictionResponse = {
 };
 
 function getManagerHeaders() {
-  const token = getAuthToken();
+  const token =
+    localStorage.getItem("manager_accessToken") ||
+    localStorage.getItem("hr_accessToken") ||
+    localStorage.getItem("accessToken") ||
+    localStorage.getItem("token");
   const storedRole = localStorage.getItem("manager_userRole") || localStorage.getItem("hr_userRole") || localStorage.getItem("userRole") || "manager";
   const normalizedRole = storedRole.trim().toLowerCase();
   const userRole = ["manager", "hr", "admin"].includes(normalizedRole) ? normalizedRole : "manager";

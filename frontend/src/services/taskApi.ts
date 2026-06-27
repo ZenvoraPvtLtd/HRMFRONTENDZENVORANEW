@@ -1,10 +1,13 @@
 import { getApiBaseUrl } from "../config/apiConfig";
-import { getAuthToken } from "../utils/auth";
 
 const BASE = () => `${getApiBaseUrl()}/api`;
 
 function authHeaders(extra: Record<string, string> = {}) {
-  const token = getAuthToken();
+  const token =
+    localStorage.getItem("accessToken") ||
+    localStorage.getItem("hr_accessToken") ||
+    localStorage.getItem("employee_accessToken") ||
+    "";
   const userName =
     localStorage.getItem("hr_userName") ||
     localStorage.getItem("employee_userName") ||

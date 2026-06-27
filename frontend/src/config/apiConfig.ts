@@ -50,7 +50,7 @@ export function getQrAttendanceUrl(token: string): string {
 
   if (typeof window !== "undefined") {
     const { protocol, hostname, port } = window.location;
-    const officeQr = import.meta.env.VITE_QR_OFFICE_FRONTEND_URL || import.meta.env.VITE_OFFICE_FRONTEND_URL;
+   const officeQr = import.meta.env.VITE_QR_OFFICE_FRONTEND_URL || import.meta.env.VITE_OFFICE_FRONTEND_URL;
     if (officeQr) {
       const url = new URL(officeQr);
       return `${url.protocol}//${url.host}/qr-attendance?token=${encodeURIComponent(token)}`;
@@ -75,7 +75,7 @@ export function getQrNetworkWarning(): string {
   if (configured) return "";
 
   return LOOPBACK_HOSTS.has(window.location.hostname)
-    ? " "
+    ? "Mobile scan ke liye app ko LAN IP se open karein ya VITE_QR_FRONTEND_URL set karein; localhost mobile par open nahi hota."
     : "";
 }
 

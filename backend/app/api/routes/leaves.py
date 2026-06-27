@@ -2,9 +2,7 @@ import os
 from datetime import datetime
 from typing import Optional
 
-from bson import ObjectId, Decimal128
-from decimal import Decimal
-from datetime import date
+from bson import ObjectId
 from fastapi import APIRouter, Header, HTTPException
 from jose import JWTError, jwt
 from pydantic import BaseModel, Field
@@ -238,32 +236,6 @@ async def get_my_leaves(
     return {"data": [_fmt(d) for d in docs]}
 
 
-def serialize_bson(val, default=None):
-    try:
-        if val is None:
-            return default
-        if isinstance(val, Decimal128):
-            return float(val.to_decimal())
-        if isinstance(val, Decimal):
-            return float(val)
-        if isinstance(val, ObjectId):
-            return str(val)
-        if isinstance(val, date) or hasattr(val, "isoformat"):
-            return val.isoformat()
-        # For numbers falling back to float for leave balances specifically,
-        # but the helper is generic. If it's a string or int, we return as is,
-        # unless we specifically need float. To satisfy "mixed numeric types" 
-        # for earned/used, let's coerce to float if it's numeric, else return val.
-        if isinstance(val, (int, float)):
-            return float(val)
-        # Attempt to cast string to float if it's a numeric string
-        if isinstance(val, str) and val.replace('.','',1).isdigit():
-             return float(val)
-        return val
-    except Exception:
-        return default
-
-
 @router.get("/balances")
 async def get_all_leave_balances(
     year: Optional[int] = None,
@@ -278,36 +250,21 @@ async def get_all_leave_balances(
         raise HTTPException(status_code=403, detail="HR access required")
 
     target_year = year or datetime.utcnow().year
-
-    try:
-        docs = list(leave_balances_col.find({"year": target_year})) if leave_balances_col is not None else []
-    except Exception as exc:
-        import traceback
-        print("[ERROR] Failed to query leave balances from database:")
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail="Database query failed for leave balances")
+    docs = list(leave_balances_col.find({"year": target_year}))
 
     # Also pull from users so employees with no balance record still appear
     all_employees: list[dict] = []
     if users_col is not None:
-        try:
-            all_employees = list(
-                users_col.find(
-                    {"role": {"$nin": ["candidate"]}},
-                    {"_id": 1, "email": 1, "fullName": 1, "name": 1, "department": 1},
-                )
+        all_employees = list(
+            users_col.find(
+                {"role": {"$nin": ["candidate"]}},
+                {"_id": 1, "email": 1, "fullName": 1, "name": 1, "department": 1},
             )
-        except Exception as exc:
-            import traceback
-            print("[ERROR] Failed to query users from database:")
-            traceback.print_exc()
-            raise HTTPException(status_code=500, detail="Database query failed for users")
+        )
 
-    balance_by_emp: dict[str, dict] = {}
-    for d in docs:
-        emp_id = d.get("employee_id")
-        if emp_id:
-            balance_by_emp[str(emp_id)] = d
+    balance_by_emp: dict[str, dict] = {
+        d["employee_id"]: d for d in docs if d.get("employee_id")
+    }
 
     results = []
     seen: set[str] = set()
@@ -324,9 +281,9 @@ async def get_all_leave_balances(
             "employee_name": emp.get("fullName") or emp.get("name") or emp.get("email") or emp_id,
             "department": emp.get("department") or "Unassigned",
             "year": target_year,
-            "earned": serialize_bson(bal.get("earned"), earned_default) if bal else earned_default,
-            "used": serialize_bson(bal.get("used"), 0.0) if bal else 0.0,
-            "remaining": serialize_bson(bal.get("remaining"), earned_default) if bal else earned_default,
+            "earned": bal.get("earned", earned_default) if bal else earned_default,
+            "used": bal.get("used", 0.0) if bal else 0.0,
+            "remaining": bal.get("remaining", earned_default) if bal else earned_default,
         })
 
     # Also include balances that exist but employee record not in users collection
@@ -338,9 +295,9 @@ async def get_all_leave_balances(
                 "employee_name": bal.get("employee_name") or emp_id,
                 "department": bal.get("department") or "Unassigned",
                 "year": target_year,
-                "earned": serialize_bson(bal.get("earned"), 0.0),
-                "used": serialize_bson(bal.get("used"), 0.0),
-                "remaining": serialize_bson(bal.get("remaining"), 0.0),
+                "earned": bal.get("earned", 0.0),
+                "used": bal.get("used", 0.0),
+                "remaining": bal.get("remaining", 0.0),
             })
 
     return {"data": results}
@@ -448,6 +405,34 @@ async def reset_year_balances(
 
 
 
+async def get_my_balance(
+    authorization: Optional[str] = Header(default=None),
+    x_user_id: Optional[str] = Header(default=None),
+):
+    _db_check()
+    payload = _parse_token(authorization)
+    employee_id = payload.get("sub") or x_user_id or "unknown"
+    year = datetime.utcnow().year
+
+    bal = leave_balances_col.find_one({"employee_id": employee_id, "year": year})
+    if not bal:
+        earned_so_far = round(datetime.utcnow().month * 1.5, 1)
+        bal = {
+            "employee_id": employee_id,
+            "year": year,
+            "earned": earned_so_far,
+            "used": 0.0,
+            "remaining": earned_so_far,
+        }
+        leave_balances_col.insert_one(bal)
+
+    return {
+        "employee_id": bal["employee_id"],
+        "year": bal["year"],
+        "earned": bal["earned"],
+        "used": bal["used"],
+        "remaining": bal["remaining"],
+    }
 
 
 @router.put("/{leave_id}")
@@ -675,7 +660,6 @@ async def hr_update_status(
     return _fmt({**leave, **updates})
 
 
-@router.get("/balance")
 @router.get("/balance/my")
 async def get_my_balance(
     authorization: Optional[str] = Header(default=None),
@@ -683,45 +667,11 @@ async def get_my_balance(
 ):
     _db_check()
     payload = _parse_token(authorization)
-    employee_id = payload.get("sub") or x_user_id or ""
-    
-    if not employee_id or employee_id == "unknown":
-        raise HTTPException(status_code=401, detail="Authentication failed or missing user identity")
-
-    # Verify if employee record exists in users database
-    emp_user = None
-    if users_col is not None:
-        try:
-            if len(employee_id) == 24:
-                try:
-                    emp_user = users_col.find_one({"_id": ObjectId(employee_id)})
-                except Exception:
-                    pass
-            if emp_user is None:
-                emp_user = users_col.find_one({"email": employee_id})
-        except Exception as exc:
-            import traceback
-            print("[ERROR] Failed to query user record from database:")
-            traceback.print_exc()
-            raise HTTPException(status_code=500, detail="Database query failed for user verification")
-
-    if emp_user is None:
-        raise HTTPException(status_code=404, detail="Employee record does not exist")
-
+    employee_id = payload.get("sub") or x_user_id or "unknown"
     year = datetime.utcnow().year
 
-    # Wrap database query and business logic
-    bal = None
-    try:
-        bal = leave_balances_col.find_one({"employee_id": employee_id, "year": year})
-    except Exception as exc:
-        import traceback
-        print("[ERROR] Failed to query leave balance from database:")
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail="Database query failed for leave balance")
-
+    bal = leave_balances_col.find_one({"employee_id": employee_id, "year": year})
     if not bal:
-        # Default balance fallback if not found in db
         earned_so_far = round(datetime.utcnow().month * 1.5, 1)
         bal = {
             "employee_id": employee_id,
@@ -730,18 +680,12 @@ async def get_my_balance(
             "used": 0.0,
             "remaining": earned_so_far,
         }
-        try:
-            leave_balances_col.insert_one(bal)
-        except Exception as exc:
-            import traceback
-            print("[ERROR] Failed to save default leave balance to database:")
-            traceback.print_exc()
-            # Do not fail request; return the default dict to avoid 500 error
+        leave_balances_col.insert_one(bal)
 
     return {
-        "employee_id": bal.get("employee_id", employee_id),
-        "year": bal.get("year", year),
-        "earned": bal.get("earned", 0.0),
-        "used": bal.get("used", 0.0),
-        "remaining": bal.get("remaining", 0.0),
+        "employee_id": bal["employee_id"],
+        "year": bal["year"],
+        "earned": bal["earned"],
+        "used": bal["used"],
+        "remaining": bal["remaining"],
     }

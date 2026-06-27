@@ -240,10 +240,10 @@ async def send_application_acknowledgement(
     fm = FastMail(_get_conf())
     try:
         await fm.send_message(message)
-        print(f"[EMAIL] [SUCCESS] Acknowledgement sent to {candidate_email}")
+        print(f"[EMAIL] ✅ Acknowledgement sent to {candidate_email}")
     except Exception as e:
         import traceback
-        print(f"[EMAIL] [ERROR] Failed to send acknowledgement to {candidate_email}: {e}")
+        print(f"[EMAIL] ❌ Failed to send acknowledgement to {candidate_email}: {e}")
         traceback.print_exc()
         raise
 
@@ -455,10 +455,10 @@ async def send_interview_link(
 
     try:
         await fm.send_message(message)
-        print(f"[EMAIL] [SUCCESS] Sent successfully to {candidate_email}")
+        print(f"[EMAIL] ✅ Sent successfully to {candidate_email}")
     except Exception as e:
         import traceback
-        print(f"[EMAIL] [ERROR] Failed to send to {candidate_email}: {e}")
+        print(f"[EMAIL] ❌ Failed to send to {candidate_email}: {e}")
         traceback.print_exc()
         raise
 
@@ -603,10 +603,10 @@ async def send_attendance_report(
     fm = FastMail(_get_conf())
     try:
         await fm.send_message(message)
-        print(f"[REPORT EMAIL] [SUCCESS] Sent to {admin_email}")
+        print(f"[REPORT EMAIL] ✅ Sent to {admin_email}")
     except Exception as e:
         import traceback
-        print(f"[REPORT EMAIL] [ERROR] Failed: {e}")
+        print(f"[REPORT EMAIL] ❌ Failed: {e}")
         traceback.print_exc()
         raise
 
@@ -737,9 +737,9 @@ async def send_rejection_email(
     fm = FastMail(_get_conf())
     try:
         await fm.send_message(message)
-        print(f"[EMAIL] [SUCCESS] Rejection email sent to {candidate_email}")
+        print(f"[EMAIL] ✅ Rejection email sent to {candidate_email}")
     except Exception as e:
         import traceback
-        print(f"[EMAIL] [ERROR] Failed to send rejection email to {candidate_email}: {e}")
+        print(f"[EMAIL] ❌ Failed to send rejection email to {candidate_email}: {e}")
         traceback.print_exc()
         raise

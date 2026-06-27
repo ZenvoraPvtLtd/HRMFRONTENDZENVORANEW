@@ -1,12 +1,9 @@
 import os
 from datetime import datetime
 from typing import Optional, List
-from fastapi import APIRouter, Header, Request, Depends
+from fastapi import APIRouter, Header, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-
-from app.core.database import db
-from app.core.jwt_auth import get_current_user, TokenPayload
 
 from app.core.database import db
 
@@ -51,14 +48,14 @@ def upsert_contact(contact: ContactPayload):
 
 
 @router.get("/contacts")
-def get_contacts(current_user: TokenPayload = Depends(get_current_user)):
+def get_contacts(request: Request):
     contacts_col = get_contacts_col()
     messages_col = get_messages_col()
     
     if contacts_col is None or messages_col is None:
         return JSONResponse(status_code=503, content={"message": "Database offline"})
         
-    current_user_id = str(current_user.sub)
+    current_user_id = request.headers.get("x-user-id") or ""
     
     # Auto-discover and sync with users collection
     if db is not None:
@@ -71,9 +68,6 @@ def get_contacts(current_user: TokenPayload = Depends(get_current_user)):
                 name = u.get("fullName") or u.get("name") or "Employee"
                 role = u.get("role", "employee")
                 initials = "".join([part[0] for part in name.split() if part]).upper()[:2] or "E"
-                email = u.get("email", "")
-                employee_id = u.get("employeeId", "")
-                username = u.get("username", "")
                 
                 contacts_col.update_one(
                     {"contact_id": u_id},
@@ -82,9 +76,6 @@ def get_contacts(current_user: TokenPayload = Depends(get_current_user)):
                         "name": name,
                         "initials": initials,
                         "role": role,
-                        "email": email,
-                        "employee_id": employee_id,
-                        "username": username,
                         "avatar_color": "#2563eb" if role == "employee" else "#111827",
                         "is_online": True
                     }},
@@ -134,12 +125,12 @@ def get_contacts(current_user: TokenPayload = Depends(get_current_user)):
 
 
 @router.get("/threads/{contact_id}/messages")
-def get_messages(contact_id: str, current_user: TokenPayload = Depends(get_current_user)):
+def get_messages(contact_id: str, request: Request):
     messages_col = get_messages_col()
     if messages_col is None:
         return JSONResponse(status_code=503, content={"message": "Database offline"})
         
-    current_user_id = str(current_user.sub)
+    current_user_id = request.headers.get("x-user-id") or ""
     
     messages = list(messages_col.find({
         "$or": [
@@ -156,12 +147,12 @@ def get_messages(contact_id: str, current_user: TokenPayload = Depends(get_curre
 
 
 @router.post("/threads/{contact_id}/messages")
-def send_message(contact_id: str, payload: MessagePayload, current_user: TokenPayload = Depends(get_current_user)):
+def send_message(contact_id: str, payload: MessagePayload, request: Request):
     messages_col = get_messages_col()
     if messages_col is None:
         return JSONResponse(status_code=503, content={"message": "Database offline"})
         
-    current_user_id = str(current_user.sub)
+    current_user_id = request.headers.get("x-user-id") or ""
     
     msg = {
         "sender_id": current_user_id,
@@ -179,12 +170,12 @@ def send_message(contact_id: str, payload: MessagePayload, current_user: TokenPa
 
 
 @router.patch("/threads/{contact_id}/read")
-def mark_read(contact_id: str, current_user: TokenPayload = Depends(get_current_user)):
+def mark_read(contact_id: str, request: Request):
     messages_col = get_messages_col()
     if messages_col is None:
         return JSONResponse(status_code=503, content={"message": "Database offline"})
         
-    current_user_id = str(current_user.sub)
+    current_user_id = request.headers.get("x-user-id") or ""
     
     messages_col.update_many(
         {"sender_id": contact_id, "receiver_id": current_user_id, "is_read": False},
@@ -194,12 +185,12 @@ def mark_read(contact_id: str, current_user: TokenPayload = Depends(get_current_
 
 
 @router.delete("/threads/{contact_id}/messages")
-def clear_thread(contact_id: str, current_user: TokenPayload = Depends(get_current_user)):
+def clear_thread(contact_id: str, request: Request):
     messages_col = get_messages_col()
     if messages_col is None:
         return JSONResponse(status_code=503, content={"message": "Database offline"})
         
-    current_user_id = str(current_user.sub)
+    current_user_id = request.headers.get("x-user-id") or ""
     
     messages_col.delete_many({
         "$or": [

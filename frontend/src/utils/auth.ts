@@ -179,32 +179,3 @@ export const isTokenValid = (token: string | null): boolean => {
 export const getRoleFromToken = (token: string) => {
   return getTokenPayload(token)?.role;
 };
-
-export const getAuthToken = (): string => {
-  const role = getStoredUserRole();
-  const path = typeof window !== "undefined" ? window.location.pathname : "";
-
-  let token: string | null = null;
-  if (role === "admin" || path.startsWith("/admin")) {
-    token = localStorage.getItem("admin_accessToken");
-  } else if (role === "hr" || path.startsWith("/hr")) {
-    token = localStorage.getItem("hr_accessToken");
-  } else if (role === "manager" || path.startsWith("/manager")) {
-    token = localStorage.getItem("manager_accessToken");
-  } else if (role === "candidate" || path.startsWith("/candidatedashboard")) {
-    token = localStorage.getItem("candidate_accessToken");
-  }
-
-  if (!token) {
-    token =
-      localStorage.getItem("admin_accessToken") ||
-      localStorage.getItem("hr_accessToken") ||
-      localStorage.getItem("manager_accessToken") ||
-      localStorage.getItem("candidate_accessToken") ||
-      localStorage.getItem("accessToken") ||
-      localStorage.getItem("token") ||
-      "";
-  }
-
-  return token;
-};

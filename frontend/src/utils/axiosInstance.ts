@@ -1,7 +1,6 @@
 import axios from 'axios';
 import type { AxiosError } from 'axios';
 import API_BASE_URL from '../config/apiConfig';
-import { getAuthToken } from './auth';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -21,7 +20,21 @@ const processQueue = (error: AxiosError | unknown, token: string | null) => {
 
 // Attach token to every request
 api.interceptors.request.use((config) => {
-  const token = getAuthToken();
+  const path = window.location.pathname;
+  let token: string | null;
+  if (path.startsWith('/candidatedashboard')) {
+    token = localStorage.getItem('candidate_accessToken') || localStorage.getItem('accessToken');
+  } else if (path.startsWith('/admin')) {
+    token = localStorage.getItem('admin_accessToken') || localStorage.getItem('hr_accessToken') || localStorage.getItem('accessToken');
+  } else if (path.startsWith('/dashboard')) {
+    token = localStorage.getItem('accessToken');
+  } else if (path.startsWith('/hr')) {
+    token = localStorage.getItem('hr_accessToken') || localStorage.getItem('accessToken');
+  } else if (path.startsWith('/manager')) {
+    token = localStorage.getItem('manager_accessToken') || localStorage.getItem('hr_accessToken') || localStorage.getItem('accessToken');
+  } else {
+    token = localStorage.getItem('admin_accessToken') || localStorage.getItem('hr_accessToken') || localStorage.getItem('accessToken');
+  }
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
@@ -31,17 +44,6 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-
-    if (error.response?.status === 403) {
-      const msg = error.response?.data?.detail || error.response?.data?.message || "";
-      if (msg === "Your Account is Suspended by Admin." || msg === "Account Deleted by Admin.") {
-        localStorage.clear();
-        sessionStorage.clear();
-        alert(msg);
-        window.location.href = '/login';
-        return Promise.reject(error);
-      }
-    }
 
     if (error.response?.status !== 401 || originalRequest._retry) {
       return Promise.reject(error);

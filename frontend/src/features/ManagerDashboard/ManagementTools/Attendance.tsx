@@ -116,11 +116,11 @@ export default function AttendancePage() {
           }
         });
         if (isMounted && response.data) {
-          type EmployeeAttendance = {
+          type EmployeeAttendance = Employee & {
             clockIn: string;
             status: string;
           };
-          const list: any[] = response.data.data || [];
+          const list: EmployeeAttendance[] = response.data.data || [];
           setEmployees(list);
           setMembers(response.data.members || []);
           if (response.data.summary) {
@@ -321,7 +321,7 @@ export default function AttendancePage() {
 </div>
 
         {/* ATTENDANCE CARD */}
-        <div className="rounded-3xl shadow-sm" style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)" }}>
+        <div className="rounded-3xl overflow-hidden shadow-sm" style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)" }}>
 
           {/* CARD TOP */}
           <div className="p-5 border-b flex flex-col lg:flex-row gap-5 lg:items-center lg:justify-between" style={{ borderBottom: "1px solid var(--border)" }}>

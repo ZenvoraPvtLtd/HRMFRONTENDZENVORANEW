@@ -16,18 +16,6 @@ SECRET_KEY = os.getenv("JWT_SECRET", "ZENVORA_SECRET_KEY_2024")
 ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
 
 
-def log_debug(message: str):
-    print(message)
-    try:
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        backend_dir = os.path.abspath(os.path.join(current_dir, "..", "..", ".."))
-        log_file_path = os.path.join(backend_dir, "logs", "auth_debug.log")
-        with open(log_file_path, "a", encoding="utf-8") as f:
-            f.write(f"{datetime.now().isoformat()} - {message}\n")
-    except Exception as e:
-        print(f"Failed to write to debug file: {e}")
-
-
 class ClockEventRequest(BaseModel):
     workMode: Optional[str] = "On-site"
     location: Optional[dict[str, Any]] = None
@@ -42,18 +30,13 @@ def _collection(handle: Any, name: str):
 
 
 def _decode_token(authorization: Optional[str]) -> dict:
-    log_debug(f"[DEBUG] Authorization header received: {authorization}")
     if not authorization or not authorization.startswith("Bearer "):
-        log_debug("[DEBUG] Failure point: Authorization header missing or does not start with Bearer")
         raise HTTPException(status_code=401, detail="Authorization header missing")
 
     try:
         token = authorization.split(" ", 1)[1]
-        decoded = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        log_debug("[DEBUG] JWT decode result: Success")
-        return decoded
-    except JWTError as e:
-        log_debug(f"[DEBUG] Failure point: JWT decode failed. Error: {str(e)}")
+        return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
 
@@ -93,28 +76,10 @@ def _employee_id(user: dict) -> str:
 def clock_in(body: ClockEventRequest, authorization: Optional[str] = Header(None)):
     attendance = _collection(attendance_collection, "attendance_logs")
     if attendance is None:
-        log_debug("[DEBUG] Failure point: Database offline")
         raise HTTPException(status_code=503, detail="Database offline")
 
-    try:
-        payload = _decode_token(authorization)
-    except HTTPException as e:
-        log_debug(f"[DEBUG] Failure point: Token decoding failed with status {e.status_code}")
-        raise e
-
-    user_id = str(payload.get("sub") or "")
-    log_debug(f"[DEBUG] User ID extracted: {user_id}")
-
-    try:
-        user = _get_user(user_id)
-        log_debug(f"[DEBUG] Employee lookup result: Found, email: {user.get('email')}, name: {user.get('fullName')}")
-    except HTTPException as e:
-        log_debug(f"[DEBUG] Failure point: Employee lookup failed with status {e.status_code}")
-        raise e
-
-    role = user.get("role", "Employee")
-    log_debug(f"[DEBUG] Role detected: {role}")
-
+    payload = _decode_token(authorization)
+    user = _get_user(str(payload.get("sub") or ""))
     now = _now()
     employee_id = _employee_id(user)
     today = _date_label(now)
@@ -151,28 +116,10 @@ def clock_in(body: ClockEventRequest, authorization: Optional[str] = Header(None
 def clock_out(body: ClockEventRequest, authorization: Optional[str] = Header(None)):
     attendance = _collection(attendance_collection, "attendance_logs")
     if attendance is None:
-        log_debug("[DEBUG] Failure point: Database offline")
         raise HTTPException(status_code=503, detail="Database offline")
 
-    try:
-        payload = _decode_token(authorization)
-    except HTTPException as e:
-        log_debug(f"[DEBUG] Failure point: Token decoding failed with status {e.status_code}")
-        raise e
-
-    user_id = str(payload.get("sub") or "")
-    log_debug(f"[DEBUG] User ID extracted: {user_id}")
-
-    try:
-        user = _get_user(user_id)
-        log_debug(f"[DEBUG] Employee lookup result: Found, email: {user.get('email')}, name: {user.get('fullName')}")
-    except HTTPException as e:
-        log_debug(f"[DEBUG] Failure point: Employee lookup failed with status {e.status_code}")
-        raise e
-
-    role = user.get("role", "Employee")
-    log_debug(f"[DEBUG] Role detected: {role}")
-
+    payload = _decode_token(authorization)
+    user = _get_user(str(payload.get("sub") or ""))
     now = _now()
     employee_id = _employee_id(user)
     today = _date_label(now)

@@ -7,9 +7,6 @@ export type ApiContact = {
   name: string;
   initials: string;
   role?: string | null;
-  email?: string | null;
-  employee_id?: string | null;
-  username?: string | null;
   avatar_color: string;
   is_online: boolean;
   last_message?: string | null;
@@ -27,12 +24,30 @@ export type ApiMessage = {
   created_at: string;
 };
 
-import { getAuthToken } from "../utils/auth";
-
 function getAuthHeaders() {
-  const token = getAuthToken();
+  const isHrRoute =
+    typeof window !== "undefined" &&
+    !window.location.pathname.startsWith("/dashboard") &&
+    !window.location.pathname.startsWith("/manager") &&
+    !window.location.pathname.startsWith("/candidatedashboard");
+  const currentName = isHrRoute
+    ? localStorage.getItem("hr_userName") || localStorage.getItem("userName") || "HR User"
+    : localStorage.getItem("userName") || localStorage.getItem("userEmail") || "Employee";
+  const currentId =
+    localStorage.getItem("userId") ||
+    (isHrRoute ? localStorage.getItem("hr_userEmail") : localStorage.getItem("userEmail")) ||
+    "user-current";
+  const currentRole = isHrRoute ? "hr" : "employee";
+  const token =
+    (isHrRoute ? localStorage.getItem("hr_accessToken") : localStorage.getItem("accessToken")) ||
+    localStorage.getItem("accessToken") ||
+    localStorage.getItem("hr_accessToken") ||
+    localStorage.getItem("token");
   return {
     "Content-Type": "application/json",
+    "X-User-Id": currentId,
+    "X-User-Name": currentName,
+    "X-User-Role": currentRole,
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 }

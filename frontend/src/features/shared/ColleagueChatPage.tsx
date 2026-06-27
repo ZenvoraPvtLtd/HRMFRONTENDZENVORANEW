@@ -26,9 +26,6 @@ interface Contact {
   color: string;
   isOnline: boolean;
   role?: string;
-  email?: string;
-  employee_id?: string;
-  username?: string;
 }
 
 interface ChatMessage {
@@ -166,7 +163,6 @@ export default function ColleagueChatPage() {
   const sendingThreadRef = useRef<Record<string, boolean>>({});
   const clearedThreadRef = useRef<Record<string, boolean>>({});
   const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [newContactList, setNewContactList] = useState<Contact[]>([]);
   const [activeChat, setActiveChat] = useState<Contact | null>(null);
@@ -191,24 +187,8 @@ export default function ColleagueChatPage() {
     ? emojiCategories.flatMap((category) => category.emojis).filter((emoji) => emoji.includes(emojiSearch.trim()))
     : selectedCategory.emojis;
 
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSearch(search);
-    }, 300);
-    return () => clearTimeout(handler);
-  }, [search]);
-
-  const filterContacts = (list: Contact[]) => {
-    const q = debouncedSearch.toLowerCase();
-    if (!q) return list;
-    return list.filter((contact) => 
-      contact.name.toLowerCase().includes(q) ||
-      (contact.email && contact.email.toLowerCase().includes(q)) ||
-      (contact.username && contact.username.toLowerCase().includes(q)) ||
-      (contact.employee_id && contact.employee_id.toLowerCase().includes(q)) ||
-      (contact.role && contact.role.toLowerCase().includes(q))
-    );
-  };
+  const filterContacts = (list: Contact[]) =>
+    list.filter((contact) => contact.name.toLowerCase().includes(search.toLowerCase()));
 
 
   useEffect(() => {
@@ -292,14 +272,11 @@ export default function ColleagueChatPage() {
           initials: contact.initials,
           name: contact.name,
           lastMessage: contact.last_message || "Ready to chat",
-          lastMessageAt: contact.last_message_at ? new Date(contact.last_message_at).getTime() : 0,
-          unreadCount: contact.unread_count || 0,
+          lastMessageAt: contact.last_message ? Date.now() : 0,
+          unreadCount: 0,
           color: contact.avatar_color,
           isOnline: contact.is_online,
           role: contact.role || (isHrChat ? "employee" : "hr"),
-          email: contact.email || undefined,
-          employee_id: contact.employee_id || undefined,
-          username: contact.username || undefined,
         }));
 
         const finalContacts = mappedContacts;
@@ -367,15 +344,9 @@ export default function ColleagueChatPage() {
             const prevMap = new Map(prev.map((c) => [c.id, c]));
             return mappedContacts.map((c) => {
               const existing = prevMap.get(c.id);
-              if (existing) {
-                return {
-                  ...c,
-                  lastMessage: existing.lastMessage !== "Ready to chat" ? existing.lastMessage : c.lastMessage,
-                  lastMessageAt: existing.lastMessageAt || c.lastMessageAt,
-                  unreadCount: existing.unreadCount || c.unreadCount,
-                };
-              }
-              return c;
+              return existing
+                ? { ...c, lastMessageAt: existing.lastMessageAt, unreadCount: existing.unreadCount }
+                : c;
             });
           });
           setActiveChat((current) => {
@@ -612,18 +583,13 @@ export default function ColleagueChatPage() {
     }
   }
 
-  const allFilteredContacts = filterContacts(contacts).filter((c) => !hiddenChats[c.id]);
-  const visibleRecentContacts = allFilteredContacts
-    .filter((c) => c.lastMessage !== "Ready to chat" || pinnedChats[c.id])
-    .sort((a, b) => {
-      if (pinnedChats[a.id] && !pinnedChats[b.id]) return -1;
-      if (!pinnedChats[a.id] && pinnedChats[b.id]) return 1;
-      return b.lastMessageAt - a.lastMessageAt;
-    });
+  const visibleRecentContacts = filterContacts(contacts)
+    .filter((contact) => !hiddenChats[contact.id])
+    .sort((a, b) => Number(Boolean(pinnedChats[b.id])) - Number(Boolean(pinnedChats[a.id])));
 
-  const visibleNewContacts = allFilteredContacts
-    .filter((c) => c.lastMessage === "Ready to chat" && !pinnedChats[c.id])
-    .sort((a, b) => a.name.localeCompare(b.name));
+  const visibleNewContacts = filterContacts(newContactList)
+    .filter((contact) => !hiddenChats[contact.id])
+    .sort((a, b) => Number(Boolean(pinnedChats[b.id])) - Number(Boolean(pinnedChats[a.id])));
 
   const renderContact = (contact: Contact) => (
     <div
@@ -743,11 +709,19 @@ export default function ColleagueChatPage() {
           </div>
 
           <div className="flex-1 overflow-y-auto px-2 pb-4" style={{ scrollbarWidth: "none" }}>
+            <p className="px-2 pb-2 text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--text-secondary)" }}>
+              Recent
+            </p>
             {isLoadingContacts ? (
-              // Loading skeleton
+              // Loading skeleton — 5 animated placeholder rows
               Array.from({ length: 5 }).map((_, i) => (
                 <div key={i} className="flex items-center gap-3 rounded-lg px-3 py-3 mb-1">
-                  <div className="shrink-0 rounded-full animate-pulse" style={{ width: 40, height: 40, background: "var(--bg-hover)" }} />
+                  {/* Avatar skeleton */}
+                  <div
+                    className="shrink-0 rounded-full animate-pulse"
+                    style={{ width: 40, height: 40, background: "var(--bg-hover)" }}
+                  />
+                  {/* Text skeleton */}
                   <div className="flex-1 flex flex-col gap-2">
                     <div className="animate-pulse rounded" style={{ height: 12, width: "60%", background: "var(--bg-hover)" }} />
                     <div className="animate-pulse rounded" style={{ height: 10, width: "80%", background: "var(--bg-hover)" }} />
@@ -758,37 +732,16 @@ export default function ColleagueChatPage() {
               <div className="px-3 py-4 text-xs rounded-lg mx-1" style={{ background: "rgba(239,68,68,0.08)", color: "#ef4444" }}>
                 {chatApiError}
               </div>
-            ) : debouncedSearch && visibleRecentContacts.length === 0 && visibleNewContacts.length === 0 ? (
-              <div className="px-3 py-8 text-center">
-                <Search size={32} className="mx-auto mb-3 opacity-20" style={{ color: "var(--text-primary)" }} />
-                <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>No results found</p>
-                <p className="text-xs mt-1" style={{ color: "var(--text-secondary)" }}>Try a different name or email</p>
-              </div>
+            ) : visibleRecentContacts.length === 0 ? (
+              <p className="px-3 py-3 text-xs" style={{ color: "var(--text-secondary)" }}>No contacts yet.</p>
             ) : (
-              <>
-                {visibleRecentContacts.length > 0 && (
-                  <>
-                    <p className="px-2 pb-2 text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--text-secondary)" }}>
-                      Recent
-                    </p>
-                    {visibleRecentContacts.map(renderContact)}
-                  </>
-                )}
-                
-                {visibleNewContacts.length > 0 && (
-                  <>
-                    <p className="px-2 pb-2 pt-3 text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--text-secondary)" }}>
-                      Start New Chat
-                    </p>
-                    {visibleNewContacts.map(renderContact)}
-                  </>
-                )}
-
-                {visibleRecentContacts.length === 0 && visibleNewContacts.length === 0 && (
-                  <p className="px-3 py-3 text-xs" style={{ color: "var(--text-secondary)" }}>No contacts yet.</p>
-                )}
-              </>
+              visibleRecentContacts.map(renderContact)
             )}
+
+            <p className="px-2 pb-2 pt-3 text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--text-secondary)" }}>
+              Start New Chat
+            </p>
+            {isLoadingContacts ? null : visibleNewContacts.map(renderContact)}
           </div>
         </aside>
 

@@ -1,5 +1,4 @@
 import { getApiBaseUrl } from "../config/apiConfig";
-import { getAuthToken } from "../utils/auth";
 
 export interface WhatsAppSchedule {
     _id: string;
@@ -68,13 +67,10 @@ export interface WhatsAppTemplate {
 
 const API_BASE = `${getApiBaseUrl()}/api/whatsapp`;
 
-const getAuthHeaders = () => {
-    const token = getAuthToken();
-    return {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-    };
-};
+const getAuthHeaders = () => ({
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${localStorage.getItem("accessToken") || ""}`,
+});
 
 
 // Send WhatsApp message immediately

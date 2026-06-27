@@ -157,7 +157,7 @@ def list_users(admin: dict = Depends(admin_only)):
         return JSONResponse(status_code=503, content={"message": "Database offline"})
 
     users = []
-    for u in col.find({"status": {"$ne": "Deleted"}}):
+    for u in col.find({}):
         users.append({
             "id": str(u["_id"]),
             "fullName": u.get("fullName") or u.get("name") or "",
@@ -330,15 +330,12 @@ def delete_user(user_id: str, admin: dict = Depends(admin_only)):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    col.update_one({"_id": oid}, {"$set": {"status": "Deleted"}})
+    col.delete_one({"_id": oid})
 
-    # Clean up employees_list entry as well via soft delete
+    # Clean up employees_list entry as well
     try:
         if db is not None:
-            db["employees_list"].update_one(
-                {"userId": user_id},
-                {"$set": {"status": "Deleted"}}
-            )
+            db["employees_list"].delete_one({"userId": user_id})
     except Exception:
         pass
 

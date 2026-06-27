@@ -203,7 +203,7 @@ def get_employees():
         except Exception as exc:
             print("DEBUG GET /api/employees - failed db['employees'] inspection:", str(exc))
 
-    return [serialize(e) for e in col.find({"status": {"$ne": "Deleted"}}).sort("createdAt", -1) if is_employee_record(e)]
+    return [serialize(e) for e in col.find({}).sort("createdAt", -1) if is_employee_record(e)]
 
 
 @router.get("/stats/summary")
@@ -220,7 +220,7 @@ def get_stats():
             "avgProfileCompletion": 0,
         }
 
-    employees = [serialize(employee) for employee in col.find({"status": {"$ne": "Deleted"}}) if is_employee_record(employee)]
+    employees = [serialize(employee) for employee in col.find({}) if is_employee_record(employee)]
     total = len(employees)
     active = sum(1 for e in employees if str(e.get("status", "")).lower() == "active")
     inactive = sum(1 for e in employees if str(e.get("status", "")).lower() == "inactive")
@@ -396,16 +396,16 @@ def delete_employee(employee_id: str):
     if not existing:
         return JSONResponse(status_code=404, content={"message": "Employee not found"})
 
-    result = col.update_one({"_id": ObjectId(employee_id)}, {"$set": {"status": "Deleted"}})
-    if result.matched_count == 0:
+    result = col.delete_one({"_id": ObjectId(employee_id)})
+    if result.deleted_count == 0:
         return JSONResponse(status_code=404, content={"message": "Employee not found"})
 
     users_col = get_users_col()
     if users_col is not None:
         if existing.get("userId") and ObjectId.is_valid(str(existing["userId"])):
-            users_col.update_one({"_id": ObjectId(str(existing["userId"]))}, {"$set": {"status": "Deleted"}})
+            users_col.delete_one({"_id": ObjectId(str(existing["userId"]))})
         elif existing.get("email"):
-            users_col.update_one({"email": str(existing["email"]).lower()}, {"$set": {"status": "Deleted"}})
+            users_col.delete_one({"email": str(existing["email"]).lower()})
 
     return {"message": "Employee deleted"}
 

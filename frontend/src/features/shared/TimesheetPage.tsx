@@ -21,7 +21,6 @@ import AttendancePage, {
   FACE_AUTO_CLOCK_OUT_EVENT,
 } from "./AttendancePage";
 import API_BASE_URL from "../../config/apiConfig";
-import { getAuthToken } from "../../utils/auth";
 import {
   enrichAttendanceLocation,
   formatAttendanceLocation,
@@ -378,7 +377,12 @@ function getTodayAttendanceBadge(
 }
 
 function getAuthHeaders(): Record<string, string> {
-  const token = getAuthToken();
+  const token =
+    localStorage.getItem("accessToken") ||
+    localStorage.getItem("hr_accessToken") ||
+    localStorage.getItem("manager_accessToken") ||
+    localStorage.getItem("candidate_accessToken");
+
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 

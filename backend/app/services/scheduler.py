@@ -123,7 +123,7 @@ def _build_report_data(start_date: datetime, end_date: datetime):
         return summary, rows
 
     except Exception as exc:
-        print(f"[REPORT] [ERROR] Failed to build report data: {exc}")
+        print(f"[REPORT] ❌ Failed to build report data: {exc}")
         import traceback
         traceback.print_exc()
         return None, None
@@ -164,9 +164,9 @@ def _send_report(report_type: str, start_date: datetime, end_date: datetime) -> 
         loop = asyncio.new_event_loop()
         loop.run_until_complete(_async_send())
         loop.close()
-        print(f"[REPORT] [SUCCESS] {report_type} attendance report sent to {admin_email}")
+        print(f"[REPORT] ✅ {report_type} attendance report sent to {admin_email}")
     except Exception as exc:
-        print(f"[REPORT] [ERROR] Failed to send {report_type} report: {exc}")
+        print(f"[REPORT] ❌ Failed to send {report_type} report: {exc}")
         import traceback
         traceback.print_exc()
 

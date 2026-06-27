@@ -10,10 +10,118 @@
 
 import type { UserProfile, ProfileUpdateRequest } from "../types/profile";
 import API_BASE_URL from "../config/apiConfig";
-import { getAuthToken } from "../utils/auth";
 
 // Base URL for profile API
 const PROFILE_API_BASE_URL = `${API_BASE_URL}/api/profile`;
+
+/**
+ * Get authentication token based on current route
+ * Handles multiple token storage locations for different user types
+ * 
+ * @returns {string} Authentication token from localStorage
+ */
+function getAuthToken(): string {
+  const path = typeof window !== "undefined" ? window.location.pathname : "";
+
+  // Check for candidate-specific token
+  if (path.startsWith("/candidatedashboard")) {
+    return (
+      localStorage.getItem("candidate_accessToken") ||
+      getTokenForRole("candidate") ||
+      ""
+    );
+  }
+
+  if (path.startsWith("/dashboard")) {
+    return getTokenForRole("employee") || localStorage.getItem("accessToken") || "";
+  }
+
+  if (path.startsWith("/manager")) {
+    return (
+      localStorage.getItem("manager_accessToken") ||
+      getTokenForRole("manager") ||
+      localStorage.getItem("hr_accessToken") ||
+      localStorage.getItem("accessToken") ||
+      ""
+    );
+  }
+
+  // Admin path
+  if (path.startsWith("/admin")) {
+    return (
+      localStorage.getItem("hr_accessToken") ||
+      localStorage.getItem("admin_accessToken") ||
+      localStorage.getItem("accessToken") ||
+      ""
+    );
+  }
+
+  if (path === "/profile" || path.startsWith("/profile/")) {
+    return (
+      localStorage.getItem("hr_accessToken") ||
+      getTokenForRole("hr") ||
+      localStorage.getItem("accessToken") ||
+      ""
+    );
+  }
+
+  // Check for HR-specific token
+  if (path.startsWith("/hr") || path.startsWith("/employees")) {
+    return (
+      localStorage.getItem("hr_accessToken") ||
+      localStorage.getItem("accessToken") ||
+      ""
+    );
+  }
+
+  // Default fallback
+  return (
+    getTokenForStoredRole() ||
+    localStorage.getItem("accessToken") ||
+    localStorage.getItem("hr_accessToken") ||
+    localStorage.getItem("manager_accessToken") ||
+    localStorage.getItem("candidate_accessToken") ||
+    ""
+  );
+}
+
+function getTokenForStoredRole(): string {
+  const role =
+    localStorage.getItem("userRole") ||
+    localStorage.getItem("hr_userRole") ||
+    localStorage.getItem("manager_userRole") ||
+    localStorage.getItem("candidate_userRole") ||
+    "";
+
+  return getTokenForRole(role);
+}
+
+function getTokenForRole(role: string | null): string {
+  if (role === "employee") return localStorage.getItem("accessToken") || "";
+  if (role === "admin") {
+    return (
+      localStorage.getItem("hr_accessToken") ||
+      localStorage.getItem("admin_accessToken") ||
+      localStorage.getItem("accessToken") ||
+      ""
+    );
+  }
+  if (role === "manager") {
+    return (
+      localStorage.getItem("manager_accessToken") ||
+      localStorage.getItem("hr_accessToken") ||
+      localStorage.getItem("accessToken") ||
+      ""
+    );
+  }
+  if (role === "hr") {
+    return localStorage.getItem("hr_accessToken") || localStorage.getItem("accessToken") || "";
+  }
+  if (role === "candidate") {
+    return localStorage.getItem("candidate_accessToken") || localStorage.getItem("accessToken") || "";
+  }
+  return "";
+}
 
 /**
  * Get common headers for API requests
