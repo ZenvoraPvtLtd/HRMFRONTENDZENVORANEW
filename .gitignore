@@ -1,0 +1,117 @@
+node_modules/
+.env
+.env.*
+dist/
+build/
+.DS_Store
+*.log
+.gemini/
+antigravity-ide/
+.system_generated/
+/backend/node_modules/
+/frontend/node_modules/
+__pycache__/
+*.pyc
+# Python
+__pycache__/
+*.py[cod]
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.venv/
+venv/
+env/
+ENV/
+.Python
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment variables
+.env
+.env.*
+.env.local
+
+# Logs
+logs/
+*.log
+
+# Uploads / generated files
+uploads/
+documents/
+
+# IDEs and editors
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# macOS & Windows
+.DS_Store
+Thumbs.db
+
+# Test / coverage
+coverage/
+.coverage
+coverage.xml
+
+# Caches
+.cache/
+
+# Frontend build outputs
+/frontend/dist/
+/frontend/build/
+
+# Misc
+*.swp
+*~
+
+# Ignore node build outputs at repo root
+dist/
+build/
+
+# Ignore local env and secrets
+.secret
+
+# TypeScript / Vite cache
+*.tsbuildinfo
+.vite/
+frontend/.vite/
+
+# Local editor/workspace files
+*.code-workspace
+
+# Machine-specific duplicate lockfiles
+package-lock-*.json
+frontend/package-lock-*.json
+
+# Local databases / runtime state
+*.sqlite
+*.sqlite3
+*.db
+
+# Tool caches
+.mypy_cache/
+.ruff_cache/
+.tox/
+
+# Vendor packages
+backend/.vendor/
+
+# Pip cache
+backend/.pip-cache/
+
+frontend/.npm-cache/
