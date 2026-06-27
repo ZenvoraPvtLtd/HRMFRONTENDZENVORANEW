@@ -220,15 +220,6 @@ export const adminNavSections: NavSection[] = [
     label: "",
     items: [
       { to: "/admin", icon: <LayoutDashboard size={18} />, label: "Dashboard", exact: true },
-      {
-        to: "/admin/sprint-board",
-        icon: <BarChart3 size={18} />,
-        label: "Sprint Board",
-        children: [
-          { to: "/admin/sprint-board", icon: <LayoutGrid size={15} />, label: "Sprint Boards" },
-          { to: "/admin/my-tasks", icon: <CheckSquare size={15} />, label: "My Tasks" },
-        ],
-      },
       // { to: "/admin/leave", icon: <Clock3 size={18} />, label: "Leave" },
       {
         to: "/admin/users",
@@ -322,7 +313,6 @@ const Sidebar = ({
     "/manager-tools": true,
     "/manager/sprint-board": true,
     "/manager/tools": true,
-    "/admin/sprint-board": false,
     "/admin/employees": false,
     "/admin/attendance": true,
     "/admin/users": false,

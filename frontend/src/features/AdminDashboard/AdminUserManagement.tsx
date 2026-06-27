@@ -213,24 +213,7 @@ export default function AdminUserManagement() {
   const paginatedUsers = filteredUsers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>
-            User & Role Management
-          </h1>
-          <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-            Create accounts, edit user roles, or suspend/delete records globally.
-          </p>
-        </div>
-        <button
-          onClick={openCreateModal}
-          className="flex items-center gap-2 px-4 py-2.5 bg-zinc-900 dark:bg-zinc-100 hover:bg-zinc-850 dark:hover:bg-zinc-200 text-white dark:text-black rounded-xl font-semibold text-sm transition cursor-pointer border border-zinc-800 dark:border-zinc-200"
-        >
-          <UserPlus className="w-4 h-4" /> Add New User
-        </button>
-      </div>
+    <div className="p-6 space-y-4">
 
       {/* Alerts */}
       {successMsg && (
@@ -246,8 +229,8 @@ export default function AdminUserManagement() {
         </div>
       )}
 
-      {/* Filters Bar */}
-      <div className="flex justify-end">
+      {/* Action Bar */}
+      <div className="flex flex-col sm:flex-row justify-end items-center gap-4">
         {/* Role Filter */}
         <div className="flex items-center gap-2.5">
           <Filter className="w-4 h-4" style={{ color: "var(--text-secondary)" }} />
@@ -262,13 +245,19 @@ export default function AdminUserManagement() {
             }}
           >
             <option value="all">All Roles</option>
-            <option value="admin">Administrators</option>
-            <option value="hr">HR Managers</option>
-            <option value="manager">Team Managers</option>
-            <option value="employee">Employees</option>
-            <option value="candidate">Candidates</option>
+            <option value="admin">Admin</option>
+            <option value="hr">HR</option>
+            <option value="manager">Manager</option>
+            <option value="employee">Employee</option>
           </select>
         </div>
+
+        <button
+          onClick={openCreateModal}
+          className="flex items-center gap-2 px-4 py-2.5 bg-zinc-900 dark:bg-zinc-100 hover:bg-zinc-850 dark:hover:bg-zinc-200 text-white dark:text-black rounded-xl font-semibold text-sm transition cursor-pointer border border-zinc-800 dark:border-zinc-200"
+        >
+          <UserPlus className="w-4 h-4" /> Add New User
+        </button>
       </div>
 
       {/* Users Table */}
