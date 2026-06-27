@@ -322,7 +322,6 @@ const Sidebar = ({
     "/manager-tools": true,
     "/manager/sprint-board": true,
     "/manager/tools": true,
-    "/admin/sprint-board": false,
     "/admin/employees": false,
     "/admin/attendance": true,
     "/admin/users": false,

@@ -365,9 +365,6 @@ const AppRoutes = () => (
         <Route path="create-user" element={<CreateUserPage />} />
 
         {/* Shared */}
-        <Route path="sprint-board" element={<SprintBoardPage />} />
-        <Route path="sprint-board/:boardId" element={<SprintBoardDetailPage />} />
-        <Route path="my-tasks" element={<MyTasksPage />} />
         <Route path="leave" element={<LeavePage />} />
         <Route path="timesheet" element={<TimesheetPage />} />
         <Route path="organization" element={<OrganizationPage />} />
