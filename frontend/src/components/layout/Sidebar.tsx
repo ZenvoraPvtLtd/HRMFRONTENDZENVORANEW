@@ -29,6 +29,7 @@ import {
   TriangleAlert,
   UserCircle,
   UserCheck,
+  UserPlus,
   UserX,
   Users,
   Video,
@@ -64,7 +65,7 @@ export const hrNavSections: NavSection[] = [
         label: "Sprint Board",
         children: [
           { to: "/sprint-board", icon: <LayoutGrid size={15} />, label: "Boards" },
-          { to: "/my-tasks", icon: <CheckSquare size={15} />, label: "" },
+          { to: "/my-tasks", icon: <CheckSquare size={15} />, label: "My Tasks" },
         ],
       },
       { to: "/leave", icon: <Clock3 size={18} />, label: "Leave" },
@@ -76,6 +77,7 @@ export const hrNavSections: NavSection[] = [
         icon: <ClipboardList size={18} />,
         label: "HR Management",
         children: [
+          { to: "/hr-management/create-user", icon: <UserPlus size={15} />, label: "Create User" },
           { to: "/hr-management/employees", icon: <Users size={15} />, label: "Employees" },
           { to: "/hr-management/employee-management", icon: <Users size={15} />, label: "Employee Management" },
           { to: "/hr-management/employee-onboarding", icon: <Users size={15} />, label: "Onboarding" },
@@ -84,7 +86,6 @@ export const hrNavSections: NavSection[] = [
           { to: "/hr-management/leave-management", icon: <Calendar size={15} />, label: "Leave Management" },
           { to: "/hr-management/my-assign-task", icon: <ClipboardList size={15} />, label: "HR Actions" },
           { to: "/hr-management/timesheet-approvals", icon: <Clock3 size={15} />, label: "Timesheet Approvals" },
-          { to: "/hr-management/timesheet-tracker", icon: <Clock3 size={15} />, label: "Timesheet Tracker" },
           { to: "/attendance-management", icon: <Calendar size={15} />, label: "Attendance Management" },
           { to: "/hr-management/performance-improvement-plan", icon: <TriangleAlert size={15} />, label: "PIP" },
           { to: "/performance", icon: <BarChart3 size={15} />, label: "Performance" },
@@ -119,7 +120,6 @@ export const hrNavSections: NavSection[] = [
         children: [
           { to: "/manager-tools/attendance", icon: <Calendar size={15} />, label: "Attendance" },
           { to: "/manager-tools/approvals", icon: <CheckCircle2 size={15} />, label: "Approvals" },
-          { to: "/manager-tools/productivity", icon: <BarChart3 size={15} />, label: "Productivity" },
           { to: "/manager-tools/projects", icon: <FolderKanban size={15} />, label: "Projects" },
           { to: "/manager-tools/team-management", icon: <Users size={15} />, label: "Team Management" },
         ],
@@ -203,7 +203,6 @@ export const managerNavSections: NavSection[] = [
         children: [
           { to: "/manager/attendance", icon: <Calendar size={15} />, label: "Attendance" },
           { to: "/manager/approvals", icon: <CheckCircle2 size={15} />, label: "Approvals" },
-          { to: "/manager/productivity", icon: <BarChart3 size={15} />, label: "Productivity" },
           { to: "/manager/projects", icon: <FolderKanban size={15} />, label: "Projects" },
           { to: "/manager/team-management", icon: <Users size={15} />, label: "Team Management" },
         ],
@@ -236,6 +235,7 @@ export const adminNavSections: NavSection[] = [
         label: "Admin",
         children: [
           { to: "/admin/users", icon: <Users size={15} />, label: "Users & Roles" },
+          { to: "/admin/create-user", icon: <UserPlus size={15} />, label: "Create User" },
         ],
       },
       {

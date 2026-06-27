@@ -1,4 +1,4 @@
-﻿﻿import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import Layout from "../components/layout/Layout";
 
 // Chatbots
@@ -43,6 +43,7 @@ import AIPredictivity from "../features/HRdashboard/AIPredictivity";
 import AIAnalytics from "../features/HRdashboard/AIAnalytics";
 import CandidatesPage from "../features/HRdashboard/CandidatesPage";
 import CandidateScreeningPage from "../features/HRdashboard/CandidateScreeningPage";
+import CreateUserPage from "../features/HRdashboard/CreateUserPage";
 
 // Module 07 — Resume Screening
 import ResumeScreening from "../features/module07/Resumescreening";
@@ -230,6 +231,9 @@ const AppRoutes = () => (
         <Route path="hr-management/candidate-screening" element={<CandidateScreeningPage />} />
         <Route path="hr-management/chat" element={<ColleagueChatPage />} />
 
+        {/* Create User — HR/Admin only */}
+        <Route path="hr-management/create-user" element={<CreateUserPage />} />
+
         {/* Module 07 — Resume Screening */}
         <Route path="resume-screening" element={<ResumeScreening />} />
         <Route path="hr-management/resume-screening" element={<ResumeScreening />} />
@@ -358,6 +362,7 @@ const AppRoutes = () => (
       <Route path="/admin/*" element={<Layout role="admin" />}>
         <Route index element={<AdminOverview />} />
         <Route path="users" element={<AdminUserManagement />} />
+        <Route path="create-user" element={<CreateUserPage />} />
 
         {/* Shared */}
         <Route path="sprint-board" element={<SprintBoardPage />} />
