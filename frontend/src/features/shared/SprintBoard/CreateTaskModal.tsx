@@ -51,7 +51,10 @@ export default function CreateTaskModal({ onClose, onCreated, sprintId, initialS
   useEffect(() => {
     const loadUsers = async () => {
       try {
-        const res = await fetch(`${getApiBaseUrl()}/api/auth/team-users`);
+        const token = localStorage.getItem("accessToken") || "";
+        const res = await fetch(`${getApiBaseUrl()}/api/auth/team-users`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         const data = (await res.json()) as TeamUsersResponse;
         if (!res.ok || !data.success || !Array.isArray(data.data)) return;
 
@@ -78,9 +81,13 @@ export default function CreateTaskModal({ onClose, onCreated, sprintId, initialS
     setLoading(true);
     setError("");
     try {
+      const token = localStorage.getItem("accessToken") || "";
       const res = await fetch(`${getApiBaseUrl()}/api/tasks`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({
           title: form.title,
           workType: form.workType,

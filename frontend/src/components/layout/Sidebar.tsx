@@ -71,7 +71,6 @@ export const hrNavSections: NavSection[] = [
       { to: "/leave", icon: <Clock3 size={18} />, label: "Leave" },
       { to: "/timesheet", icon: <Activity size={18} />, label: "Timesheet" },
       { to: "/organization", icon: <Users size={18} />, label: "Organization" },
-      { to: "/hr-management/chat", icon: <MessageCircle size={18} />, label: "Chat" },
       {
         to: "/hr-management",
         icon: <ClipboardList size={18} />,
@@ -156,7 +155,7 @@ export const employeeNavSections: NavSection[] = [
         label: "Sprint Board",
         children: [
           { to: "/dashboard/sprint-board", icon: <LayoutGrid size={15} />, label: "Boards" },
-          { to: "/dashboard/my-tasks", icon: <CheckSquare size={15} />, label: "My Tasks" },
+          { to: "/dashboard/my-tasks", icon: <CheckSquare size={15} />, label: "Tasks" },
         ],
       },
     ],
@@ -170,7 +169,6 @@ export const employeeNavSections: NavSection[] = [
       { to: "/dashboard/grievances", icon: <MessageSquare size={18} />, label: "My Grievances" },
       { to: "/dashboard/timesheet", icon: <Activity size={18} />, label: "Timesheet" },
       { to: "/dashboard/organization", icon: <Users size={18} />, label: "Organization" },
-      { to: "/dashboard/chat", icon: <MessageCircle size={18} />, label: "Chat" },
     ],
   },
 ];
@@ -189,13 +187,12 @@ export const managerNavSections: NavSection[] = [
         label: "Sprint Board",
         children: [
           { to: "/manager/sprint-board", icon: <LayoutGrid size={15} />, label: "Boards" },
-          { to: "/manager/my-tasks", icon: <CheckSquare size={15} />, label: "My Tasks" },
+          { to: "/manager/my-tasks", icon: <CheckSquare size={15} />, label: "Tasks" },
         ],
       },
       { to: "/manager/leave", icon: <Clock3 size={18} />, label: "Leave" },
       { to: "/manager/timesheet", icon: <Activity size={18} />, label: "Timesheet" },
       { to: "/manager/organization", icon: <Users size={18} />, label: "Organization" },
-      { to: "/manager/chat", icon: <MessageCircle size={18} />, label: "Chat" },
       {
         to: "/manager/tools",
         icon: <Users size={18} />,
@@ -219,16 +216,13 @@ export const adminNavSections: NavSection[] = [
     label: "",
     items: [
       { to: "/admin", icon: <LayoutDashboard size={18} />, label: "Dashboard", exact: true },
-      {
-        to: "/admin/sprint-board",
-        icon: <BarChart3 size={18} />,
-        label: "Sprint Board",
-        children: [
-          { to: "/admin/sprint-board", icon: <LayoutGrid size={15} />, label: "Boards" },
-          { to: "/admin/my-tasks", icon: <CheckSquare size={15} />, label: "My Tasks" },
-        ],
-      },
       { to: "/admin/leave", icon: <Clock3 size={18} />, label: "Leave" },
+      { to: "/admin/employees", icon: <Users size={18} />, label: "Employee" },
+      { to: "/admin/employee-management", icon: <Users size={18} />, label: "Employee Management" },
+      { to: "/admin/holiday-calendar", icon: <Calendar size={18} />, label: "Holiday Calendar" },
+      { to: "/admin/announcements", icon: <MessageSquare size={18} />, label: "Announcements" },
+      { to: "/admin/documents", icon: <FileText size={18} />, label: "Documents" },
+      { to: "/admin/whatsapp", icon: <MessageSquare size={18} />, label: "WhatsApp" },
       {
         to: "/admin/users",
         icon: <ShieldCheck size={18} />,
@@ -244,7 +238,7 @@ export const adminNavSections: NavSection[] = [
         label: "HR Management",
         children: [
           { to: "/admin/employees", icon: <Users size={15} />, label: "Employees" },
-          { to: "/admin/employee-management", icon: <Users size={15} />, label: "HR Employees" },
+          { to: "/admin/employee-management", icon: <Users size={15} />, label: "Employee Management" },
           { to: "/admin/leave-balance", icon: <Calendar size={15} />, label: "Leave Balances" },
           { to: "/admin/leave-management", icon: <Calendar size={15} />, label: "Leave Management" },
           { to: "/admin/holiday-calendar", icon: <Calendar size={15} />, label: "Holiday Calendar" },

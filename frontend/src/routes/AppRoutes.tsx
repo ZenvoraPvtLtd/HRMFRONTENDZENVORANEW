@@ -138,7 +138,6 @@ const AppRoutes = () => (
         <Route path="timesheet" element={<TimesheetPage />} />
         <Route path="organization" element={<OrganizationPage />} />
         <Route path="profile" element={<ProfilePage />} />
-        <Route path="chat" element={<ColleagueChatPage />} />
         <Route path="my-pip" element={<MyPIPPage />} />
 
         {/* HR tools */}
@@ -229,7 +228,6 @@ const AppRoutes = () => (
         <Route path="hr-management/candidates" element={<CandidatesPage />} />
         <Route path="candidate-screening" element={<CandidateScreeningPage />} />
         <Route path="hr-management/candidate-screening" element={<CandidateScreeningPage />} />
-        <Route path="hr-management/chat" element={<ColleagueChatPage />} />
 
         {/* Create User — HR/Admin only */}
         <Route path="hr-management/create-user" element={<CreateUserPage />} />
@@ -282,7 +280,6 @@ const AppRoutes = () => (
         <Route path="timesheet" element={<TimesheetPage />} />
         <Route path="organization" element={<OrganizationPage />} />
         <Route path="profile" element={<ProfilePage />} />
-        <Route path="chat" element={<ColleagueChatPage />} />
         <Route path="my-pip" element={<MyPIPPage />} />
 
         {/* Employee-specific */}
@@ -315,7 +312,6 @@ const AppRoutes = () => (
         <Route path="timesheet" element={<TimesheetPage />} />
         <Route path="organization" element={<OrganizationPage />} />
         <Route path="profile" element={<ProfilePage />} />
-        <Route path="chat" element={<ColleagueChatPage />} />
         <Route path="my-pip" element={<MyPIPPage />} />
 
         {/* Manager tools */}
@@ -346,7 +342,6 @@ const AppRoutes = () => (
         <Route path="timesheet" element={<TimesheetPage />} />
         <Route path="organization" element={<OrganizationPage />} />
         <Route path="profile" element={<ProfilePage />} />
-        <Route path="chat" element={<ColleagueChatPage />} />
         <Route path="my-pip" element={<MyPIPPage />} />
         <Route path="attendance" element={<ManagerAttendancePage />} />
         <Route path="approvals" element={<ApprovalsPage />} />
@@ -369,7 +364,6 @@ const AppRoutes = () => (
         <Route path="timesheet" element={<TimesheetPage />} />
         <Route path="organization" element={<OrganizationPage />} />
         <Route path="profile" element={<ProfilePage />} />
-        <Route path="chat" element={<ColleagueChatPage />} />
         <Route path="my-pip" element={<MyPIPPage />} />
 
         {/* HR routes for admin */}

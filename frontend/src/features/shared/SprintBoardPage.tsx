@@ -97,9 +97,14 @@ export default function SprintBoardPage() {
 
   const loadSprints = async () => {
     try {
+      const token = localStorage.getItem("accessToken") || "";
       const [sprintsRes, tasksRes] = await Promise.all([
-        fetch(`${getApiBaseUrl()}/api/sprints`),
-        fetch(`${getApiBaseUrl()}/api/tasks`),
+        fetch(`${getApiBaseUrl()}/api/sprints`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        fetch(`${getApiBaseUrl()}/api/tasks`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
       ]);
 
       const [sprintsData, tasksData] = await Promise.all([sprintsRes.json(), tasksRes.json()]);

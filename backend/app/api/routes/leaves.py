@@ -78,18 +78,18 @@ REJECTED = "rejected"
 
 
 class LeaveCreate(BaseModel):
-    leave_type: str = Field(..., min_length=2)
-    duration_type: str = Field(..., min_length=2)
+    leave_type: str
+    duration_type: str
     leave_date: str
-    days: float = Field(..., gt=0)
-    reason: str = Field(..., min_length=3)
+    days: float
+    reason: Optional[str] = ""
 
 
 class LeaveUpdate(BaseModel):
     leave_type: Optional[str] = None
     duration_type: Optional[str] = None
     leave_date: Optional[str] = None
-    days: Optional[float] = Field(default=None, gt=0)
+    days: Optional[float] = None
     reason: Optional[str] = None
 
 
@@ -109,16 +109,14 @@ def _parse_token(authorization: Optional[str]) -> dict:
 
 
 def _fmt(leave: dict) -> dict:
-    internal_status = leave.get("status", MANAGER_PENDING)
-    if internal_status == MANAGER_PENDING:
+    internal_status = leave.get("status", "hr_pending")
+    if internal_status in ("hr_pending", "manager_pending", MANAGER_PENDING):
         frontend_status = "Pending"
-    elif internal_status == MANAGER_APPROVED:
+    elif internal_status in ("manager_approved", "admin_pending"):
         frontend_status = "Under HR Review"
-    elif internal_status == MANAGER_REJECTED:
-        frontend_status = "Rejected"
     elif internal_status == APPROVED:
         frontend_status = "Approved"
-    else:
+    else:  # rejected, MANAGER_REJECTED, etc.
         frontend_status = "Rejected"
 
     return {
@@ -193,6 +191,7 @@ async def create_leave(
     employee_name = x_user_name or "Employee"
 
     manager_id = None
+    user_role = "employee"
     if users_col is not None:
         try:
             emp_user = users_col.find_one({"_id": ObjectId(employee_id)}) if len(employee_id) == 24 else None
@@ -200,8 +199,23 @@ async def create_leave(
                 emp_user = users_col.find_one({"email": employee_id})
             if emp_user:
                 manager_id = emp_user.get("manager_id")
+                user_role = emp_user.get("role") or "employee"
         except Exception:
             pass
+
+    # Determine initial status and notify role based on applicant's role
+    if user_role == "employee":
+        initial_status = "hr_pending"
+        notify_role = "hr"
+    elif user_role == "manager":
+        initial_status = "admin_pending"
+        notify_role = "admin"
+    elif user_role == "hr":
+        initial_status = "manager_pending"
+        notify_role = "manager"
+    else:  # admin
+        initial_status = "approved"
+        notify_role = None
 
     doc = {
         "employee_id": employee_id,
@@ -211,15 +225,43 @@ async def create_leave(
         "leave_date": body.leave_date,
         "days": body.days,
         "reason": body.reason,
-        "status": MANAGER_PENDING,
+        "status": initial_status,
         "applied_date": datetime.utcnow().isoformat(),
         "manager_reviewed_at": None,
         "hr_reviewed_at": None,
         "manager_comment": None,
         "hr_comment": None,
     }
+    if manager_id:
+        doc["manager_id"] = str(manager_id)
+
     result = leaves_col.insert_one(doc)
     doc["_id"] = result.inserted_id
+
+    # If auto-approved, deduct leave balance
+    if initial_status == "approved":
+        year = datetime.utcnow().year
+        try:
+            leave_balances_col.update_one(
+                {"employee_id": employee_id, "year": year},
+                {"$inc": {"used": body.days, "remaining": -body.days}},
+                upsert=True,
+            )
+        except Exception:
+            pass
+
+    # Send notification
+    if _create_notif and notify_role:
+        try:
+            _create_notif(
+                title="New Leave Request",
+                message=f"{employee_name} has applied for {body.leave_type} on {body.leave_date} ({body.days} days).",
+                type_="leave_created",
+                role=notify_role,
+            )
+        except Exception as e:
+            print(f"[LEAVES] Failed to create notification: {e}")
+
     return _fmt(doc)
 
 
@@ -456,7 +498,7 @@ async def update_leave(
     leave = leaves_col.find_one({"_id": oid, "employee_id": employee_id})
     if not leave:
         raise HTTPException(status_code=404, detail="Leave not found")
-    if leave.get("status") != MANAGER_PENDING:
+    if leave.get("status") not in (MANAGER_PENDING, "hr_pending", "manager_pending", "admin_pending"):
         raise HTTPException(status_code=400, detail="Only pending leaves can be edited")
 
     updates = {k: v for k, v in body.model_dump().items() if v is not None}
@@ -482,7 +524,7 @@ async def delete_leave(
     leave = leaves_col.find_one({"_id": oid, "employee_id": employee_id})
     if not leave:
         raise HTTPException(status_code=404, detail="Leave not found")
-    if leave.get("status") != MANAGER_PENDING:
+    if leave.get("status") not in (MANAGER_PENDING, "hr_pending", "manager_pending", "admin_pending"):
         raise HTTPException(status_code=400, detail="Only pending leaves can be deleted")
 
     leaves_col.delete_one({"_id": oid})
@@ -504,11 +546,11 @@ async def get_manager_leaves(
     manager_sub = payload.get("sub")
     if manager_sub:
         query = {
-            "status": {"$in": [MANAGER_PENDING, MANAGER_APPROVED, MANAGER_REJECTED]},
+            "status": {"$in": ["manager_pending", "admin_pending", "approved", "rejected", MANAGER_PENDING, MANAGER_APPROVED, MANAGER_REJECTED]},
             "$or": [{"manager_id": manager_sub}, {"manager_id": None}, {"manager_id": {"$exists": False}}],
         }
     else:
-        query = {"status": {"$in": [MANAGER_PENDING, MANAGER_APPROVED, MANAGER_REJECTED]}}
+        query = {"status": {"$in": ["manager_pending", "admin_pending", "approved", "rejected", MANAGER_PENDING, MANAGER_APPROVED, MANAGER_REJECTED]}}
 
     docs = list(leaves_col.find(query).sort("applied_date", -1).limit(limit))
     return {"data": [_fmt(d) for d in docs]}
@@ -542,11 +584,16 @@ async def manager_update_status(
     leave = leaves_col.find_one({"_id": oid})
     if not leave:
         raise HTTPException(status_code=404, detail="Leave not found")
-    if leave.get("status") != MANAGER_PENDING:
+    if leave.get("status") not in ("manager_pending", MANAGER_PENDING):
         raise HTTPException(status_code=400, detail="Leave is not in manager_pending state")
 
+    if body.status == MANAGER_APPROVED:
+        db_status = "admin_pending"
+    else:
+        db_status = "rejected"
+
     updates = {
-        "status": body.status,
+        "status": db_status,
         "manager_reviewed_at": datetime.utcnow().isoformat(),
         "manager_comment": manager_comment,
     }
@@ -554,14 +601,26 @@ async def manager_update_status(
 
     employee_id = leave.get("employee_id", "")
     leave_type = leave.get("leave_type", "Leave")
-    if body.status == MANAGER_APPROVED:
+    employee_name = leave.get("employee_name", "Employee")
+
+    if db_status == "admin_pending":
         _notify_employee(
             employee_id,
-            "Leave Under HR Review",
-            f'Your {leave_type} request has been approved by manager and is now under HR review.',
+            "Leave Under Admin Review",
+            f'Your {leave_type} request has been approved by manager and is now under Admin review.',
             "leave_status_updated",
         )
-    elif body.status == MANAGER_REJECTED:
+        if _create_notif:
+            try:
+                _create_notif(
+                    title="Leave Awaiting Admin Approval",
+                    message=f"{employee_name}'s {leave_type} request approved by manager and pending your approval.",
+                    type_="leave_pending_admin",
+                    role="admin",
+                )
+            except Exception:
+                pass
+    elif db_status == "rejected":
         reason = f' Reason: {manager_comment}' if manager_comment else ''
         _notify_employee(
             employee_id,
@@ -586,7 +645,7 @@ async def get_hr_leaves(
         raise HTTPException(status_code=403, detail="HR access required")
 
     docs = list(
-        leaves_col.find({"status": {"$in": [MANAGER_PENDING, MANAGER_APPROVED, MANAGER_REJECTED, APPROVED, REJECTED]}})
+        leaves_col.find({"status": {"$in": ["hr_pending", "manager_pending", "admin_pending", "approved", "rejected", MANAGER_PENDING, MANAGER_APPROVED, MANAGER_REJECTED, APPROVED, REJECTED]}})
         .sort("applied_date", -1)
         .limit(limit)
     )
@@ -617,11 +676,31 @@ async def hr_update_status(
     leave = leaves_col.find_one({"_id": oid})
     if not leave:
         raise HTTPException(status_code=404, detail="Leave not found")
-    if leave.get("status") != MANAGER_APPROVED:
-        raise HTTPException(status_code=400, detail="Only manager-approved leaves can be reviewed by HR")
+
+    current_status = leave.get("status")
+
+    if current_status == "hr_pending":
+        if body.status == APPROVED:
+            db_status = "manager_pending"
+        else:
+            db_status = "rejected"
+    elif current_status == "admin_pending":
+        if role != "admin":
+            raise HTTPException(status_code=403, detail="Admin approval required for this stage")
+        if body.status == APPROVED:
+            db_status = "approved"
+        else:
+            db_status = "rejected"
+    elif current_status in (MANAGER_APPROVED, "manager_approved"):  # Legacy
+        if body.status == APPROVED:
+            db_status = "approved"
+        else:
+            db_status = "rejected"
+    else:
+        raise HTTPException(status_code=400, detail=f"Leave request in '{current_status}' state cannot be reviewed by HR/Admin")
 
     updates = {
-        "status": body.status,
+        "status": db_status,
         "hr_reviewed_at": datetime.utcnow().isoformat(),
         "hr_comment": body.comment,
     }
@@ -629,27 +708,46 @@ async def hr_update_status(
 
     employee_id = leave.get("employee_id", "")
     leave_type = leave.get("leave_type", "Leave")
+    employee_name = leave.get("employee_name", "Employee")
 
-    if body.status == APPROVED:
+    if db_status == "manager_pending":
+        _notify_employee(
+            employee_id,
+            "Leave Under Manager Review",
+            f'Your {leave_type} request has been approved by HR and is now under manager review.',
+            "leave_status_updated",
+        )
+        if _create_notif:
+            try:
+                _create_notif(
+                    title="New Leave Request",
+                    message=f"{employee_name} has applied for {leave_type} and is pending your approval.",
+                    type_="leave_pending_manager",
+                    role="manager",
+                )
+            except Exception:
+                pass
+    elif db_status == "approved":
         year = datetime.utcnow().year
         leave_balances_col.update_one(
-            {"employee_id": leave["employee_id"], "year": year},
+            {"employee_id": employee_id, "year": year},
             {"$inc": {"used": leave.get("days", 0), "remaining": -leave.get("days", 0)}},
             upsert=True,
         )
         _notify_employee(
             employee_id,
             "Leave Request Approved",
-            f'Your {leave_type} request has been approved by HR.',
+            f'Your {leave_type} request has been approved by Admin.',
             "leave_approved",
         )
-    elif body.status == REJECTED:
-        comment = leave.get("hr_comment") or ""
+    elif db_status == "rejected":
+        reviewer = "Admin" if current_status == "admin_pending" else "HR"
+        comment = body.comment or ""
         reason = f' Reason: {comment}' if comment else ''
         _notify_employee(
             employee_id,
             "Leave Request Rejected",
-            f'Your {leave_type} request has been rejected by HR.{reason}',
+            f'Your {leave_type} request has been rejected by {reviewer}.{reason}',
             "leave_rejected",
         )
 

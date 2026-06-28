@@ -79,11 +79,51 @@ def get_current_user_review_filters(current_user: TokenPayload) -> list[dict]:
     return filters
 
 
+def _get_employee_email(employee_id: str, employee_name: str) -> Optional[str]:
+    if users_collection is None:
+        return None
+    try:
+        emp = None
+        if employee_id:
+            emp = users_collection.find_one({"employeeId": employee_id})
+            if not emp:
+                emp = users_collection.find_one({"employee_id": employee_id})
+        if not emp and employee_name:
+            emp = users_collection.find_one({"fullName": employee_name})
+            if not emp:
+                emp = users_collection.find_one({"name": employee_name})
+        if emp:
+            return emp.get("email")
+    except Exception:
+        pass
+    return None
+
+
+def migrate_performance_reviews():
+    if performance_reviews_collection is None or users_collection is None:
+        return
+    try:
+        reviews = list(performance_reviews_collection.find({"employeeEmail": {"$exists": False}}))
+        for review in reviews:
+            emp_id = review.get("employeeId")
+            emp_name = review.get("employeeName") or review.get("employee_name")
+            email = _get_employee_email(emp_id, emp_name)
+            if email:
+                performance_reviews_collection.update_one(
+                    {"_id": review["_id"]},
+                    {"$set": {"employeeEmail": email.strip().lower()}}
+                )
+    except Exception as e:
+        print(f"[PERFORMANCE] Migration failed: {e}")
+
+
 @router.get("")
 def get_performance_reviews():
     try:
         if performance_reviews_collection is None:
             return JSONResponse(status_code=503, content={"message": "Database offline"})
+
+        migrate_performance_reviews()
 
         reviews = [
             serialize_review(review)
@@ -102,6 +142,10 @@ def create_performance_review(payload: PerformanceReviewPayload):
 
         data = payload.model_dump()
         data["createdAt"] = datetime.utcnow().isoformat()
+
+        email = _get_employee_email(payload.employeeId, payload.employeeName)
+        if email:
+            data["employeeEmail"] = email.strip().lower()
 
         result = performance_reviews_collection.insert_one(data)
         data["_id"] = str(result.inserted_id)
@@ -126,6 +170,10 @@ def update_performance_review(review_id: str, payload: PerformanceReviewPayload)
 
         data = payload.model_dump()
         data["updatedAt"] = datetime.utcnow().isoformat()
+
+        email = _get_employee_email(payload.employeeId, payload.employeeName)
+        if email:
+            data["employeeEmail"] = email.strip().lower()
 
         result = performance_reviews_collection.find_one_and_update(
             {"_id": ObjectId(review_id)},
@@ -168,6 +216,8 @@ def get_my_performance_reviews(current_user: TokenPayload = Depends(get_current_
     try:
         if performance_reviews_collection is None:
             return JSONResponse(status_code=503, content={"message": "Database offline"})
+
+        migrate_performance_reviews()
 
         reviews = [
             serialize_review(review)
