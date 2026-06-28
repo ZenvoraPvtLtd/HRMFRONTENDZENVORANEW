@@ -83,6 +83,8 @@ import ProfilePage from "../features/shared/ProfilePage";
 import MyPIPPage from "../features/shared/MyPIPPage";
 import MyPerformancePage from "../features/shared/MyPerformancePage";
 import MyGrievancesPage from "../features/shared/MyGrievancesPage";
+import EmployeeEventsPage from "../features/shared/EmployeeEventsPage";
+import EmployeeAnnouncementsPage from "../features/shared/EmployeeAnnouncementsPage";
 
 // Auth
 import ForgotPassword from "../pages/auth/ForgotPassword";
@@ -281,6 +283,8 @@ const AppRoutes = () => (
         {/* Employee-specific */}
         <Route path="performance" element={<MyPerformancePage />} />
         <Route path="grievances" element={<MyGrievancesPage />} />
+        <Route path="events" element={<EmployeeEventsPage />} />
+        <Route path="announcements" element={<EmployeeAnnouncementsPage />} />
         <Route path="attendance" element={<Navigate to="timesheet" replace />} />
 
         <Route

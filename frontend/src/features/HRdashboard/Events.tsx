@@ -43,7 +43,7 @@ const initialEvents: EventItem[] = [
   },
   {
     id: 2,
-    title: "Vected Offsite Gathering",
+    title: "Zenvora Offsite Gathering",
     category: "recognition",
     date: "20/12/2025",
     time: "10:00 AM",
@@ -273,7 +273,7 @@ export default function Events() {
                   <input
                     value={draft.title}
                     onChange={(event) => setDraft({ ...draft, title: event.target.value })}
-                    placeholder="Vected Offsite Gathering"
+                    placeholder="Zenvora Offsite Gathering"
                     className="w-full rounded-lg px-4 py-3 outline-none"
                     style={inputMuted}
                   />

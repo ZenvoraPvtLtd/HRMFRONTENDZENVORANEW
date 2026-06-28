@@ -164,6 +164,8 @@ export const employeeNavSections: NavSection[] = [
     label: "WORK",
     items: [
       { to: "/dashboard/leave", icon: <Clock3 size={18} />, label: "Leave" },
+      { to: "/dashboard/events", icon: <Calendar size={18} />, label: "Events" },
+      { to: "/dashboard/announcements", icon: <MessageSquare size={18} />, label: "Announcements" },
       { to: "/dashboard/performance", icon: <BarChart3 size={18} />, label: "My Performance" },
       { to: "/dashboard/my-pip", icon: <TriangleAlert size={18} />, label: "My PIP" },
       { to: "/dashboard/grievances", icon: <MessageSquare size={18} />, label: "My Grievances" },
