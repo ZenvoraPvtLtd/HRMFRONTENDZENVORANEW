@@ -66,7 +66,6 @@ export const hrNavSections: NavSection[] = [
         children: [
           { to: "/sprint-board", icon: <LayoutGrid size={15} />, label: "Boards" },
           { to: "/my-tasks", icon: <CheckSquare size={15} />, label: "Tasks " },
-          { to: "/my-tasks", icon: <CheckSquare size={15} />, label: "My Tasks" },
         ],
       },
       { to: "/leave", icon: <Clock3 size={18} />, label: "Leave" },
