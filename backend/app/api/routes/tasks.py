@@ -1,11 +1,9 @@
 from datetime import datetime
 from typing import Optional
 
-from fastapi import APIRouter, Query, Depends
+from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse
 from bson import ObjectId
-
-from app.core.jwt_auth import exclude_roles
 
 from app.core.database import tasks_collection, employees_collection
 
@@ -62,7 +60,7 @@ def _send_task_assignment_notification(task: dict):
         print(f"[WHATSAPP] Failed to queue task assignment notification: {e}")
 
 @router.post("")
-def create_sprint_task(task: SprintTask, current_user: dict = Depends(exclude_roles(["admin"]))):
+def create_sprint_task(task: SprintTask):
     try:
         task_dict = task.model_dump(by_alias=True)
         task_dict["createdAt"] = datetime.now().isoformat()
@@ -82,7 +80,7 @@ def create_sprint_task(task: SprintTask, current_user: dict = Depends(exclude_ro
 
 
 @router.get("")
-def get_sprint_tasks(sprint_id: Optional[str] = Query(None), current_user: dict = Depends(exclude_roles(["admin"]))):
+def get_sprint_tasks(sprint_id: Optional[str] = Query(None)):
     try:
         if tasks_collection is None:
             return JSONResponse(status_code=503, content={"success": False, "message": "Database offline"})
@@ -103,7 +101,7 @@ def get_sprint_tasks(sprint_id: Optional[str] = Query(None), current_user: dict 
 
 
 @router.patch("/{task_id}")
-def update_sprint_task(task_id: str, task: SprintTaskUpdate, current_user: dict = Depends(exclude_roles(["admin"]))):
+def update_sprint_task(task_id: str, task: SprintTaskUpdate):
     try:
         if tasks_collection is None:
             return JSONResponse(status_code=503, content={"success": False, "message": "Database offline"})
@@ -127,7 +125,7 @@ def update_sprint_task(task_id: str, task: SprintTaskUpdate, current_user: dict 
 
 
 @router.delete("/{task_id}")
-def delete_sprint_task(task_id: str, current_user: dict = Depends(exclude_roles(["admin"]))):
+def delete_sprint_task(task_id: str):
     try:
         if tasks_collection is None:
             return JSONResponse(status_code=503, content={"success": False, "message": "Database offline"})

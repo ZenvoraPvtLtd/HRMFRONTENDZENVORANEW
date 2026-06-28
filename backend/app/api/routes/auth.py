@@ -123,15 +123,6 @@ class ResetPasswordRequest(BaseModel):
     password: str
 
 
-class CreateUserRequest(BaseModel):
-    fullName: str
-    email: str
-    phoneNumber: Optional[str] = ""
-    role: str  # "employee" or "manager"
-    department: Optional[str] = "General"
-    password: Optional[str] = None  # if empty, auto-generate
-
-
 class ChangePasswordRequest(BaseModel):
     currentPassword: str
     newPassword: str
@@ -731,7 +722,11 @@ async def complete_registration(body: CompleteRegistrationRequest):
     existing_email = users_collection.find_one({"email": email})
     if existing_email:
         return JSONResponse(status_code=409, content={"message": "Email already registered"})
-    
+
+    strength_error = validate_password_strength(body.password)
+    if strength_error:
+        return JSONResponse(status_code=400, content={"message": strength_error})
+
     # Create user
     hashed = pwd_context.hash(body.password)
     now = datetime.utcnow().isoformat()
@@ -886,24 +881,7 @@ async def register(body: RegisterRequest, request: Request):
     existing = users_collection.find_one({"email": email})
     if existing:
         return JSONResponse(status_code=409, content={"message": "Email already registered"})
-
-    # Only HR and Admin can self-register. Employees and Managers are created by HR/Admin.
-    if body.inviteSource != "hr_employee_invite":
-        requested_role = normalize_auth_role(body.role)
-        if requested_role in {"employee", "manager"}:
-            return JSONResponse(
-                status_code=403,
-                content={"message": "Employee and Manager accounts cannot self-register. Please contact your HR department."},
-            )
-
-    # Validate email format
-    email_pattern = re.compile(r"^[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}$", re.IGNORECASE)
-    if not email_pattern.match(email):
-        return JSONResponse(
-            status_code=400,
-            content={"message": "Please enter a valid email address (e.g. john@company.com)"}
-        )
-
+        
     if getattr(body, "phoneNumber", None):
         existing_phone = users_collection.find_one({"phoneNumber": body.phoneNumber})
         if existing_phone:
@@ -915,20 +893,9 @@ async def register(body: RegisterRequest, request: Request):
         plain_password = str(body.password or "").strip()
         if not plain_password:
             return JSONResponse(status_code=400, content={"message": "Password is required"})
-
-        # Strong password validation for self-registration (HR/Admin)
-        STRONG_PASSWORD_MSG = (
-            "Password must be at least 8 characters long and include at least one "
-            "uppercase letter, one lowercase letter, one number, and one special character."
-        )
-        if (
-            len(plain_password) < 8
-            or not re.search(r"[A-Z]", plain_password)
-            or not re.search(r"[a-z]", plain_password)
-            or not re.search(r"\d", plain_password)
-            or not re.search(r"[^A-Za-z0-9]", plain_password)
-        ):
-            return JSONResponse(status_code=400, content={"message": STRONG_PASSWORD_MSG})
+        strength_error = validate_password_strength(plain_password)
+        if strength_error:
+            return JSONResponse(status_code=400, content={"message": strength_error})
 
     hashed = pwd_context.hash(plain_password)
     now = datetime.utcnow().isoformat()
@@ -1002,113 +969,6 @@ async def register(body: RegisterRequest, request: Request):
     return response
 
 
-
-# ---------------------------------------------------------------------------
-# Create User — HR / Admin only
-# ---------------------------------------------------------------------------
-@router.post("/create-user")
-async def create_user(body: CreateUserRequest, current_user: TokenPayload = Depends(get_current_user)):
-    """HR or Admin creates an Employee or Manager account directly."""
-    if users_collection is None or db is None:
-        return JSONResponse(status_code=503, content={"message": "Database offline"})
-
-    # Only HR and Admin are allowed to call this endpoint
-    requester_role = str(current_user.role or "").strip().lower()
-    if requester_role not in {"hr", "admin"}:
-        raise HTTPException(status_code=403, detail="Only HR or Admin can create user accounts")
-
-    # Only employee and manager accounts can be created this way
-    target_role = normalize_auth_role(body.role)
-    if target_role not in {"employee", "manager"}:
-        return JSONResponse(
-            status_code=400,
-            content={"message": "You can only create Employee or Manager accounts"}
-        )
-
-    email = body.email.lower().strip()
-
-    # Validate email format strictly
-    email_pattern = re.compile(r"^[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}$", re.IGNORECASE)
-    if not email_pattern.match(email):
-        return JSONResponse(
-            status_code=400,
-            content={"message": "Please enter a valid email address (e.g. john@company.com)"}
-        )
-
-    # Prevent duplicate email registration
-    if users_collection.find_one({"email": email}):
-        return JSONResponse(status_code=409, content={"message": "A user with this email already exists"})
-
-    # Prevent duplicate phone number registration
-    phone = str(body.phoneNumber or "").strip()
-    if phone:
-        if users_collection.find_one({"phoneNumber": phone}):
-            return JSONResponse(status_code=409, content={"message": "A user with this phone number already exists"})
-
-    # Auto-generate password if not provided
-    plain_password = str(body.password or "").strip() or generate_temporary_password(12)
-
-    hashed = pwd_context.hash(plain_password)
-    now = datetime.utcnow().isoformat()
-    employee_id = generate_employee_id(target_role, body.fullName)
-
-    new_user = {
-        "fullName": body.fullName.strip(),
-        "name": body.fullName.strip(),
-        "email": email,
-        "phoneNumber": str(body.phoneNumber or "").strip(),
-        "role": target_role,
-        "department": str(body.department or "General").strip(),
-        "password": hashed,
-        "createdAt": now,
-        "employeeId": employee_id,
-        "createdBy": current_user.sub,
-    }
-
-    result = users_collection.insert_one(new_user)
-    new_user["_id"] = result.inserted_id
-
-    # Create an employee record so the employee list reflects the new user
-    try:
-        emp_col = db["employees_list"]
-        if not emp_col.find_one({"email": email}):
-            emp_doc = {
-                "name": new_user["fullName"],
-                "fullName": new_user["fullName"],
-                "email": email,
-                "department": new_user["department"],
-                "role": target_role,
-                "employeeId": employee_id,
-                "productivity": 0,
-                "status": "Active",
-                "phoneNumber": new_user["phoneNumber"],
-                "joinDate": now,
-                "createdAt": now,
-                "userId": str(result.inserted_id),
-            }
-            emp_col.insert_one(emp_doc)
-    except Exception as e:
-        print(f"[CREATE-USER] Failed to insert employee record: {e}")
-
-    # Send welcome email with login credentials
-    email_sent, email_error = send_invite_email(
-        email,
-        plain_password,
-        body.fullName.strip(),
-    )
-
-    return {
-        "success": True,
-        "message": "User created successfully" + (" and welcome email sent" if email_sent else " (email could not be sent)"),
-        "employeeId": employee_id,
-        "email": email,
-        "role": target_role,
-        "temporaryPassword": plain_password,
-        "emailSent": email_sent,
-        "emailError": email_error,
-    }
-
-
 @router.post("/login")
 async def login(body: LoginRequest):
     if users_collection is None:
@@ -1120,15 +980,20 @@ async def login(body: LoginRequest):
 
     if not verify_user_password(body.password, user):
         return JSONResponse(status_code=401, content={"message": "Invalid email or password"})
-    # Check if employee is suspended
+    # Check suspension status directly in users collection first (authoritative source)
+    if str(user.get("status", "")).strip().lower() == "suspended":
+        return JSONResponse(status_code=403, content={"message": "Your Account is Suspended by Admin."})
+
+    # Secondary check in employees_list (catches sync edge cases)
     try:
         if db is not None:
             emp_col = db["employees_list"]
             emp = emp_col.find_one({"email": user.get("email", "")})
-            if emp and emp.get("status") == "Suspended":
-                return JSONResponse(status_code=403, content={"message": "Account suspended. Please contact HR."})
+            if emp and str(emp.get("status", "")).strip().lower() == "suspended":
+                return JSONResponse(status_code=403, content={"message": "Your Account is Suspended by Admin."})
     except Exception as e:
-        print(f"[AUTH] failed to check employee suspension: {e}")
+        print(f"[AUTH] failed to check employee suspension in employees_list: {e}")
+
     token = create_access_token({"sub": str(user["_id"]), "role": normalize_auth_role(user.get("role", ""))})
     return build_user_response(user, token)
 
@@ -1153,6 +1018,10 @@ async def refresh_token(authorization: str = Header(None)):
         user = users_collection.find_one({"_id": ObjectId(user_id)})
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
+
+        # Block suspended users from refreshing tokens
+        if str(user.get("status", "")).strip().lower() == "suspended":
+            raise HTTPException(status_code=403, detail="Your Account is Suspended by Admin.")
 
         # Create new access token
         new_token = create_access_token({
@@ -1229,16 +1098,7 @@ async def forgot_password(body: ForgotPasswordRequest):
 
     user = users_collection.find_one({"email": email})
     if not user:
-        # Generic message to avoid email enumeration attacks
         return {"message": "If an account exists with this email, an OTP has been sent."}
-
-    # Forgot password is only allowed for HR and Admin accounts
-    user_role = normalize_auth_role(user.get("role", ""))
-    if user_role not in {"hr", "admin"}:
-        return JSONResponse(
-            status_code=403,
-            content={"message": "Forgot password is only available for HR and Admin accounts. Please contact your HR department to reset your password."},
-        )
 
     otp = generate_otp()
     expires = datetime.utcnow() + timedelta(minutes=10)
@@ -1304,19 +1164,9 @@ async def reset_password(body: ResetPasswordRequest):
     if not user:
         return JSONResponse(status_code=404, content={"message": "User not found."})
 
-    # Strong password validation for reset-password
-    STRONG_PASSWORD_MSG = (
-        "Password must be at least 8 characters long and include at least one "
-        "uppercase letter, one lowercase letter, one number, and one special character."
-    )
-    if (
-        len(body.password) < 8
-        or not re.search(r"[A-Z]", body.password)
-        or not re.search(r"[a-z]", body.password)
-        or not re.search(r"\d", body.password)
-        or not re.search(r"[^A-Za-z0-9]", body.password)
-    ):
-        return JSONResponse(status_code=400, content={"message": STRONG_PASSWORD_MSG})
+    strength_error = validate_password_strength(body.password)
+    if strength_error:
+        return JSONResponse(status_code=400, content={"message": strength_error})
 
     hashed = pwd_context.hash(body.password)
 
@@ -1330,14 +1180,13 @@ async def reset_password(body: ResetPasswordRequest):
     return {"message": "Password reset successfully. Please login with your new password."}
 
 
-STRONG_PASSWORD_ERROR = (
+_WEAK_PASSWORD_MSG = (
     "Password must be at least 8 characters long and include at least one "
     "uppercase letter, one lowercase letter, one number, and one special character."
 )
 
 
 def validate_password_strength(password: str) -> Optional[str]:
-    """Returns an error message string if the password is weak, else None."""
     if (
         len(password) < 8
         or not re.search(r"[A-Z]", password)
@@ -1345,7 +1194,7 @@ def validate_password_strength(password: str) -> Optional[str]:
         or not re.search(r"\d", password)
         or not re.search(r"[^A-Za-z0-9]", password)
     ):
-        return STRONG_PASSWORD_ERROR
+        return _WEAK_PASSWORD_MSG
     return None
 
 
@@ -1377,3 +1226,4 @@ async def change_password(body: ChangePasswordRequest, current_user: TokenPayloa
     users_collection.update_one({"_id": user["_id"]}, {"$set": {"password": hashed}})
 
     return {"message": "Password updated successfully"}
+    return {"message": "Password reset successfully. Please login with your new password."}

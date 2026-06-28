@@ -276,27 +276,9 @@ function CreateReviewModal({
   const [employeeId, setEmployeeId] = useState(review?.employeeId || "");
   const [employeeName, setEmployeeName] = useState(review?.employeeName || "");
   const [reviewType, setReviewType] = useState(review?.reviewType || "mid-year");
-  const getInitialDates = () => {
-    if (review?.period && review.period.includes(" - ")) {
-      const parts = review.period.split(" - ");
-      return { start: parts[0] || "", end: parts[1] || "" };
-    }
-    return { start: review?.period || "", end: "" };
-  };
-  const initDates = getInitialDates();
-  const [startDate, setStartDate] = useState(initDates.start);
-  const [endDate, setEndDate] = useState(initDates.end);
   const [period, setPeriod] = useState(review?.period || "");
   const [rating, setRating] = useState(review?.rating || "3");
   const [notes, setNotes] = useState(review?.notes || "");
-
-  const onCreatePeriod = (start: string, end: string) => {
-    if (start && end) {
-      setPeriod(`${start} - ${end}`);
-    } else {
-      setPeriod(start || end || "");
-    }
-  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 px-3 py-3 sm:items-center sm:px-4 sm:py-6">
@@ -329,35 +311,12 @@ function CreateReviewModal({
             onChange={setReviewType}
             options={["mid-year", "annual", "quarterly"]}
           />
-          <div>
-            <span className="mb-1 block text-xs font-semibold animate-fade-in" style={textPrimary}>
-              Period *
-            </span>
-            <div className="grid grid-cols-2 gap-2">
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setStartDate(val);
-                  onCreatePeriod(val, endDate);
-                }}
-                className="h-10 w-full rounded-lg px-3 text-sm outline-none"
-                style={input}
-              />
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setEndDate(val);
-                  onCreatePeriod(startDate, val);
-                }}
-                className="h-10 w-full rounded-lg px-3 text-sm outline-none"
-                style={input}
-              />
-            </div>
-          </div>
+          <Field
+            label="Period"
+            placeholder="01/01/2026 - 31/01/2026"
+            value={period}
+            onChange={setPeriod}
+          />
           <SelectField
             label="Rating"
             value={rating}

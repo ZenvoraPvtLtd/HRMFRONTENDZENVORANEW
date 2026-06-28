@@ -20,12 +20,6 @@ interface Sprint {
   created_at?: string;
 }
 
-interface SprintTaskSummary {
-  sprintId?: string;
-  sprint_id?: string;
-  status?: string;
-}
-
 function SprintCard({ sprint, onClick }: { sprint: Sprint; onClick: () => void }) {
   const title = sprint.name || sprint.title || "Sprint";
   const startDate = sprint.start_date
@@ -174,19 +168,10 @@ export default function SprintBoardPage() {
     setSprints((prev) => [sprint, ...prev]);
   };
 
-  useEffect(() => {
-    const refreshProgress = () => {
-      void loadSprints();
-    };
-
-    window.addEventListener("tasks:updated", refreshProgress);
-    return () => window.removeEventListener("tasks:updated", refreshProgress);
-  }, []);
-
   return (
     <>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <h2 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>Sprint Board</h2>
+        {/* <h2 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>Sprint Board</h2> */}
         {userRole !== "employee" && (
           <button
             onClick={() => setShowCreate(true)}

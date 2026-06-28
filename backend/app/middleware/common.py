@@ -42,8 +42,26 @@ def get_current_user(request: Request) -> Dict[str, Any]:
         if "sub" in payload and "id" not in payload:
             payload["id"] = payload["sub"]
         if "id" in payload and "role" in payload:
+            # Enforce suspension: check current DB status so old tokens cannot bypass it
+            try:
+                from bson import ObjectId
+                from app.core.database import db
+                user_id = str(payload.get("id") or payload.get("sub", ""))
+                if db is not None and user_id and ObjectId.is_valid(user_id):
+                    user = db["users"].find_one({"_id": ObjectId(user_id)}, {"status": 1})
+                    if user and str(user.get("status", "")).strip().lower() == "suspended":
+                        raise ApiException(
+                            status_code=403,
+                            payload={"message": "Your Account is Suspended by Admin."},
+                        )
+            except ApiException:
+                raise
+            except Exception:
+                pass  # DB errors don't revoke valid tokens; suspension check is best-effort
             return payload
         raise ValueError("Token missing required fields")
+    except ApiException:
+        raise
     except Exception:
         raise ApiException(status_code=401, payload={"message": "Invalid or expired token"})
 

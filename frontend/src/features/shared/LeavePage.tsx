@@ -254,12 +254,7 @@ export default function LeavePage() {
   return (
     <div className="min-h-screen" style={{ background: "var(--bg-primary)" }}>
       <div className="w-full px-3 py-4 sm:px-5 sm:py-5 lg:px-7 lg:py-6">
-        <LeaveStats
-          earned={balance?.earned ?? 0}
-          used={balance?.used ?? 0}
-          remaining={balance?.remaining ?? 0}
-          requests={requests}
-        />
+        <LeaveStats requests={requests} />
 
         <section className="mt-4 rounded-xl border p-3 shadow-sm sm:mt-5 sm:p-4" style={{ background: "var(--bg-secondary)", borderColor: "var(--border)" }}>
           <div className="mb-4 flex items-center justify-between gap-3 flex-wrap">
@@ -457,6 +452,7 @@ export default function LeavePage() {
                 const managerDone = cardManagerStatus !== "Pending";
                 const managerRejected = cardManagerStatus === "Rejected";
                 const hrDone = cardHrStatus !== "Pending";
+                const hrRejected = cardHrStatus === "Rejected";
                 const canEdit = isManagerPending(request);
 
                 return (
@@ -520,9 +516,13 @@ export default function LeavePage() {
                       <span style={{ color: "var(--border)" }}>—</span>
 
                       {/* HR */}
-                      <span className="flex items-center gap-1" style={{ color: hrDone ? "#10b981" : "var(--text-secondary)" }}>
+                      <span className="flex items-center gap-1" style={{ color: hrRejected ? "#ef4444" : hrDone ? "#10b981" : "var(--text-secondary)" }}>
                         {hrDone ? (
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                          hrRejected ? (
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                          ) : (
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                          )
                         ) : (
                           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/></svg>
                         )}

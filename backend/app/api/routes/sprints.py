@@ -4,9 +4,7 @@ from bson import ObjectId
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-from fastapi import Depends
 from app.core.database import db
-from app.core.jwt_auth import exclude_roles
 
 try:
     from app.services.notifications import create_notification as _create_notif
@@ -46,7 +44,7 @@ class SprintPayload(BaseModel):
 
 
 @router.get("")
-def get_sprints(current_user: dict = Depends(exclude_roles(["admin"]))):
+def get_sprints():
     col = get_col()
     if col is None:
         return JSONResponse(status_code=503, content={"message": "Database offline"})
@@ -55,7 +53,7 @@ def get_sprints(current_user: dict = Depends(exclude_roles(["admin"]))):
 
 
 @router.post("")
-def create_sprint(payload: SprintPayload, current_user: dict = Depends(exclude_roles(["admin"]))):
+def create_sprint(payload: SprintPayload):
     col = get_col()
     if col is None:
         return JSONResponse(status_code=503, content={"message": "Database offline"})
@@ -77,7 +75,7 @@ def create_sprint(payload: SprintPayload, current_user: dict = Depends(exclude_r
 
 
 @router.delete("/{sprint_id}")
-def delete_sprint(sprint_id: str, current_user: dict = Depends(exclude_roles(["admin"]))):
+def delete_sprint(sprint_id: str):
     col = get_col()
     if col is None:
         return JSONResponse(status_code=503, content={"message": "Database offline"})

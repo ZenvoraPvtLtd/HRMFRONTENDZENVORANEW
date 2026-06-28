@@ -140,7 +140,10 @@ export default function TimesheetApprovals() {
     borderColor: isDark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.1)",
     oddRowBackgroundColor: isDark ? "#0d0d0d" : "#fafafa",
     cellTextColor: isDark ? "#ffffff" : "#111111",
-    panelBackgroundColor: isDark ? "#0a0a0a" : "#ffffff",
+    secondaryForegroundColor: isDark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.5)",
+    paginationBackgroundColor: isDark ? "#0a0a0a" : "#ffffff",
+    cellFocusBorderColor: "transparent",
+    rangeSelectionBorderColor: "transparent",
   });
   const [search, setSearch] = useTopHeaderSearch();
   const [records, setRecords] = useState<TimesheetRecord[]>([]);
@@ -328,8 +331,8 @@ export default function TimesheetApprovals() {
     }
 
     // Submitted / Pending — show action buttons (same style as LeaveManagement)
-    const isApproved = (status as string) === "Approved";
-    const isRejected = (status as string) === "Rejected";
+    const isApproved = status === "Approved";
+    const isRejected = status === "Rejected";
 
     return (
       <div style={{ display: "flex", gap: "0.5rem", padding: "4px 0", alignItems: "center" }}>

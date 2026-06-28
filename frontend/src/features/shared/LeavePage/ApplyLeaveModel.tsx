@@ -148,7 +148,7 @@ export default function ApplyLeaveModal({ onClose, onSubmit, initialData, mode =
                   setFromDate(e.target.value);
                   if (toDate && e.target.value > toDate) setToDate(e.target.value);
                 }}
-                min={today}
+                min={mode === 'edit' ? undefined : today}
                 className="w-full px-3 py-2.5 text-sm border rounded-lg focus:outline-none"
                 style={{ background: 'var(--bg-primary)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
               />
@@ -161,7 +161,7 @@ export default function ApplyLeaveModal({ onClose, onSubmit, initialData, mode =
                 type="date"
                 value={toDate}
                 onChange={(e) => setToDate(e.target.value)}
-                min={fromDate || today}
+                min={fromDate || (mode === 'edit' ? undefined : today)}
                 className="w-full px-3 py-2.5 text-sm border rounded-lg focus:outline-none"
                 style={{ background: 'var(--bg-primary)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
               />

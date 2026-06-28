@@ -1,4 +1,4 @@
-import { CalendarDays, CheckCircle2, Circle, Info } from 'lucide-react';
+import { CalendarDays, CheckCircle2, Circle, Info, XCircle } from 'lucide-react';
 import type { LeaveRequest } from '../../../types/leave';
 
 interface LeaveRequestCardProps {
@@ -45,9 +45,7 @@ function ApprovalStep({ label, done, rejected }: { label: string; done: boolean;
     <div className="flex items-center gap-1">
       {done ? (
         rejected ? (
-          <span className="w-4 h-4 rounded-full flex items-center justify-center" style={{ background: 'rgba(239,68,68,0.1)' }}>
-            <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#ef4444' }} />
-          </span>
+          <XCircle size={14} style={{ color: '#ef4444' }} />
         ) : (
           <CheckCircle2 size={14} style={{ color: 'var(--accent)' }} />
         )

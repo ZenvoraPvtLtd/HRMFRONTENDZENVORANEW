@@ -1,32 +1,25 @@
 import { Calendar, TrendingDown, CheckCircle2 } from "lucide-react";
 import type { LeaveRequest } from "../../../types/leave";
 
-const CASUAL_TOTAL = 12;
-const SICK_TOTAL = 6;
 const ANNUAL_TOTAL = 18;
 
 interface LeaveStatsProps {
-  earned: number;
-  used: number;
-  remaining: number;
   requests: LeaveRequest[];
 }
 
-export default function LeaveStats({ earned, used, remaining, requests }: LeaveStatsProps) {
-  // Calculate used by type from approved requests
-  const usedCasual = requests
-    .filter((r) => r.status === "Approved" && r.leave_type === "Casual Leave")
-    .reduce((sum, r) => sum + (r.days ?? 0), 0);
-  const usedSick = requests
-    .filter((r) => r.status === "Approved" && r.leave_type === "Sick Leave")
-    .reduce((sum, r) => sum + (r.days ?? 0), 0);
+export default function LeaveStats({ requests }: LeaveStatsProps) {
+  // Full Day = 1, Half Day = 0.5
+  const used = requests
+    .filter((r) => r.status === "Approved")
+    .reduce((sum, r) => sum + (r.duration_type === "Half Day" ? 0.5 : 1), 0);
+
+  const remaining = parseFloat((ANNUAL_TOTAL - used).toFixed(1));
 
   const cards = [
     {
-      key: "earned",
-      label: "Earned Till Now",
-      value: earned,
-      sub: `of ${ANNUAL_TOTAL} total (1.5/month)`,
+      key: "total",
+      label: "Total",
+      value: ANNUAL_TOTAL,
       icon: <Calendar size={22} />,
       color: "var(--text-primary)",
       iconBg: "var(--bg-hover)",
@@ -35,7 +28,6 @@ export default function LeaveStats({ earned, used, remaining, requests }: LeaveS
       key: "used",
       label: "Used",
       value: used,
-      sub: `Casual ${usedCasual} · Sick ${usedSick}`,
       icon: <TrendingDown size={22} />,
       color: "var(--text-primary)",
       iconBg: "var(--bg-hover)",
@@ -44,7 +36,6 @@ export default function LeaveStats({ earned, used, remaining, requests }: LeaveS
       key: "remaining",
       label: "Remaining",
       value: remaining,
-      sub: `Casual ${Math.max(0, CASUAL_TOTAL - usedCasual)} · Sick ${Math.max(0, SICK_TOTAL - usedSick)}`,
       icon: <CheckCircle2 size={22} />,
       color: "var(--text-primary)",
       iconBg: "var(--bg-hover)",
@@ -76,9 +67,6 @@ export default function LeaveStats({ earned, used, remaining, requests }: LeaveS
             </div>
             <div className="mt-0.5 text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
               {card.label}
-            </div>
-            <div className="mt-0.5 text-xs" style={{ color: "var(--text-secondary)", opacity: 0.7 }}>
-              {card.sub}
             </div>
           </div>
         </div>

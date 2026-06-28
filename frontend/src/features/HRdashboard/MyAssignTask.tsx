@@ -823,7 +823,6 @@ function EmployeeActionPanel({
                     type="date"
                     value={reviewForm.reviewDate}
                     onChange={(event) => setReviewForm((form) => ({ ...form, reviewDate: event.target.value }))}
-                    min={new Date().toISOString().split("T")[0]}
                     className="rounded-lg px-3 py-3 text-sm outline-none min-w-0"
                     style={inputMuted}
                   />

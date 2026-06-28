@@ -409,7 +409,6 @@ function CreateExitInterviewModal({
               onChange={(value) =>
                 setForm({ ...form, resignation_date: value })
               }
-              min={new Date().toISOString().split("T")[0]}
             />
 
             <InputField
@@ -419,7 +418,6 @@ function CreateExitInterviewModal({
               onChange={(value) =>
                 setForm({ ...form, last_working_date: value })
               }
-              min={new Date().toISOString().split("T")[0]}
             />
             <TextAreaField
               label="Reason For Leaving"
@@ -474,13 +472,11 @@ function InputField({
   type = "text",
   value,
   onChange,
-  min,
 }: {
   label: string;
   type?: string;
   value: string;
   onChange: (value: string) => void;
-  min?: string;
 }) {
   return (
     <label className="block">
@@ -491,7 +487,6 @@ function InputField({
         type={type}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        min={min}
         className="h-10 w-full rounded-lg px-3 text-sm outline-none"
         style={input}
       />

@@ -305,7 +305,6 @@ export default function Events() {
                       type="date"
                       value={draft.date}
                       onChange={(event) => setDraft({ ...draft, date: event.target.value })}
-                      min={new Date().toISOString().split("T")[0]}
                       className="w-full rounded-lg px-4 py-3 outline-none"
                       style={inputMuted}
                     />
