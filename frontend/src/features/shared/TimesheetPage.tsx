@@ -1552,31 +1552,7 @@ export default function TimesheetPage() {
           </div>
 
           {/* Work Mode selector */}
-          {!clockedIn && (
-            <div className="card" style={{ padding: "1.25rem" }}>
-              <div
-                style={{
-                  fontSize: "0.7rem",
-                  fontWeight: 700,
-                  color: "var(--text-secondary)",
-                  letterSpacing: "0.08em",
-                  textTransform: "uppercase",
-                  marginBottom: "0.75rem",
-                }}
-              >
-                Work Mode
-              </div>
-              <ConstrainedDropdown
-                value={clockInModalMode}
-                onChange={(value) => setClockInModalMode(value as WorkMode)}
-                options={["On-site", "Remote (WFH)", "Hybrid"]}
-                buttonStyle={{
-                  padding: "0.6rem 0.75rem",
-                  borderRadius: "0.5rem",
-                }}
-              />
-            </div>
-          )}
+         
 
           {/* Action buttons */}
           <div
@@ -1876,6 +1852,7 @@ export default function TimesheetPage() {
             >
               Work Mode <span style={{ color: "#ef4444" }}>*</span>
             </label>
+
             <ConstrainedDropdown
               value={clockInModalMode}
               onChange={(value) => setClockInModalMode(value as WorkMode)}
@@ -2304,6 +2281,7 @@ export default function TimesheetPage() {
             </div>
           </Modal>
         )}
+
       </div>
 
     </div>
