@@ -1,4 +1,4 @@
-﻿import { CalendarDays, ChevronDown, Loader2, Mail, RefreshCw, CheckCircle2 } from "lucide-react";
+import { CalendarDays, ChevronDown, Loader2, Mail, RefreshCw, CheckCircle2 } from "lucide-react";
 
 import { useState, useEffect } from "react";
 import { SEARCH_EVENT } from "../../../components/layout/TopHeader";
@@ -116,7 +116,7 @@ export default function AttendancePage() {
           }
         });
         if (isMounted && response.data) {
-          type EmployeeAttendance = {
+          type EmployeeAttendance = Employee & {
             clockIn: string;
             status: string;
           };

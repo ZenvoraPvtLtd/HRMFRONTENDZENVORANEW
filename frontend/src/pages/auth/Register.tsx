@@ -599,7 +599,7 @@ useEffect(() => {
         >
           Create Account
         </h2>
-        <p className={theme.subtext}>Join Zenvora and start your journey</p>
+        <p className={theme.subtext}>Register as HR or Admin — Employee & Manager accounts are created by HR</p>
       </div>
 
       {/* Social Buttons */}
@@ -764,6 +764,16 @@ useEffect(() => {
           >
             Role
           </label>
+          <div
+            className={`text-xs mb-2 px-3 py-2 rounded-lg border ${
+              isDark
+                ? "bg-blue-500/10 border-blue-500/20 text-blue-300"
+                : "bg-blue-50 border-blue-200 text-blue-700"
+            }`}
+          >
+            ℹ️ This registration is for <strong>HR</strong> and <strong>Admin</strong> accounts only.
+            Employee & Manager accounts are created by HR from the dashboard.
+          </div>
           <ConstrainedDropdown
             value={formik.values.role}
             onChange={(value) => formik.setFieldValue("role", value)}
@@ -771,8 +781,6 @@ useEffect(() => {
               { value: "", label: "Select your role" },
               { value: "admin", label: "Admin" },
               { value: "hr", label: "HR" },
-              { value: "manager", label: "Manager" },
-              { value: "employee", label: "Employee" },
             ]}
             buttonStyle={{ colorScheme: isDark ? "dark" : "light" }}
           />

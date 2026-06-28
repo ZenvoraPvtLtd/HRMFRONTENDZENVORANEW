@@ -473,9 +473,7 @@ export async function updateHrLeaveStatus(leaveId: string, status: "approved" | 
   const response = await fetch(`${FASTAPI_BASE_URL}/api/leaves/${leaveId}/status`, {
     method: "PATCH",
     headers: getAuthHeaders(),
-
     body: JSON.stringify({ status, comment: comment || "" }),
-    body: JSON.stringify({ status, comment }),
   });
 
   if (!response.ok) throw new Error("Unable to update leave status");

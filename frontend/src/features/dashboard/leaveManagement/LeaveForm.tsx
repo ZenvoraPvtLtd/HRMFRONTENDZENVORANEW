@@ -77,6 +77,7 @@ export default function LeaveForm({
       <input
         type="date"
         className="border p-2 w-full mb-3"
+        min={new Date().toISOString().split("T")[0]}
         value={form.leave_date}
         onChange={(e) =>
           setForm({
