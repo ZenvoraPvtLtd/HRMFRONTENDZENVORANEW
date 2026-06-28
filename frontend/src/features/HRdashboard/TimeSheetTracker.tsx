@@ -416,38 +416,40 @@ ${sessionStatus}
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-2 mb-5">
-            <button
-              onClick={handleStart}
-              className="flex items-center justify-center gap-1 py-2.5 rounded-2xl font-semibold text-sm transition"
-              style={{
-                background:
-                  "rgba(148,163,184,0.15)",
-                color:
-                  "var(--text-primary)",
-              }}
-            >
-              <Play size={14} />
-              Start
-            </button>
-
-            <button
-              onClick={handlePause}
-              className="flex items-center justify-center gap-1 py-2.5 rounded-2xl font-semibold text-sm transition"
-              style={{
-                background:
-                  "rgba(148,163,184,0.15)",
-                color:
-                  "var(--text-primary)",
-              }}
-            >
-              <Pause size={14} />
-              Pause
-            </button>
+          <div className="grid grid-cols-2 gap-2 mb-5">
+            {isRunning ? (
+              <button
+                onClick={handlePause}
+                className="flex items-center justify-center gap-1 py-2.5 rounded-2xl font-semibold text-sm transition"
+                style={{
+                  background:
+                    "rgba(148,163,184,0.15)",
+                  color:
+                    "var(--text-primary)",
+                }}
+              >
+                <Pause size={14} />
+                Pause
+              </button>
+            ) : (
+              <button
+                onClick={handleStart}
+                className="flex items-center justify-center gap-1 py-2.5 rounded-2xl font-semibold text-sm transition"
+                style={{
+                  background:
+                    "rgba(148,163,184,0.15)",
+                  color:
+                    "var(--text-primary)",
+                }}
+              >
+                <Play size={14} />
+                Start
+              </button>
+            )}
 
             <ResetButton
               onClick={handleReset}
-              className="py-2.5 rounded-2xl"
+              className="w-full py-2.5 rounded-2xl"
               style={{
                 background: "rgba(148,163,184,0.15)",
                 color: "var(--text-primary)",

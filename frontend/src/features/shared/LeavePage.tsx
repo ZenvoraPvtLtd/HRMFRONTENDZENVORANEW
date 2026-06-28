@@ -27,7 +27,7 @@ function formatDate(dateStr: string) {
 function getStatusInfo(internalStatus?: string): { label: string; style: React.CSSProperties } {
   switch (internalStatus) {
     case "manager_approved":
-      return { label: "Mgr Approved", style: { background: "rgba(16,185,129,0.12)", color: "#10b981", border: "1px solid rgba(16,185,129,0.25)" } };
+      return { label: "Mgr Approved", style: { background: "rgba(16,185,129,0.12)", color: "#10bsu81", border: "1px solid rgba(16,185,129,0.25)" } };
     case "manager_rejected":
       return { label: "Mgr Rejected", style: { background: "rgba(239,68,68,0.12)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.25)" } };
     case "manager_pending":

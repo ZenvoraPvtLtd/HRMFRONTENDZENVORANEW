@@ -39,19 +39,12 @@ type Holiday = {
 };
 
 const initialHolidays: Holiday[] = [
-  { id: 1, title: "New Year", date: "2026-01-01", type: "Public Holiday" },
-  { id: 2, title: "Republic Day", date: "2026-01-26", type: "National Holiday" },
-  { id: 3, title: "Holi", date: "2026-03-04", type: "Government / Festival" },
-  { id: 4, title: "Labour Day", date: "2026-05-01", type: "Government Holiday" },
-  { id: 5, title: "Independence Day", date: "2026-08-15", type: "National Holiday" },
-  { id: 6, title: "Raksha Bandhan", date: "2026-08-28", type: "Government / Festival" },
-  { id: 7, title: "Janmashtami", date: "2026-09-04", type: "Government / Festival" },
-  { id: 8, title: "Gandhi Jayanti", date: "2026-10-02", type: "National Holiday" },
-  { id: 9, title: "Dussehra", date: "2026-10-20", type: "Government / Festival" },
-  { id: 10, title: "Diwali", date: "2026-11-08", type: "Government / Festival" },
-  { id: 11, title: "Guru Nanak Jayanti", date: "2026-11-24", type: "Government / Festival" },
-  { id: 12, title: "Christmas", date: "2026-12-25", type: "Public Holiday" },
 ];
+
+const getTodayDate = () => {
+  return new Date().toISOString().split("T")[0];
+};
+
 
 const holidayTypes: HolidayType[] = [
   "Public Holiday",
@@ -111,7 +104,7 @@ export default function HolidayCalendar() {
     type: HolidayType;
   }>({
     title: "",
-    date: "2026-01-01",
+    date: getTodayDate(),
     type: "Government / Festival",
   });
 
@@ -147,17 +140,37 @@ export default function HolidayCalendar() {
     [holidays, selectedYear],
   );
 
-  const filteredHolidays = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    if (!query) return yearHolidays;
 
-    return yearHolidays.filter((holiday) =>
-      [holiday.title, holiday.type, getHolidayDay(holiday.date), formatHolidayDate(holiday.date)]
+
+  const filteredHolidays = useMemo(() => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const query = search.trim().toLowerCase();
+
+  return yearHolidays
+    .filter((holiday) => {
+      const holidayDate = new Date(`${holiday.date}T00:00:00`);
+      holidayDate.setHours(0, 0, 0, 0);
+
+      // Only today and future holidays
+      return holidayDate >= today;
+    })
+    .filter((holiday) => {
+      if (!query) return true;
+
+      return [
+        holiday.title,
+        holiday.type,
+        getHolidayDay(holiday.date),
+        formatHolidayDate(holiday.date),
+      ]
         .join(" ")
         .toLowerCase()
-        .includes(query),
-    );
-  }, [search, yearHolidays]);
+        .includes(query);
+    });
+}, [yearHolidays, search]);
+
 
   const upcomingHolidays = yearHolidays.filter(
     (holiday) => new Date(`${holiday.date}T00:00:00`) >= today,
@@ -165,12 +178,13 @@ export default function HolidayCalendar() {
   const elapsedHolidays = yearHolidays.length - upcomingHolidays.length;
   const nextHoliday = upcomingHolidays[0];
 
-  const resetForm = () => {
-    setNewHoliday({
-      title: "",
-      date: `${selectedYear}-01-01`,
-      type: "Government / Festival",
-    });
+ const resetForm = () => {
+  setNewHoliday({
+    title: "",
+    date: getTodayDate(),
+    type: "Government / Festival",
+  });
+
     setIsEditMode(false);
     setEditingId(null);
   };
@@ -456,6 +470,7 @@ export default function HolidayCalendar() {
                 <input
                   type="date"
                   value={newHoliday.date}
+                  min={getTodayDate()}
                   onChange={(event) =>
                     setNewHoliday({ ...newHoliday, date: event.target.value })
                   }
