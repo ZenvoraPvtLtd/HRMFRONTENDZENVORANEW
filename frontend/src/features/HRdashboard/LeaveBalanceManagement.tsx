@@ -312,15 +312,6 @@ export default function LeaveBalanceManagement() {
           Reset Year
         </button>
 
-        <button
-          type="button"
-          onClick={() => setIsBulkOpen(true)}
-          className="col-span-2 inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg px-3 text-sm font-semibold sm:col-span-1 sm:w-auto sm:px-4"
-          style={btnPrimary}
-        >
-          <Users size={15} />
-          Bulk Assignment
-        </button>
       </div>
 
       <div className="rounded-2xl p-4" style={card}>

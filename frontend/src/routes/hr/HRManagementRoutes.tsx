@@ -89,8 +89,7 @@ export const HRManagementRoutes = () => (
     {/* Timesheet */}
     <Route path="timesheet-approvals" element={<TimeSheetApprovals />} />
     <Route path="hr-management/timesheet-approvals" element={<TimeSheetApprovals />} />
-    <Route path="timesheet-tracker" element={<TimeSheetTracker />} />
-    <Route path="hr-management/timesheet-tracker" element={<TimeSheetTracker />} />
+
 
     {/* Training */}
     <Route path="training-development" element={<TrainingNDevlopment />} />

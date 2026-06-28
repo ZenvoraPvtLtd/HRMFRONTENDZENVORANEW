@@ -48,27 +48,7 @@ if leaves_col is not None:
         leaves_col.create_index([("employee_id", 1), ("applied_date", -1)])
     except Exception:
         pass
-from pymongo import MongoClient
-
-router = APIRouter(prefix="/api/leaves", tags=["leaves"])
-
-MONGODB_URI = os.getenv("MONGODB_URI") or os.getenv("MONGO_URI", "mongodb://localhost:27017")
-DATABASE_NAME = os.getenv("DATABASE_NAME", "zenvora_ai")
-SECRET_KEY = os.getenv("JWT_SECRET", "ZENVORA_SECRET_KEY_2024")
-ALGORITHM = "HS256"
-
-try:
-    _client = MongoClient(MONGODB_URI, serverSelectionTimeoutMS=5000)
-    _db = _client[DATABASE_NAME]
-    leaves_col = _db["leaves"]
-    leave_balances_col = _db["leave_balances"]
-    users_col = _db["users"]
-    leaves_col.create_index([("employee_id", 1), ("applied_date", -1)])
-except Exception as e:
-    print(f"[LEAVES] MongoDB connection failed: {e}")
-    leaves_col = None
-    leave_balances_col = None
-    users_col = None
+# Use core database collections with fallback support
 
 MANAGER_PENDING = "manager_pending"
 MANAGER_APPROVED = "manager_approved"
@@ -288,7 +268,7 @@ async def get_all_leave_balances(
     _db_check()
     payload = _parse_token(authorization)
     role = payload.get("role") or x_user_role or ""
-    if role not in ("hr", "admin"):
+    if role not in ("hr", "admin", "manager"):
         raise HTTPException(status_code=403, detail="HR access required")
 
     target_year = year or datetime.utcnow().year

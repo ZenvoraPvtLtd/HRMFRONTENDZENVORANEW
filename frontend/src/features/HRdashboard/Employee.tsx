@@ -399,14 +399,6 @@ export default function Employee() {
               {/* Manage employee invites, access, and workforce status. */}
             </p>
           </div>
-          <button
-            onClick={openInviteModal}
-            className="inline-flex h-11 shrink-0 items-center justify-center gap-2 self-end rounded-xl px-5 text-sm font-semibold transition-all duration-200 sm:self-auto"
-            style={{ background: "var(--text-primary)", color: "var(--bg-primary)" }}
-          >
-            <Send size={18} />
-            Send Invite
-          </button>
         </div>
 
         {/* Success Message */}

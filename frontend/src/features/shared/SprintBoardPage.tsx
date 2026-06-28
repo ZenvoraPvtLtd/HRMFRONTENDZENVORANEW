@@ -59,14 +59,7 @@ function SprintCard({ sprint, onClick }: { sprint: Sprint; onClick: () => void }
         <p className="text-xs leading-relaxed line-clamp-2" style={{ color: "var(--text-secondary)" }}>{sprint.description}</p>
       )}
 
-      <div>
-        <div className="flex items-center gap-2">
-          <div className="flex-1 rounded-full h-1" style={{ background: "var(--bg-hover)" }}>
-            <div className="h-1 rounded-full transition-all duration-500" style={{ width: `${sprint.progress}%`, background: "var(--accent)" }} />
-          </div>
-          <span className="text-xs shrink-0" style={{ color: "var(--text-secondary)" }}>{sprint.progress}%</span>
-        </div>
-      </div>
+
 
       {(startDate || endDate) && (
         <div className="text-xs flex items-center gap-1" style={{ color: "var(--text-secondary)" }}>

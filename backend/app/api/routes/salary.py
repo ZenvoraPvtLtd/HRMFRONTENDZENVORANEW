@@ -17,16 +17,12 @@ except ImportError:
 
 router = APIRouter(prefix="/api/salary", tags=["salary"])
 
-MONGODB_URI = os.getenv("MONGODB_URI") or os.getenv("MONGO_URI", "mongodb://localhost:27017")
-DATABASE_NAME = os.getenv("DATABASE_NAME", "zenvora_ai")
+from app.core.database import db
 
-try:
-    _client = MongoClient(MONGODB_URI, serverSelectionTimeoutMS=5000)
-    _db = _client[DATABASE_NAME]
-    salary_col = _db["salary_slips"]
-    employees_col = _db["employees"]
-except Exception as e:
-    print(f"[SALARY] MongoDB connection failed: {e}")
+if db is not None:
+    salary_col = db["salary_slips"]
+    employees_col = db["employees"]
+else:
     salary_col = None
     employees_col = None
 

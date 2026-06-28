@@ -64,7 +64,7 @@ export const hrNavSections: NavSection[] = [
         label: "Sprint Board",
         children: [
           { to: "/sprint-board", icon: <LayoutGrid size={15} />, label: "Boards" },
-          { to: "/my-tasks", icon: <CheckSquare size={15} />, label: "" },
+          { to: "/my-tasks", icon: <CheckSquare size={15} />, label: "Tasks" },
         ],
       },
       { to: "/leave", icon: <Clock3 size={18} />, label: "Leave" },
@@ -83,7 +83,6 @@ export const hrNavSections: NavSection[] = [
           { to: "/hr-management/leave-management", icon: <Calendar size={15} />, label: "Leave Management" },
           { to: "/hr-management/my-assign-task", icon: <ClipboardList size={15} />, label: "HR Actions" },
           { to: "/hr-management/timesheet-approvals", icon: <Clock3 size={15} />, label: "Timesheet Approvals" },
-          { to: "/hr-management/timesheet-tracker", icon: <Clock3 size={15} />, label: "Timesheet Tracker" },
           { to: "/attendance-management", icon: <Calendar size={15} />, label: "Attendance Management" },
           { to: "/hr-management/performance-improvement-plan", icon: <TriangleAlert size={15} />, label: "PIP" },
           { to: "/performance", icon: <BarChart3 size={15} />, label: "Performance" },
@@ -104,7 +103,6 @@ export const hrNavSections: NavSection[] = [
           // Module 07 — Resume Screening
           { to: "/resume-screening", icon: <FileSearch size={15} />, label: "Resume Screening" },
           { to: "/interview-dashboard", icon: <Video size={15} />, label: "Interview Dashboard" },
-          { to: "/resume-result", icon: <FileSearch size={15} />, label: "Resume Result" },
           // Salary, Offers & Reports
           { to: "/salary-slips", icon: <Briefcase size={15} />, label: "Salary Slips" },
           { to: "/offer-letters", icon: <FileText size={15} />, label: "Offer Letters" },
@@ -118,7 +116,6 @@ export const hrNavSections: NavSection[] = [
         children: [
           { to: "/manager-tools/attendance", icon: <Calendar size={15} />, label: "Attendance" },
           { to: "/manager-tools/approvals", icon: <CheckCircle2 size={15} />, label: "Approvals" },
-          { to: "/manager-tools/productivity", icon: <BarChart3 size={15} />, label: "Productivity" },
           { to: "/manager-tools/projects", icon: <FolderKanban size={15} />, label: "Projects" },
           { to: "/manager-tools/team-management", icon: <Users size={15} />, label: "Team Management" },
         ],
@@ -222,8 +219,8 @@ export const adminNavSections: NavSection[] = [
         icon: <BarChart3 size={18} />,
         label: "Sprint Board",
         children: [
-          { to: "/admin/sprint-board", icon: <LayoutGrid size={15} />, label: "Sprint Boards" },
-          { to: "/admin/my-tasks", icon: <CheckSquare size={15} />, label: "My Tasks" },
+          { to: "/admin/sprint-board", icon: <LayoutGrid size={15} />, label: "Boards" },
+          { to: "/admin/my-tasks", icon: <CheckSquare size={15} />, label: "Tasks" },
         ],
       },
      // { to: "/admin/leave", icon: <Clock3 size={18} />, label: "Leave" },
@@ -265,7 +262,6 @@ export const adminNavSections: NavSection[] = [
           // Module 07 — Resume Screening
           { to: "/admin/resume-screening", icon: <FileSearch size={15} />, label: "Resume Screening" },
           { to: "/admin/interview-dashboard", icon: <Video size={15} />, label: "Interview Dashboard" },
-          { to: "/admin/resume-result", icon: <FileSearch size={15} />, label: "Resume Result" },
           // Salary, Offers & Reports
           { to: "/admin/salary-slips", icon: <Briefcase size={15} />, label: "Salary Slips" },
           { to: "/admin/offer-letters", icon: <FileText size={15} />, label: "Offer Letters" },
@@ -279,7 +275,6 @@ export const adminNavSections: NavSection[] = [
         children: [
           { to: "/admin/attendance", icon: <Calendar size={15} />, label: "Attendance" },
           { to: "/admin/approvals", icon: <CheckCircle2 size={15} />, label: "Approvals" },
-          { to: "/admin/productivity", icon: <BarChart3 size={15} />, label: "Productivity" },
           { to: "/admin/team-management", icon: <Users size={15} />, label: "Team Management" },
           { to: "/admin/projects", icon: <FolderKanban size={15} />, label: "Projects" },
         ],

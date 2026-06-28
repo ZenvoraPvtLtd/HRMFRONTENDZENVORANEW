@@ -17,15 +17,11 @@ except ImportError:
 
 router = APIRouter(prefix="/api/meeting-reminders", tags=["meeting-reminders"])
 
-MONGODB_URI = os.getenv("MONGODB_URI") or os.getenv("MONGO_URI", "mongodb://localhost:27017")
-DATABASE_NAME = os.getenv("DATABASE_NAME", "zenvora_ai")
+from app.core.database import db
 
-try:
-    _client = MongoClient(MONGODB_URI, serverSelectionTimeoutMS=5000)
-    _db = _client[DATABASE_NAME]
-    meetings_col = _db["meetings"]
-except Exception as e:
-    print(f"[MEETING REMINDERS] MongoDB connection failed: {e}")
+if db is not None:
+    meetings_col = db["meetings"]
+else:
     meetings_col = None
 
 

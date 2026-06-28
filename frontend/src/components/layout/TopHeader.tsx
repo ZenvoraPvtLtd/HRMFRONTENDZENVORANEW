@@ -337,6 +337,7 @@ export default function TopHeader({ userName, profilePath, onSearch, navSections
           value={query}
           onChange={(e) => handleChange(e.target.value)}
           placeholder={placeholder}
+          autoComplete="off"
           style={{
             width: "100%",
             height: 38,

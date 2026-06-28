@@ -1,4 +1,4 @@
-﻿﻿import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import Layout from "../components/layout/Layout";
 
 // Chatbots
@@ -205,8 +205,7 @@ const AppRoutes = () => (
         {/* Timesheet */}
         <Route path="timesheet-approvals" element={<TimeSheetApprovals />} />
         <Route path="hr-management/timesheet-approvals" element={<TimeSheetApprovals />} />
-        <Route path="timesheet-tracker" element={<TimeSheetTracker />} />
-        <Route path="hr-management/timesheet-tracker" element={<TimeSheetTracker />} />
+
 
         <Route path="attendance-correction" element={<AttendanceCorrection />} />
         <Route path="hr-management/attendance-correction" element={<AttendanceCorrection />} />
@@ -383,7 +382,6 @@ const AppRoutes = () => (
         <Route path="exit-management" element={<ExitManagement />} />
         <Route path="recruitment-talent-acquisition" element={<RecruitmentTalentAcquisition />} />
         <Route path="timesheet-approvals" element={<TimeSheetApprovals />} />
-        <Route path="timesheet-tracker" element={<TimeSheetTracker />} />
         <Route path="attendance-correction" element={<AttendanceCorrection />} />
         <Route path="attendance-management" element={<ManagerAttendancePage />} />
         <Route path="interview-modules" element={<InterviewModules />} />
