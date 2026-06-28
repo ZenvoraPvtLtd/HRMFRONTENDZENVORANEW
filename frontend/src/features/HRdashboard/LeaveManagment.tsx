@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 
 import { useEffect, useMemo, useState } from "react";
+import PaginationControls from "../../components/PaginationControls";
 import {
   hrPageWrap,
   card,
@@ -95,6 +96,9 @@ export default function ModernLeaveManagement() {
   const [yearFilter, setYearFilter] = useState("All");
   const [submitting, setSubmitting] = useState<string | null>(null);
 
+  const PAGE_SIZE = 10;
+  const [currentPage, setCurrentPage] = useState(1);
+
   // ── Reason modal state ────────────────────────────────────────────────
   const [modalOpen, setModalOpen] = useState(false);
   const [modalAction, setModalAction] = useState<"Approved" | "Rejected">("Approved");
@@ -139,6 +143,9 @@ export default function ModernLeaveManagement() {
     };
   }, []);
 
+  // Reset to page 1 whenever filters or search change
+  useEffect(() => { setCurrentPage(1); }, [search, statusFilter, yearFilter]);
+
   const filteredLeaves = useMemo(() => {
     return leaveRequests.filter((leave) => {
       const matchesSearch =
@@ -161,6 +168,13 @@ export default function ModernLeaveManagement() {
       return matchesSearch && matchesStatus && matchesYear;
     });
   }, [leaveRequests, search, statusFilter, yearFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredLeaves.length / PAGE_SIZE));
+  const effectivePage = Math.min(currentPage, totalPages);
+  const paginatedLeaves = filteredLeaves.slice(
+    (effectivePage - 1) * PAGE_SIZE,
+    effectivePage * PAGE_SIZE,
+  );
 
   const yearOptions = useMemo(() => {
     const currentYear = new Date().getFullYear().toString();
@@ -424,7 +438,7 @@ export default function ModernLeaveManagement() {
             </thead>
 
             <tbody>
-              {filteredLeaves.map((leave) => {
+              {paginatedLeaves.map((leave) => {
                 const _ist = leave.internal_status;
                 const _canAct = hrCanAct(_ist);
                 const _isApproved = _ist === "approved";
@@ -600,12 +614,20 @@ export default function ModernLeaveManagement() {
             </tbody>
           </table>
         </div>
+        {totalPages > 1 && (
+          <PaginationControls
+            currentPage={effectivePage}
+            totalItems={filteredLeaves.length}
+            pageSize={PAGE_SIZE}
+            itemLabel="leave requests"
+            onPageChange={setCurrentPage}
+          />
+        )}
       </div>
-
 
       {/* MOBILE CARDS */}
       <div className="grid grid-cols-1 gap-4 lg:hidden">
-        {filteredLeaves.map((leave) => {
+        {paginatedLeaves.map((leave) => {
           const _mist = leave.internal_status;
           const _mCanAct = hrCanAct(_mist);
           const _mIsApproved = _mist === "approved";
@@ -730,6 +752,15 @@ export default function ModernLeaveManagement() {
           );
         })}
       </div>
+      {totalPages > 1 && (
+        <PaginationControls
+          currentPage={effectivePage}
+          totalItems={filteredLeaves.length}
+          pageSize={PAGE_SIZE}
+          itemLabel="leave requests"
+          onPageChange={setCurrentPage}
+        />
+      )}
     </div>
   );
 }

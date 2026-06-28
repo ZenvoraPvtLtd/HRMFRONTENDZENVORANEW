@@ -4,6 +4,7 @@ import { fetchManagerLeaves, updateManagerLeaveStatus } from "../../../services/
 import type { HrLeaveRequest } from "../../../services/leaveApi";
 import API_BASE_URL from "../../../config/apiConfig";
 import { SEARCH_EVENT } from "../../../components/layout/TopHeader";
+import PaginationControls from "../../../components/PaginationControls";
 
 type DecisionStatus = "manager_approved" | "manager_rejected";
 
@@ -58,12 +59,20 @@ export default function ApprovalsPage() {
   const [timesheetReviewError, setTimesheetReviewError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
+  const PAGE_SIZE = 10;
+  const [leavePage, setLeavePage] = useState(1);
+  const [timesheetPage, setTimesheetPage] = useState(1);
+
   // Sync with TopHeader search bar
   useEffect(() => {
     const handler = (e: Event) => setSearch((e as CustomEvent<string>).detail || "");
     window.addEventListener(SEARCH_EVENT, handler);
     return () => window.removeEventListener(SEARCH_EVENT, handler);
   }, []);
+
+  // Reset to page 1 when search changes
+  useEffect(() => { setLeavePage(1); }, [search]);
+  useEffect(() => { setTimesheetPage(1); }, [search, timesheetMonth, timesheetYear]);
 
   async function load() {
     setLoading(true);
@@ -161,6 +170,28 @@ export default function ApprovalsPage() {
       setSubmitting(null);
     }
   }
+
+  const q = search.trim().toLowerCase();
+  const filteredLeaves = q
+    ? leaves.filter((l) => [(l.employee ?? ""), (l.type ?? ""), (l.department ?? "")].some((v) => v.toLowerCase().includes(q)))
+    : leaves;
+  const filteredTimesheets = q
+    ? timesheets.filter((ts) => [(ts.employee ?? ""), (ts.department ?? ""), (ts.status ?? "")].some((v) => v.toLowerCase().includes(q)))
+    : timesheets;
+
+  const totalLeavePages = Math.max(1, Math.ceil(filteredLeaves.length / PAGE_SIZE));
+  const effectiveLeavePage = Math.min(leavePage, totalLeavePages);
+  const paginatedLeaves = filteredLeaves.slice(
+    (effectiveLeavePage - 1) * PAGE_SIZE,
+    effectiveLeavePage * PAGE_SIZE,
+  );
+
+  const totalTimesheetPages = Math.max(1, Math.ceil(filteredTimesheets.length / PAGE_SIZE));
+  const effectiveTimesheetPage = Math.min(timesheetPage, totalTimesheetPages);
+  const paginatedTimesheets = filteredTimesheets.slice(
+    (effectiveTimesheetPage - 1) * PAGE_SIZE,
+    effectiveTimesheetPage * PAGE_SIZE,
+  );
 
   const needsAction = leaves.filter((l) => !l.decision && (!l.internal_status || l.internal_status === "manager_pending")).length;
   const total = leaves.length;
@@ -269,8 +300,8 @@ export default function ApprovalsPage() {
       {/* Table */}
       {activeTab === "leave" && (
         <div className="rounded-xl overflow-hidden" style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)" }}>
-          <div className="overflow-x-auto w-full">
-            <table className="w-full" style={{ minWidth: "800px" }}> 
+          <div className="overflow-x-auto w-full" style={{ minWidth: 0 }}>
+            <table className="w-full" style={{ minWidth: "800px" }}>
               <thead>
                 <tr className="table-header-row" style={{ borderBottom: "1px solid var(--border)" }}>
                   {columns.map((col) => (
@@ -307,10 +338,14 @@ export default function ApprovalsPage() {
                       No leave requests found
                     </td>
                   </tr>
+                ) : filteredLeaves.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="text-center py-12 text-sm" style={{ color: "var(--text-secondary)" }}>
+                      No results match your search
+                    </td>
+                  </tr>
                 ) : (
-                    leaves.map((leave) => {
-                      const q = search.trim().toLowerCase();
-                      if (q && ![(leave.employee ?? ""), (leave.type ?? ""), (leave.department ?? "")].some(v => v.toLowerCase().includes(q))) return null;
+                    paginatedLeaves.map((leave) => {
                     // Determine effective status: local decision takes priority, else use internal_status from API
                     const internalStatus = leave.decision ?? leave.internal_status ?? "manager_pending";
                     const isPending = internalStatus === "manager_pending";
@@ -399,6 +434,15 @@ export default function ApprovalsPage() {
               </tbody>
             </table>
           </div>
+          {totalLeavePages > 1 && (
+            <PaginationControls
+              currentPage={effectiveLeavePage}
+              totalItems={filteredLeaves.length}
+              pageSize={PAGE_SIZE}
+              itemLabel="leave requests"
+              onPageChange={setLeavePage}
+            />
+          )}
         </div>
       )}
 
@@ -475,10 +519,14 @@ export default function ApprovalsPage() {
                         No timesheet submissions for {new Date(2000, timesheetMonth - 1).toLocaleString("default", { month: "long" })} {timesheetYear}
                       </td>
                     </tr>
+                  ) : filteredTimesheets.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="text-center py-12 text-sm" style={{ color: "var(--text-secondary)" }}>
+                        No results match your search
+                      </td>
+                    </tr>
                   ) : (
-                    timesheets.map((ts) => {
-                      const q = search.trim().toLowerCase();
-                      if (q && ![(ts.employee ?? ""), (ts.department ?? ""), (ts.status ?? "")].some(v => v.toLowerCase().includes(q))) return null;
+                    paginatedTimesheets.map((ts) => {
                       const isPending = ts.status === "Submitted" || ts.status === "Pending";
                       const isApproved = ts.status === "Approved";
 
@@ -550,6 +598,15 @@ export default function ApprovalsPage() {
                 </tbody>
               </table>
             </div>
+            {totalTimesheetPages > 1 && (
+              <PaginationControls
+                currentPage={effectiveTimesheetPage}
+                totalItems={filteredTimesheets.length}
+                pageSize={PAGE_SIZE}
+                itemLabel="timesheets"
+                onPageChange={setTimesheetPage}
+              />
+            )}
           </div>
         </div>
       )}

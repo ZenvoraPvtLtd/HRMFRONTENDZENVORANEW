@@ -98,13 +98,6 @@ export default function ProjectsPage() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // header search
-  useEffect(() => {
-    const handler = (e: Event) => setSearch((e as CustomEvent<string>).detail || "");
-    window.addEventListener(SEARCH_EVENT, handler);
-    return () => window.removeEventListener(SEARCH_EVENT, handler);
-  }, []);
-
   // ── helpers ──────────────────────────────────────────────────
   const getId = (p: Project) => p.id ?? p._id ?? "";
   const getName = (p: Project) => p.name ?? p.project_name ?? "—";

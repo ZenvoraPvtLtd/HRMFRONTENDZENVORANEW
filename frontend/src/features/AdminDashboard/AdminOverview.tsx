@@ -84,10 +84,10 @@ export default function AdminOverview() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>
-            Admin Dashboard Overview
+            {/* Admin Dashboard Overview */}
           </h1>
           <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-            Monitor users, database, and central integration statuses.
+            {/* Monitor users, database, and central integration statuses. */}
           </p>
         </div>
         <button

@@ -459,7 +459,6 @@ export default function HolidayCalendar() {
                   onChange={(event) =>
                     setNewHoliday({ ...newHoliday, date: event.target.value })
                   }
-                  min={new Date().toISOString().split("T")[0]}
                   className="w-full rounded-lg px-4 py-2.5 outline-none"
                   style={inputMuted}
                 />

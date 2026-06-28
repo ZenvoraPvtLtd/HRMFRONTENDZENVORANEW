@@ -75,7 +75,7 @@ export function getQrNetworkWarning(): string {
   if (configured) return "";
 
   return LOOPBACK_HOSTS.has(window.location.hostname)
-    ? ""
+    ? "."
     : "";
 }
 

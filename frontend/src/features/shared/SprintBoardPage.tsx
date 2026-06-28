@@ -20,12 +20,6 @@ interface Sprint {
   created_at?: string;
 }
 
-interface SprintTaskSummary {
-  sprintId?: string;
-  sprint_id?: string;
-  status?: string;
-}
-
 function SprintCard({ sprint, onClick }: { sprint: Sprint; onClick: () => void }) {
   const title = sprint.name || sprint.title || "Sprint";
   const startDate = sprint.start_date
@@ -97,43 +91,10 @@ export default function SprintBoardPage() {
 
   const loadSprints = async () => {
     try {
-      const [sprintsRes, tasksRes] = await Promise.all([
-        fetch(`${getApiBaseUrl()}/api/sprints`),
-        fetch(`${getApiBaseUrl()}/api/tasks`),
-      ]);
-
-      const [sprintsData, tasksData] = await Promise.all([sprintsRes.json(), tasksRes.json()]);
-
-      const tasks = Array.isArray(tasksData.data) ? (tasksData.data as SprintTaskSummary[]) : [];
-      const progressBySprint = tasks.reduce<Record<string, { total: number; done: number }>>((acc, task) => {
-        const sprintId = task.sprintId || task.sprint_id;
-        if (!sprintId) return acc;
-
-        if (!acc[sprintId]) {
-          acc[sprintId] = { total: 0, done: 0 };
-        }
-
-        acc[sprintId].total += 1;
-        if ((task.status || "").toUpperCase() === "DONE") {
-          acc[sprintId].done += 1;
-        }
-
-        return acc;
-      }, {});
-
-      if (sprintsData.success && Array.isArray(sprintsData.sprints)) {
-        setSprints(
-          sprintsData.sprints.map((sprint: Sprint) => {
-            const sprintId = sprint.id || sprint._id || "";
-            const stats = progressBySprint[sprintId];
-            const progress = stats && stats.total > 0 ? Math.round((stats.done / stats.total) * 100) : Number(sprint.progress) || 0;
-
-            return {
-              ...sprint,
-              progress,
-            };
-          })
-        );
+      const res = await fetch(`${getApiBaseUrl()}/api/sprints`);
+      const data = await res.json();
+      if (data.success && Array.isArray(data.sprints)) {
+        setSprints(data.sprints);
       } else {
         setSprints([]);
       }
@@ -169,19 +130,10 @@ export default function SprintBoardPage() {
     setSprints((prev) => [sprint, ...prev]);
   };
 
-  useEffect(() => {
-    const refreshProgress = () => {
-      void loadSprints();
-    };
-
-    window.addEventListener("tasks:updated", refreshProgress);
-    return () => window.removeEventListener("tasks:updated", refreshProgress);
-  }, []);
-
   return (
     <>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <h2 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>Sprint Board</h2>
+        {/* <h2 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>Sprint Board</h2> */}
         {userRole !== "employee" && (
           <button
             onClick={() => setShowCreate(true)}

@@ -48,10 +48,11 @@ const ResetPassword = () => {
 
     validationSchema: Yup.object({
       password: Yup.string()
-        .min(
-          8,
-          "Password must contain uppercase, lowercase and special character"
-        )
+        .min(8, "Password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, one number, and one special character.")
+        .matches(/[A-Z]/, "Password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, one number, and one special character.")
+        .matches(/[a-z]/, "Password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, one number, and one special character.")
+        .matches(/[0-9]/, "Password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, one number, and one special character.")
+        .matches(/[^A-Za-z0-9]/, "Password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, one number, and one special character.")
         .required("Password is required"),
 
       confirmPassword: Yup.string()

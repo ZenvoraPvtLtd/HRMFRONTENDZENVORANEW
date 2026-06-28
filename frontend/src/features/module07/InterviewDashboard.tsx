@@ -56,191 +56,147 @@ const filters: Filter[] = [
 ];
 
 export default function InterviewDashboard() {
-  const [filter, setFilter] =
-    useState<Filter>("All");
-
+  const [filter, setFilter] = useState<Filter>("All");
   const [search, setSearch] = useState("");
+  const [hoveredRow, setHoveredRow] = useState<number | null>(null);
+  const [hoveredBtn, setHoveredBtn] = useState<number | null>(null);
 
   const filteredCandidates = useMemo(() => {
     return candidates.filter((candidate) => {
       const matchesFilter =
-        filter === "All"
-          ? true
-          : candidate.status === filter;
-
-      const matchesSearch =
-        candidate.name
-          .toLowerCase()
-          .includes(search.toLowerCase());
-
+        filter === "All" ? true : candidate.status === filter;
+      const matchesSearch = candidate.name
+        .toLowerCase()
+        .includes(search.toLowerCase());
       return matchesFilter && matchesSearch;
     });
   }, [filter, search]);
 
   const stats = {
     total: candidates.length,
-    hired: candidates.filter(
-      (c) => c.status === "Hired"
-    ).length,
-    pending: candidates.filter(
-      (c) => c.status === "Pending Interview"
-    ).length,
-    rejected: candidates.filter(
-      (c) => c.status === "Rejected"
-    ).length,
+    hired: candidates.filter((c) => c.status === "Hired").length,
+    pending: candidates.filter((c) => c.status === "Pending Interview").length,
+    rejected: candidates.filter((c) => c.status === "Rejected").length,
   };
 
   return (
-    <div className="min-h-screen bg-black text-white p-8">
-
+    <div
+      className="min-h-screen p-8"
+      style={{ background: "var(--bg-primary)", color: "var(--text-primary)" }}
+    >
       {/* Stats */}
-
       <div className="grid grid-cols-4 gap-5 mb-10">
-
-        <StatCard
-          title="TOTAL"
-          value={stats.total}
-        />
-
-        <StatCard
-          title="HIRED"
-          value={stats.hired}
-        />
-
-        <StatCard
-          title="PENDING INTERVIEW"
-          value={stats.pending}
-        />
-
-        <StatCard
-          title="REJECTED"
-          value={stats.rejected}
-        />
-
+        <StatCard title="TOTAL" value={stats.total} />
+        <StatCard title="HIRED" value={stats.hired} />
+        <StatCard title="PENDING INTERVIEW" value={stats.pending} />
+        <StatCard title="REJECTED" value={stats.rejected} />
       </div>
 
       {/* Filters */}
-
       <div className="flex items-center gap-3 mb-6">
-
-        <span className="text-zinc-400">
-          Filter:
-        </span>
+        <span style={{ color: "var(--text-secondary)" }}>Filter:</span>
 
         {filters.map((item) => (
           <button
             key={item}
             onClick={() => setFilter(item)}
-            className={`px-5 py-2 rounded-full border transition ${
-              filter === item
-                ? "bg-zinc-800 border-zinc-700"
-                : "border-zinc-800"
-            }`}
+            className="px-5 py-2 rounded-full transition"
+            style={{
+              border: "1px solid var(--border)",
+              background: filter === item ? "var(--bg-hover)" : "transparent",
+              color: filter === item ? "var(--text-primary)" : "var(--text-secondary)",
+            }}
           >
             {item}
           </button>
         ))}
-
-        
-
       </div>
 
       {/* Table */}
-
-      <div className="rounded-2xl border border-zinc-800 overflow-hidden bg-zinc-950">
-
+      <div
+        className="rounded-2xl overflow-hidden"
+        style={{ border: "1px solid var(--border)", background: "var(--bg-secondary)" }}
+      >
         <table className="w-full">
-
           <thead>
-
-            <tr className="border-b border-zinc-800 text-zinc-400">
-
-              <th className="text-left p-4">
-                Candidate
-              </th>
-
-              <th className="text-left p-4">
-                Status
-              </th>
-
-              <th className="text-left p-4">
-                Interview Date
-              </th>
-
-              <th className="text-left p-4">
-                Time
-              </th>
-
-              <th className="text-left p-4">
-                Meet Link
-              </th>
-
-              <th className="text-left p-4">
-                Actions
-              </th>
-
+            <tr
+              className="border-b"
+              style={{ borderColor: "var(--border)", color: "var(--text-secondary)" }}
+            >
+              <th className="text-left p-4">Candidate</th>
+              <th className="text-left p-4">Status</th>
+              <th className="text-left p-4">Interview Date</th>
+              <th className="text-left p-4">Time</th>
+              <th className="text-left p-4">Meet Link</th>
+              <th className="text-left p-4">Actions</th>
             </tr>
-
           </thead>
 
           <tbody>
+            {filteredCandidates.map((candidate) => (
+              <tr
+                key={candidate.id}
+                className="border-b"
+                style={{
+                  borderColor: "var(--border)",
+                  background:
+                    hoveredRow === candidate.id
+                      ? "var(--bg-hover)"
+                      : "transparent",
+                  transition: "background 0.15s",
+                }}
+                onMouseEnter={() => setHoveredRow(candidate.id)}
+                onMouseLeave={() => setHoveredRow(null)}
+              >
+                <td className="p-4 font-medium" style={{ color: "var(--text-primary)" }}>
+                  {candidate.name}
+                </td>
 
-            {filteredCandidates.map(
-              (candidate) => (
-                <tr
-                  key={candidate.id}
-                  className="border-b border-zinc-800 hover:bg-zinc-900"
-                >
-                  <td className="p-4 font-medium">
-                    {candidate.name}
-                  </td>
+                <td className="p-4">
+                  <StatusBadge status={candidate.status} />
+                </td>
 
-                  <td className="p-4">
-                    <StatusBadge
-                      status={candidate.status}
-                    />
-                  </td>
+                <td className="p-4" style={{ color: "var(--text-primary)" }}>
+                  {candidate.interviewDate}
+                </td>
 
-                  <td className="p-4">
-                    {candidate.interviewDate}
-                  </td>
+                <td className="p-4" style={{ color: "var(--text-primary)" }}>
+                  {candidate.interviewTime}
+                </td>
 
-                  <td className="p-4">
-                    {candidate.interviewTime}
-                  </td>
+                <td className="p-4">
+                  <a
+                    href={candidate.meetLink}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300"
+                  >
+                    Join Meet
+                    <ExternalLink size={14} />
+                  </a>
+                </td>
 
-                  <td className="p-4">
-                    <a
-                      href={candidate.meetLink}
-                      target="_blank"
-                      className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300"
-                    >
-                      Join Meet
-                      <ExternalLink size={14} />
-                    </a>
-                  </td>
-
-                  <td className="p-4">
-
-                    <button className="p-2 rounded-lg hover:bg-zinc-800">
-
-                      <MoreVertical
-                        size={18}
-                      />
-
-                    </button>
-
-                  </td>
-                </tr>
-              )
-            )}
-
+                <td className="p-4">
+                  <button
+                    className="p-2 rounded-lg"
+                    style={{
+                      background:
+                        hoveredBtn === candidate.id
+                          ? "var(--bg-hover)"
+                          : "transparent",
+                      color: "var(--text-primary)",
+                    }}
+                    onMouseEnter={() => setHoveredBtn(candidate.id)}
+                    onMouseLeave={() => setHoveredBtn(null)}
+                  >
+                    <MoreVertical size={18} />
+                  </button>
+                </td>
+              </tr>
+            ))}
           </tbody>
-
         </table>
-
       </div>
-
     </div>
   );
 }
@@ -253,30 +209,32 @@ function StatCard({
   value: number;
 }) {
   return (
-    <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
-      <div className="text-zinc-400 text-sm font-semibold">
+    <div
+      className="rounded-2xl p-6"
+      style={{ border: "1px solid var(--border)", background: "var(--bg-secondary)" }}
+    >
+      <div
+        className="text-sm font-semibold"
+        style={{ color: "var(--text-secondary)" }}
+      >
         {title}
       </div>
 
-      <div className="text-4xl font-bold mt-3">
+      <div
+        className="text-4xl font-bold mt-3"
+        style={{ color: "var(--text-primary)" }}
+      >
         {value}
       </div>
     </div>
   );
 }
 
-function StatusBadge({
-  status,
-}: {
-  status: Status;
-}) {
-  const styles = {
-    Hired:
-      "bg-green-500/10 text-green-400",
-    Rejected:
-      "bg-red-500/10 text-red-400",
-    "Pending Interview":
-      "bg-yellow-500/10 text-yellow-400",
+function StatusBadge({ status }: { status: Status }) {
+  const styles: Record<Status, string> = {
+    Hired: "bg-green-500/10 text-green-400",
+    Rejected: "bg-red-500/10 text-red-400",
+    "Pending Interview": "bg-yellow-500/10 text-yellow-400",
   };
 
   return (

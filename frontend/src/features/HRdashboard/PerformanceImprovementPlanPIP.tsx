@@ -296,7 +296,6 @@ function CreatePIPModal({
               type="date"
               value={form.start_date}
               onChange={(value) => setForm({ ...form, start_date: value })}
-              min={new Date().toISOString().split("T")[0]}
             />
             <StatusField
               value={form.status}
@@ -394,13 +393,11 @@ function InputField({
   type = "text",
   value,
   onChange,
-  min,
 }: {
   label: string;
   type?: string;
   value: string;
   onChange: (value: string) => void;
-  min?: string;
 }) {
   return (
     <label className="block">
@@ -411,7 +408,6 @@ function InputField({
         type={type}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        min={min}
         className="h-10 w-full rounded-lg px-3 text-sm outline-none"
         style={input}
       />

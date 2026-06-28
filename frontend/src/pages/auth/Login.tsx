@@ -26,6 +26,12 @@ const Login = () => {
     if (params.get("invite") === "1") {
       clearAuthStorage();
     }
+    // Display suspension message forwarded by the axios interceptor
+    const suspensionMsg = sessionStorage.getItem("suspensionMessage");
+    if (suspensionMsg) {
+      setApiError(suspensionMsg);
+      sessionStorage.removeItem("suspensionMessage");
+    }
   }, []);
 
   const handleGoogleLogin = () => {
@@ -285,9 +291,9 @@ const Login = () => {
 
       {/* Footer */}
       <p className={`text-center mt-6 text-sm ${theme.footerText}`}>
-        HR or Admin?{" "}
+        Don't have an account?{" "}
         <Link to="/register" className={`font-semibold ${theme.signupLink}`}>
-          Create an account
+          Sign up here
         </Link>
       </p>
     </AuthLayout>

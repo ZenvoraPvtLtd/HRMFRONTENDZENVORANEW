@@ -131,6 +131,16 @@ export function saveWorkClockOut() {
         clockOutTime: session.clockOutTime.toISOString(),
       }),
     );
+
+    // Accumulate session into this-week total
+    const weekStart = getWeekStart();
+    const weekKey = `weeklyWork_${clock.userId}`;
+    try {
+      const raw = localStorage.getItem(weekKey);
+      const existing = raw ? (JSON.parse(raw) as { weekStart: string; totalMs: number }) : null;
+      const existingMs = existing && existing.weekStart === weekStart ? (existing.totalMs || 0) : 0;
+      localStorage.setItem(weekKey, JSON.stringify({ weekStart, totalMs: existingMs + session.workSeconds * 1000 }));
+    } catch {}
   }
 
   localStorage.removeItem(clockKey);
@@ -257,6 +267,27 @@ export function getElapsedBreakSeconds(defaultWorkMode = "Remote (WFH)") {
       ? Math.max(0, Date.now() - clock.breakStartTime.getTime())
       : 0;
   return Math.max(0, Math.floor((clock.breakAccumulatedMs + activeBreakMs) / 1000));
+}
+
+function getWeekStart(): string {
+  const now = new Date();
+  const daysFromMonday = now.getDay() === 0 ? 6 : now.getDay() - 1;
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - daysFromMonday);
+  monday.setHours(0, 0, 0, 0);
+  return monday.toISOString().split("T")[0];
+}
+
+export function getThisWeekWorkMs(userId = getWorkClockUserId()): number {
+  try {
+    const raw = localStorage.getItem(`weeklyWork_${userId}`);
+    if (!raw) return 0;
+    const parsed = JSON.parse(raw) as { weekStart: string; totalMs: number };
+    if (parsed.weekStart !== getWeekStart()) return 0;
+    return Math.max(0, Number(parsed.totalMs) || 0);
+  } catch {
+    return 0;
+  }
 }
 
 export function getLastWorkSession(): LastWorkSession | null {

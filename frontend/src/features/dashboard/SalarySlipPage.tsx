@@ -233,7 +233,7 @@ export default function SalarySlipPage() {
             style={{
               ...buttonStyle,
               background: processing || !selectedEmployee ? "var(--border)" : "var(--accent)",
-              color: "white",
+              color: "var(--accent-text)",
               opacity: processing || !selectedEmployee ? 0.6 : 1,
             }}
           >

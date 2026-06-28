@@ -29,7 +29,6 @@ import {
   TriangleAlert,
   UserCircle,
   UserCheck,
-  UserPlus,
   UserX,
   Users,
   Video,
@@ -51,9 +50,9 @@ export type NavSection = {
   items: NavItem[];
 };
 
-
+// ---------------------------------------------------------------------------
 // HR nav sections
-
+// ---------------------------------------------------------------------------
 export const hrNavSections: NavSection[] = [
   {
     label: "",
@@ -65,8 +64,7 @@ export const hrNavSections: NavSection[] = [
         label: "Sprint Board",
         children: [
           { to: "/sprint-board", icon: <LayoutGrid size={15} />, label: "Boards" },
-          { to: "/my-tasks", icon: <CheckSquare size={15} />, label: "Tasks " },
-          { to: "/my-tasks", icon: <CheckSquare size={15} />, label: "My Tasks" },
+          { to: "/my-tasks", icon: <CheckSquare size={15} />, label: "" },
         ],
       },
       { to: "/leave", icon: <Clock3 size={18} />, label: "Leave" },
@@ -78,7 +76,6 @@ export const hrNavSections: NavSection[] = [
         icon: <ClipboardList size={18} />,
         label: "HR Management",
         children: [
-          { to: "/hr-management/create-user", icon: <UserPlus size={15} />, label: "Create User" },
           { to: "/hr-management/employees", icon: <Users size={15} />, label: "Employees" },
           { to: "/hr-management/employee-management", icon: <Users size={15} />, label: "Employee Management" },
           { to: "/hr-management/employee-onboarding", icon: <Users size={15} />, label: "Onboarding" },
@@ -87,6 +84,7 @@ export const hrNavSections: NavSection[] = [
           { to: "/hr-management/leave-management", icon: <Calendar size={15} />, label: "Leave Management" },
           { to: "/hr-management/my-assign-task", icon: <ClipboardList size={15} />, label: "HR Actions" },
           { to: "/hr-management/timesheet-approvals", icon: <Clock3 size={15} />, label: "Timesheet Approvals" },
+          { to: "/hr-management/timesheet-tracker", icon: <Clock3 size={15} />, label: "Timesheet Tracker" },
           { to: "/attendance-management", icon: <Calendar size={15} />, label: "Attendance Management" },
           { to: "/hr-management/performance-improvement-plan", icon: <TriangleAlert size={15} />, label: "PIP" },
           { to: "/performance", icon: <BarChart3 size={15} />, label: "Performance" },
@@ -121,6 +119,7 @@ export const hrNavSections: NavSection[] = [
         children: [
           { to: "/manager-tools/attendance", icon: <Calendar size={15} />, label: "Attendance" },
           { to: "/manager-tools/approvals", icon: <CheckCircle2 size={15} />, label: "Approvals" },
+          { to: "/manager-tools/productivity", icon: <BarChart3 size={15} />, label: "Productivity" },
           { to: "/manager-tools/projects", icon: <FolderKanban size={15} />, label: "Projects" },
           { to: "/manager-tools/team-management", icon: <Users size={15} />, label: "Team Management" },
         ],
@@ -129,9 +128,9 @@ export const hrNavSections: NavSection[] = [
   },
 ];
 
-
+// ---------------------------------------------------------------------------
 // Candidate nav sections
-
+// ---------------------------------------------------------------------------
 export const candidateNavSections: NavSection[] = [
   {
     label: "",
@@ -143,9 +142,9 @@ export const candidateNavSections: NavSection[] = [
   },
 ];
 
-
+// ---------------------------------------------------------------------------
 // Employee nav sections
-
+// ---------------------------------------------------------------------------
 export const employeeNavSections: NavSection[] = [
   {
     label: "",
@@ -176,9 +175,9 @@ export const employeeNavSections: NavSection[] = [
   },
 ];
 
-
+// ---------------------------------------------------------------------------
 // Manager nav sections
-
+// ---------------------------------------------------------------------------
 export const managerNavSections: NavSection[] = [
   {
     label: "",
@@ -204,6 +203,7 @@ export const managerNavSections: NavSection[] = [
         children: [
           { to: "/manager/attendance", icon: <Calendar size={15} />, label: "Attendance" },
           { to: "/manager/approvals", icon: <CheckCircle2 size={15} />, label: "Approvals" },
+          { to: "/manager/productivity", icon: <BarChart3 size={15} />, label: "Productivity" },
           { to: "/manager/projects", icon: <FolderKanban size={15} />, label: "Projects" },
           { to: "/manager/team-management", icon: <Users size={15} />, label: "Team Management" },
         ],
@@ -212,28 +212,30 @@ export const managerNavSections: NavSection[] = [
   },
 ];
 
-
+// ---------------------------------------------------------------------------
 // Admin nav sections
-
+// ---------------------------------------------------------------------------
 export const adminNavSections: NavSection[] = [
   {
     label: "",
     items: [
       { to: "/admin", icon: <LayoutDashboard size={18} />, label: "Dashboard", exact: true },
-      { to: "/admin/leave", icon: <Clock3 size={18} />, label: "Leave" },
-      { to: "/admin/employees", icon: <Users size={18} />, label: "Employee" },
-      { to: "/admin/employee-management", icon: <Users size={18} />, label: "Employee Management" },
-      { to: "/admin/holiday-calendar", icon: <Calendar size={18} />, label: "Holiday Calendar" },
-      { to: "/admin/announcements", icon: <MessageSquare size={18} />, label: "Announcements" },
-      { to: "/admin/documents", icon: <FileText size={18} />, label: "Documents" },
-      { to: "/admin/whatsapp", icon: <MessageSquare size={18} />, label: "WhatsApp" },
+      {
+        to: "/admin/sprint-board",
+        icon: <BarChart3 size={18} />,
+        label: "Sprint Board",
+        children: [
+          { to: "/admin/sprint-board", icon: <LayoutGrid size={15} />, label: "Sprint Boards" },
+          { to: "/admin/my-tasks", icon: <CheckSquare size={15} />, label: "My Tasks" },
+        ],
+      },
+     // { to: "/admin/leave", icon: <Clock3 size={18} />, label: "Leave" },
       {
         to: "/admin/users",
         icon: <ShieldCheck size={18} />,
         label: "Admin",
         children: [
           { to: "/admin/users", icon: <Users size={15} />, label: "Users & Roles" },
-          { to: "/admin/create-user", icon: <UserPlus size={15} />, label: "Create User" },
         ],
       },
       {
@@ -242,7 +244,7 @@ export const adminNavSections: NavSection[] = [
         label: "HR Management",
         children: [
           { to: "/admin/employees", icon: <Users size={15} />, label: "Employees" },
-          { to: "/admin/employee-management", icon: <Users size={15} />, label: "Employee Management" },
+          { to: "/admin/employee-management", icon: <Users size={15} />, label: "HR Employees" },
           { to: "/admin/leave-balance", icon: <Calendar size={15} />, label: "Leave Balances" },
           { to: "/admin/leave-management", icon: <Calendar size={15} />, label: "Leave Management" },
           { to: "/admin/holiday-calendar", icon: <Calendar size={15} />, label: "Holiday Calendar" },
@@ -289,9 +291,9 @@ export const adminNavSections: NavSection[] = [
   },
 ];
 
-
+// ---------------------------------------------------------------------------
 // Sidebar component
-
+// ---------------------------------------------------------------------------
 interface SidebarProps {
   isCollapsed: boolean;
   setIsCollapsed: (val: boolean) => void;
@@ -320,6 +322,7 @@ const Sidebar = ({
     "/manager-tools": true,
     "/manager/sprint-board": true,
     "/manager/tools": true,
+    "/admin/sprint-board": false,
     "/admin/employees": false,
     "/admin/attendance": true,
     "/admin/users": false,

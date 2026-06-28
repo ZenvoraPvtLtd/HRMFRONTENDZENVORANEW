@@ -101,10 +101,34 @@ export default function Interviews() {
     setCurrentPage(Math.min(Math.max(page, 1), totalPages));
   };
 
+  const exportCSV = () => {
+    const headers = ["ID", "Candidate Name", "Role", "Date & Time", "Duration", "Interview Type", "Status"];
+    const rows = visibleRows.map((r) => [
+      r.id,
+      r.candidate.name,
+      r.candidate.role,
+      r.datetime,
+      r.duration,
+      r.type,
+      r.status,
+    ]);
+    const csvContent = [headers, ...rows]
+      .map((row) => row.map((v) => `"${v}"`).join(","))
+      .join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `ai_video_interviews_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="animate-fade-in px-2 sm:px-4">
       <div className="mb-4 flex justify-end">
         <Button
+          onClick={exportCSV}
           style={{
             width: "auto",
             padding: "0.625rem 1.25rem",

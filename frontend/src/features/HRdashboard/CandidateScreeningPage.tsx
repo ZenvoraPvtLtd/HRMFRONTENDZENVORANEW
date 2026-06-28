@@ -509,7 +509,7 @@ export default function CandidateScreeningPage() {
   return (
     <div style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
 
-      {/* Page Header */}
+      {/* Page Header
       <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
         <div
           style={{
@@ -530,7 +530,7 @@ export default function CandidateScreeningPage() {
             Review applicants, run JD matching, and manage candidate status
           </p>
         </div>
-      </div>
+      </div> */}
 
       {/* Stats Row */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "1rem" }}>

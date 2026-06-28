@@ -52,6 +52,9 @@ export default function AdminUserManagement() {
   const [formErrors, setFormErrors] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  const PAGE_SIZE = 10;
+  const [currentPage, setCurrentPage] = useState(1);
+
   const fetchUsers = async () => {
     setLoading(true);
     setError(null);
@@ -78,6 +81,10 @@ export default function AdminUserManagement() {
     window.addEventListener(SEARCH_EVENT, handleHeaderSearch);
     return () => window.removeEventListener(SEARCH_EVENT, handleHeaderSearch);
   }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, roleFilter]);
 
   const openCreateModal = () => {
     setModalMode("create");
@@ -177,24 +184,30 @@ export default function AdminUserManagement() {
     }
   };
 
-  // Filter & Search logic - Protected from null/undefined checks
-  const filteredUsers = users.filter((u) => {
-    const fullName = u.fullName || "";
-    const email = u.email || "";
-    const phoneNumber = u.phoneNumber || "";
-    const term = searchTerm.toLowerCase();
-    
-    const matchesSearch = 
-      fullName.toLowerCase().includes(term) ||
-      email.toLowerCase().includes(term) ||
-      phoneNumber.includes(searchTerm);
-    const matchesRole = roleFilter === "all" || u.role === roleFilter;
-    return matchesSearch && matchesRole;
-  });
+  // Filter, sort (newest first), and paginate
+  const filteredUsers = users
+    .filter((u) => {
+      const fullName = u.fullName || "";
+      const email = u.email || "";
+      const phoneNumber = u.phoneNumber || "";
+      const term = searchTerm.toLowerCase();
+      const matchesSearch =
+        fullName.toLowerCase().includes(term) ||
+        email.toLowerCase().includes(term) ||
+        phoneNumber.includes(searchTerm);
+      const matchesRole = roleFilter === "all" || u.role === roleFilter;
+      return matchesSearch && matchesRole;
+    })
+    .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+
+  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / PAGE_SIZE));
+  const paginatedUsers = filteredUsers.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE,
+  );
 
   return (
-    <div className="p-6 space-y-4">
-
+    <div className="p-6 space-y-6">
       {/* Alerts */}
       {successMsg && (
         <div className="flex items-center gap-2 p-3.5 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-xl text-sm animate-fade-in font-medium">
@@ -209,8 +222,14 @@ export default function AdminUserManagement() {
         </div>
       )}
 
-      {/* Action Bar */}
-      <div className="flex flex-col sm:flex-row justify-end items-center gap-4">
+      {/* Filters Bar */}
+      <div className="flex items-center gap-3 justify-end">
+        <button
+          onClick={openCreateModal}
+          className="flex items-center gap-2 px-4 py-2.5 bg-zinc-900 dark:bg-zinc-100 hover:bg-zinc-850 dark:hover:bg-zinc-200 text-white dark:text-black rounded-xl font-semibold text-sm transition cursor-pointer border border-zinc-800 dark:border-zinc-200"
+        >
+          <UserPlus className="w-4 h-4" /> Add New User
+        </button>
         {/* Role Filter */}
         <div className="flex items-center gap-2.5">
           <Filter className="w-4 h-4" style={{ color: "var(--text-secondary)" }} />
@@ -218,26 +237,20 @@ export default function AdminUserManagement() {
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
             className="py-2.5 pl-3 pr-8 rounded-xl border outline-none text-sm cursor-pointer"
-            style={{ 
-              borderColor: "var(--border)", 
-              background: "var(--bg-secondary)", 
-              color: "var(--text-primary)" 
+            style={{
+              borderColor: "var(--border)",
+              background: "var(--bg-secondary)",
+              color: "var(--text-primary)"
             }}
           >
             <option value="all">All Roles</option>
-            <option value="admin">Admin</option>
-            <option value="hr">HR</option>
-            <option value="manager">Manager</option>
-            <option value="employee">Employee</option>
+            <option value="admin">Administrators</option>
+            <option value="hr">HR Managers</option>
+            <option value="manager">Team Managers</option>
+            <option value="employee">Employees</option>
+            <option value="candidate">Candidates</option>
           </select>
         </div>
-
-        <button
-          onClick={openCreateModal}
-          className="flex items-center gap-2 px-4 py-2.5 bg-zinc-900 dark:bg-zinc-100 hover:bg-zinc-850 dark:hover:bg-zinc-200 text-white dark:text-black rounded-xl font-semibold text-sm transition cursor-pointer border border-zinc-800 dark:border-zinc-200"
-        >
-          <UserPlus className="w-4 h-4" /> Add New User
-        </button>
       </div>
 
       {/* Users Table */}
@@ -264,7 +277,7 @@ export default function AdminUserManagement() {
                 </tr>
               </thead>
               <tbody className="divide-y" style={{ borderColor: "var(--border)" }}>
-                {filteredUsers.map((user) => (
+                {paginatedUsers.map((user) => (
                   <tr key={user.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/20 transition">
                     <td className="p-4">
                       <div>
@@ -317,6 +330,61 @@ export default function AdminUserManagement() {
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Pagination */}
+      {!loading && filteredUsers.length > PAGE_SIZE && (
+        <div className="flex items-center justify-between px-1">
+          <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
+            Showing {(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filteredUsers.length)} of {filteredUsers.length} users
+          </p>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1.5 rounded-lg border text-xs font-semibold transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              style={{ borderColor: "var(--border)", color: "var(--text-primary)", background: "var(--bg-secondary)" }}
+            >
+              Previous
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .reduce<(number | "...")[]>((acc, page, idx, arr) => {
+                if (page === 1 || page === totalPages || Math.abs(page - currentPage) <= 1) {
+                  if (acc.length > 0 && acc[acc.length - 1] !== "..." && (page as number) - (arr[idx - 1] as number) > 1) {
+                    acc.push("...");
+                  }
+                  acc.push(page);
+                }
+                return acc;
+              }, [])
+              .map((item, idx) =>
+                item === "..." ? (
+                  <span key={`ellipsis-${idx}`} className="px-1.5 text-xs" style={{ color: "var(--text-secondary)" }}>…</span>
+                ) : (
+                  <button
+                    key={item}
+                    onClick={() => setCurrentPage(item as number)}
+                    className="w-8 h-8 rounded-lg border text-xs font-semibold transition cursor-pointer"
+                    style={{
+                      borderColor: currentPage === item ? "var(--text-primary)" : "var(--border)",
+                      background: currentPage === item ? "var(--text-primary)" : "var(--bg-secondary)",
+                      color: currentPage === item ? "var(--bg-secondary)" : "var(--text-primary)",
+                    }}
+                  >
+                    {item}
+                  </button>
+                )
+              )}
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1.5 rounded-lg border text-xs font-semibold transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              style={{ borderColor: "var(--border)", color: "var(--text-primary)", background: "var(--bg-secondary)" }}
+            >
+              Next
+            </button>
           </div>
         </div>
       )}

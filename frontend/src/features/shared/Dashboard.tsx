@@ -20,6 +20,7 @@ import {
   getElapsedBreakSeconds,
   getElapsedWorkSeconds,
   getLastWorkSession,
+  getThisWeekWorkMs,
   readWorkClock,
   WORK_CLOCK_EVENT,
 } from "../../utils/workClock";
@@ -99,6 +100,8 @@ export function DashboardOverview() {
   const [recentSprints, setRecentSprints] = useState<DashboardSprint[]>([]);
   const [lastSession, setLastSession] = useState(() => getLastWorkSession());
 
+  const [weeklyWorkMs, setWeeklyWorkMs] = useState(() => getThisWeekWorkMs());
+
   const [leavesLoading, setLeavesLoading] = useState(true);
   const [leavesError, setLeavesError] = useState(false);
   const [sprintsLoading, setSprintsLoading] = useState(true);
@@ -125,6 +128,7 @@ export function DashboardOverview() {
       setClockInTime(clock.clockInTime);
       setElapsedMs(getElapsedWorkSeconds(clock.clockInTime) * 1000);
       setLastSession(getLastWorkSession());
+      setWeeklyWorkMs(getThisWeekWorkMs());
     };
 
     window.addEventListener(WORK_CLOCK_EVENT, syncClock);
@@ -153,7 +157,7 @@ export function DashboardOverview() {
       try {
         const leaves = await fetchMyLeaves();
         if (isMounted) {
-          setPendingLeaves(leaves.filter((leave) => leave.status === "Pending").length);
+          setPendingLeaves(leaves.filter((leave) => leave.status !== "Approved" && leave.status !== "Rejected").length);
           setLeavesLoading(false);
         }
       } catch {
@@ -231,8 +235,9 @@ export function DashboardOverview() {
   const clockInDisplay = clockInTime
     ? clockInTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
     : "--:--";
-  const activeSprintCount = recentSprints.slice(0, 4).length;
-  const thisWeekHours = `${Math.floor(elapsedMs / 3600000)}.${pad(Math.floor((elapsedMs % 3600000) / 60000))}h`;
+  const activeSprintCount = recentSprints.length;
+  const totalWeekMs = weeklyWorkMs + (clockedIn ? elapsedMs : 0);
+  const thisWeekHours = `${Math.floor(totalWeekMs / 3600000)}.${pad(Math.floor((totalWeekMs % 3600000) / 60000))}h`;
   const today = new Date().toLocaleDateString([], {
     weekday: "long",
     month: "long",
@@ -256,14 +261,14 @@ export function DashboardOverview() {
   }, [query, clockedIn, elapsedMs, pendingLeaves, employeeCount, activeSprintCount]);
 
   const filteredSprints = useMemo(() => {
-    if (!query) return recentSprints.slice(0, 4);
+    if (!query) return recentSprints.slice(0, 6);
     return recentSprints
       .filter((sprint) =>
         [sprint.title, sprint.description, sprint.start, sprint.end].some((v) =>
           v.toLowerCase().includes(query)
         )
       )
-      .slice(0, 4);
+      .slice(0, 6);
   }, [query, recentSprints]);
 
   const showPayslips =
