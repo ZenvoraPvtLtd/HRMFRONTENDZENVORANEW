@@ -164,7 +164,7 @@ export default function SprintBoardDetailPage() {
     });
 
     try {
-      await fetch(`${getApiBaseUrl()}/api/tasks/${taskId}`, {
+      const res = await fetch(`${getApiBaseUrl()}/api/tasks/${taskId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -172,6 +172,10 @@ export default function SprintBoardDetailPage() {
         },
         body: JSON.stringify({ status: newStatus }),
       });
+
+      if (res.ok) {
+        window.dispatchEvent(new Event("tasks:updated"));
+      }
     } catch (e) {
       console.error("Failed to update task status:", e);
     }
