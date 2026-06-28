@@ -134,7 +134,10 @@ export default function SprintBoardDetailPage() {
   // Load sprint info
   useEffect(() => {
     if (!id) return;
-    fetch(`${getApiBaseUrl()}/api/sprints`).then(r => r.json()).then(data => {
+    const token = localStorage.getItem("accessToken") || "";
+    fetch(`${getApiBaseUrl()}/api/sprints`, {
+      headers: { Authorization: `Bearer ${token}` }
+    }).then(r => r.json()).then(data => {
       if (data.success && Array.isArray(data.sprints)) {
         const sprint = data.sprints.find((s: ApiTask) => s.id === id || s._id === id);
         if (sprint) {
@@ -185,7 +188,10 @@ export default function SprintBoardDetailPage() {
     try {
       // Fetch only tasks belonging to this sprint
       const sprintParam = id ? `?sprint_id=${id}` : "";
-      const res = await fetch(`${getApiBaseUrl()}/api/tasks${sprintParam}`);
+      const token = localStorage.getItem("accessToken") || "";
+      const res = await fetch(`${getApiBaseUrl()}/api/tasks${sprintParam}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       const data = await res.json();
       if (data.success && Array.isArray(data.data)) {
         const newBoard: typeof defaultBoard = {

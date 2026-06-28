@@ -210,21 +210,62 @@ export default function LeaveManagementPage() {
             <table style={{ width: "100%", minWidth: 900, borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ background: "var(--table-head-bg)", color: "var(--table-head-text)" }}>
-                  {["Employee", "Leave Type", "Period", "Days", "Status", "Manager", "HR", "Actions"].map(col => (
+                  {["Employee", "Leave Type", "Period", "Days", "Reason", "Status", "HR", "Manager", "Admin", "Actions"].map(col => (
                     <th key={col} style={{ padding: "0.75rem 1rem", textAlign: "left", fontSize: "0.75rem", fontWeight: 700, whiteSpace: "nowrap" }}>{col}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {loadingLeaves ? (
-                  <tr><td colSpan={8} style={{ padding: "2rem", textAlign: "center", color: "var(--text-secondary)", fontSize: "0.85rem" }}>Loading…</td></tr>
+                  <tr><td colSpan={10} style={{ padding: "2rem", textAlign: "center", color: "var(--text-secondary)", fontSize: "0.85rem" }}>Loading…</td></tr>
                 ) : errorLeaves ? (
-                  <tr><td colSpan={8} style={{ padding: "2rem", textAlign: "center", color: "#ef4444", fontSize: "0.85rem" }}>{errorLeaves}</td></tr>
+                  <tr><td colSpan={10} style={{ padding: "2rem", textAlign: "center", color: "#ef4444", fontSize: "0.85rem" }}>{errorLeaves}</td></tr>
                 ) : filteredLeaves.length === 0 ? (
-                  <tr><td colSpan={8} style={{ padding: "2rem", textAlign: "center", color: "var(--text-secondary)", fontSize: "0.85rem" }}>No leave requests found</td></tr>
+                  <tr><td colSpan={10} style={{ padding: "2rem", textAlign: "center", color: "var(--text-secondary)", fontSize: "0.85rem" }}>No leave requests found</td></tr>
                 ) : (
                   filteredLeaves.map(leave => {
-                    const canHrAct = leave.internal_status === "manager_approved" || leave.status === "Under HR Review";
+                    const role = localStorage.getItem("userRole") || localStorage.getItem("hr_userRole") || "hr";
+                    const canHrAct = 
+                      (role === "admin" && leave.internal_status === "admin_pending") || 
+                      (role === "hr" && leave.internal_status === "hr_pending") ||
+                      (role === "admin" && leave.internal_status === "hr_pending") ||
+                      (leave.internal_status === "manager_approved") || 
+                      (leave.status === "Under HR Review");
+
+                    let hrVal = "Pending";
+                    let mgrVal = "Pending";
+                    let admVal = "Pending";
+
+                    if (leave.internal_status === "approved") {
+                      hrVal = "Approved";
+                      mgrVal = "Approved";
+                      admVal = "Approved";
+                    } else if (leave.internal_status === "rejected") {
+                      hrVal = "Rejected";
+                      mgrVal = "Rejected";
+                      admVal = "Rejected";
+                    } else if (leave.internal_status === "admin_pending") {
+                      hrVal = "Approved";
+                      mgrVal = "Approved";
+                      admVal = "Pending";
+                    } else if (leave.internal_status === "manager_pending") {
+                      hrVal = "Approved";
+                      mgrVal = "Pending";
+                      admVal = "Pending";
+                    } else if (leave.internal_status === "hr_pending") {
+                      hrVal = "Pending";
+                      mgrVal = "Pending";
+                      admVal = "Pending";
+                    } else if (leave.internal_status === "manager_approved") {
+                      mgrVal = "Approved";
+                      hrVal = leave.status === "Approved" ? "Approved" : (leave.status === "Rejected" ? "Rejected" : "Pending");
+                      admVal = "—";
+                    } else if (leave.internal_status === "manager_rejected") {
+                      mgrVal = "Rejected";
+                      hrVal = "—";
+                      admVal = "—";
+                    }
+
                     return (
                       <tr key={leave.id} style={{ borderTop: "1px solid var(--border)" }}
                         onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "var(--bg-hover)"}
@@ -237,19 +278,27 @@ export default function LeaveManagementPage() {
                         <td style={{ padding: "0.75rem 1rem", fontSize: "0.82rem", color: "var(--text-secondary)", whiteSpace: "nowrap" }}>{leave.type}</td>
                         <td style={{ padding: "0.75rem 1rem", fontSize: "0.78rem", color: "var(--text-secondary)", whiteSpace: "nowrap" }}>{leave.date}</td>
                         <td style={{ padding: "0.75rem 1rem", fontSize: "0.82rem", color: "var(--text-primary)", textAlign: "center" }}>{leave.days}</td>
+                        <td style={{ padding: "0.75rem 1rem", fontSize: "0.82rem", color: "var(--text-secondary)", maxWidth: "200px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={leave.reason}>
+                          {leave.reason || "—"}
+                        </td>
                         <td style={{ padding: "0.75rem 1rem" }}>
                           <span style={{ ...statusStyle(leave.status), padding: "0.2rem 0.6rem", borderRadius: "999px", fontSize: "0.72rem", fontWeight: 700 }}>
                             {leave.status}
                           </span>
                         </td>
                         <td style={{ padding: "0.75rem 1rem" }}>
-                          <span style={{ ...statusStyle(leave.internal_status === "manager_approved" ? "Approved" : leave.internal_status === "manager_rejected" ? "Rejected" : "Pending"), padding: "0.2rem 0.6rem", borderRadius: "999px", fontSize: "0.72rem", fontWeight: 700 }}>
-                            {leave.internal_status === "manager_approved" ? "Approved" : leave.internal_status === "manager_rejected" ? "Rejected" : "Pending"}
+                          <span style={{ ...statusStyle(hrVal), padding: "0.2rem 0.6rem", borderRadius: "999px", fontSize: "0.72rem", fontWeight: 700 }}>
+                            {hrVal}
                           </span>
                         </td>
                         <td style={{ padding: "0.75rem 1rem" }}>
-                          <span style={{ ...statusStyle(leave.status === "Approved" ? "Approved" : leave.status === "Rejected" ? "Rejected" : "Pending"), padding: "0.2rem 0.6rem", borderRadius: "999px", fontSize: "0.72rem", fontWeight: 700 }}>
-                            {leave.status === "Approved" ? "Approved" : leave.status === "Rejected" ? "Rejected" : "Pending"}
+                          <span style={{ ...statusStyle(mgrVal), padding: "0.2rem 0.6rem", borderRadius: "999px", fontSize: "0.72rem", fontWeight: 700 }}>
+                            {mgrVal}
+                          </span>
+                        </td>
+                        <td style={{ padding: "0.75rem 1rem" }}>
+                          <span style={{ ...statusStyle(admVal), padding: "0.2rem 0.6rem", borderRadius: "999px", fontSize: "0.72rem", fontWeight: 700 }}>
+                            {admVal}
                           </span>
                         </td>
                         <td style={{ padding: "0.75rem 1rem" }}>

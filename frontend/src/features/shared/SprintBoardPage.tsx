@@ -91,10 +91,48 @@ export default function SprintBoardPage() {
 
   const loadSprints = async () => {
     try {
-      const res = await fetch(`${getApiBaseUrl()}/api/sprints`);
-      const data = await res.json();
-      if (data.success && Array.isArray(data.sprints)) {
-        setSprints(data.sprints);
+      const token = localStorage.getItem("accessToken") || "";
+      const [sprintsRes, tasksRes] = await Promise.all([
+        fetch(`${getApiBaseUrl()}/api/sprints`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        fetch(`${getApiBaseUrl()}/api/tasks`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+      ]);
+
+      const [sprintsData, tasksData] = await Promise.all([sprintsRes.json(), tasksRes.json()]);
+
+      const tasks = Array.isArray(tasksData.data) ? (tasksData.data as SprintTaskSummary[]) : [];
+      const progressBySprint = tasks.reduce<Record<string, { total: number; done: number }>>((acc, task) => {
+        const sprintId = task.sprintId || task.sprint_id;
+        if (!sprintId) return acc;
+
+        if (!acc[sprintId]) {
+          acc[sprintId] = { total: 0, done: 0 };
+        }
+
+        acc[sprintId].total += 1;
+        if ((task.status || "").toUpperCase() === "DONE") {
+          acc[sprintId].done += 1;
+        }
+
+        return acc;
+      }, {});
+
+      if (sprintsData.success && Array.isArray(sprintsData.sprints)) {
+        setSprints(
+          sprintsData.sprints.map((sprint: Sprint) => {
+            const sprintId = sprint.id || sprint._id || "";
+            const stats = progressBySprint[sprintId];
+            const progress = stats && stats.total > 0 ? Math.round((stats.done / stats.total) * 100) : Number(sprint.progress) || 0;
+
+            return {
+              ...sprint,
+              progress,
+            };
+          })
+        );
       } else {
         setSprints([]);
       }

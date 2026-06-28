@@ -37,6 +37,7 @@ type ReviewPayload = {
 export default function PerformanceManagement() {
   const [search] = useTopHeaderSearch();
   const [reviewsData, setReviewsData] = useState<PerformanceReview[]>([]);
+  const [employees, setEmployees] = useState<{ id: string; employeeId: string; name: string }[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingReview, setEditingReview] = useState<PerformanceReview | null>(null);
@@ -53,9 +54,18 @@ export default function PerformanceManagement() {
     }
   };
 
+  const fetchEmployees = async () => {
+    try {
+      const response = await api.get("/api/employees");
+      setEmployees(response.data || []);
+    } catch {
+      setEmployees([]);
+    }
+  };
+
   useEffect(() => {
-    const t = setTimeout(() => fetchReviews(), 0);
-    return () => clearTimeout(t);
+    fetchReviews();
+    fetchEmployees();
   }, []);
 
   const filteredReviews = useMemo(() => {
@@ -78,14 +88,21 @@ export default function PerformanceManagement() {
       period: payload.period.trim(),
     };
 
-    if (!nextPayload.employeeName || !nextPayload.period) return;
+    if (!nextPayload.employeeName) {
+      alert("Please select an employee");
+      return;
+    }
+    if (!nextPayload.period) {
+      alert("Please select both start date and end date for the review period");
+      return;
+    }
 
     try {
       await api.post("/api/performance-reviews", nextPayload);
       setIsCreateOpen(false);
       fetchReviews();
     } catch {
-      // API fail ho to koi message show nahi hoga
+      alert("Failed to create performance review. Please check the fields and try again.");
     }
   };
 
@@ -99,7 +116,14 @@ export default function PerformanceManagement() {
       period: payload.period.trim(),
     };
 
-    if (!nextPayload.employeeName || !nextPayload.period) return;
+    if (!nextPayload.employeeName) {
+      alert("Please select an employee");
+      return;
+    }
+    if (!nextPayload.period) {
+      alert("Please select both start date and end date for the review period");
+      return;
+    }
 
     setReviewsData((prev) =>
       prev.map((review) =>
@@ -112,7 +136,7 @@ export default function PerformanceManagement() {
       setEditingReview(null);
       fetchReviews();
     } catch {
-      // API fail ho to koi message show nahi hoga
+      alert("Failed to update performance review. Please try again.");
     }
   };
 
@@ -219,6 +243,7 @@ export default function PerformanceManagement() {
 
       {isCreateOpen && (
         <CreateReviewModal
+          employees={employees}
           onClose={() => setIsCreateOpen(false)}
           onCreate={createReview}
         />
@@ -226,6 +251,7 @@ export default function PerformanceManagement() {
 
       {editingReview && (
         <CreateReviewModal
+          employees={employees}
           review={editingReview}
           onClose={() => setEditingReview(null)}
           onCreate={updateReview}
@@ -239,10 +265,12 @@ function CreateReviewModal({
   review,
   onClose,
   onCreate,
+  employees,
 }: {
   review?: PerformanceReview;
   onClose: () => void;
   onCreate: (payload: ReviewPayload) => void;
+  employees: { id: string; employeeId: string; name: string }[];
 }) {
   const isEdit = Boolean(review);
   const [employeeId, setEmployeeId] = useState(review?.employeeId || "");
@@ -265,17 +293,17 @@ function CreateReviewModal({
         </div>
 
         <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4 sm:px-5">
-          <Field
-            label="Employee ID"
-            placeholder="Optional"
-            value={employeeId}
-            onChange={setEmployeeId}
-          />
-          <Field
-            label="Employee Name"
-            placeholder="Employee name"
-            value={employeeName}
-            onChange={setEmployeeName}
+          <SelectField
+            label="Select Employee *"
+            value={employeeId && employeeName ? `${employeeName} (${employeeId})` : "Select Employee"}
+            onChange={(val) => {
+              const selected = employees.find(emp => `${emp.name} (${emp.employeeId || emp.id})` === val);
+              if (selected) {
+                setEmployeeId(selected.employeeId || selected.id);
+                setEmployeeName(selected.name);
+              }
+            }}
+            options={employees.map(emp => `${emp.name} (${emp.employeeId || emp.id})`)}
           />
           <SelectField
             label="Review Type"

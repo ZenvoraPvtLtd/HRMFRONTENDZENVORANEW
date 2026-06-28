@@ -1,11 +1,10 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Brain,
   Code,
   Sliders,
   Video,
   Plus,
-  Search,
   Trash2,
   Clock,
   BookOpen,
@@ -14,10 +13,11 @@ import {
   Sparkles,
 } from "lucide-react";
 import Button from "../../components/button/Button";
+import { SEARCH_EVENT } from "../../components/layout/TopHeader";
 
 interface InterviewModule {
   id: string;
-  name: string;
+  name: string; 
   description: string;
   type: "video" | "coding" | "cognitive" | "behavioral";
   questionsCount: number;
@@ -88,6 +88,15 @@ export default function InterviewModules() {
   const [newModuleDuration, setNewModuleDuration] = useState(30);
   const [newModuleDifficulty, setNewModuleDifficulty] = useState<"Easy" | "Medium" | "Hard">("Medium");
   const [newModuleParams, setNewModuleParams] = useState("");
+
+  useEffect(() => {
+    const handleSearch = (event: Event) => {
+      setSearchTerm((event as CustomEvent<string>).detail || "");
+    };
+
+    window.addEventListener(SEARCH_EVENT, handleSearch);
+    return () => window.removeEventListener(SEARCH_EVENT, handleSearch);
+  }, []);
 
   const handleToggleActive = (id: string) => {
     setModules(
@@ -181,31 +190,11 @@ export default function InterviewModules() {
         </Button>
       </div>
 
-      {/* Filter and Search Bar */}
+      {/* Filter Bar */}
       <div
         className="p-4 rounded-xl mb-6 flex flex-col sm:flex-row gap-4 items-center justify-between"
         style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)" }}
       >
-        <div className="relative w-full sm:w-80">
-          <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2"
-            size={18}
-            style={{ color: "var(--text-secondary)" }}
-          />
-          <input
-            type="text"
-            placeholder="Search modules..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 rounded-lg text-sm bg-transparent"
-            style={{
-              border: "1px solid var(--border)",
-              color: "var(--text-primary)",
-              outline: "none",
-            }}
-          />
-        </div>
-
         <div className="flex gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0" style={{ scrollbarWidth: "none" }}>
           {["all", "video", "coding", "cognitive", "behavioral"].map((type) => (
             <button
@@ -214,7 +203,7 @@ export default function InterviewModules() {
               className="px-4 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all"
               style={{
                 background: selectedType === type ? "var(--accent)" : "var(--bg-hover)",
-                color: selectedType === type ? "#fff" : "var(--text-secondary)",
+                color: selectedType === type ? "#000" : "var(--text-secondary)",
                 border: "none",
                 cursor: "pointer",
               }}
@@ -487,4 +476,3 @@ export default function InterviewModules() {
     </div>
   );
 }
-

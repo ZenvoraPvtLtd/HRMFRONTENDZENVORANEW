@@ -74,7 +74,7 @@ def create_event_notifications(event: dict):
     for user in users:
         notifications.append({
             "title": "New Event Created",
-            "message": f"{event.get('title', '')} is scheduled on {event.get('date', '')} at {event.get('time', '') or 'TBA'}.",
+            "message": f"{event.get('title', '')} is scheduled on {event.get('date', '')} at {event.get('time', '') or 'TBA'}. Place: {event.get('venue', '') or 'TBA'}. Details: {event.get('description', '') or 'N/A'}.",
             "type": "event",
             "role": user.get("role"),
             "user_id": str(user.get("_id")),

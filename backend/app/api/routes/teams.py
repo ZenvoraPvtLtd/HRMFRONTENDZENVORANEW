@@ -1,9 +1,16 @@
 from collections import defaultdict
+from datetime import datetime
+import re
+from typing import Optional
 
-from fastapi import APIRouter
+from bson import ObjectId
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
+from passlib.context import CryptContext
+from pydantic import BaseModel
 
 from app.core.database import users_collection
+from app.core.jwt_auth import TokenPayload, get_current_user
 
 router = APIRouter(prefix="/api/teams", tags=["teams"])
 
@@ -94,3 +101,165 @@ def get_teams():
         )
 
     return {"success": True, "teams": teams}
+
+
+class TeamMemberAddRequest(BaseModel):
+    name: str
+    email: str
+    employeeId: Optional[str] = None
+    contact: Optional[str] = None
+    projects: Optional[str] = None
+    skills: Optional[str] = None
+    shift: Optional[str] = None
+
+
+pwd_context = CryptContext(schemes=["pbkdf2_sha256", "bcrypt"], deprecated="auto")
+
+
+@router.post("/add-member")
+async def add_team_member(
+    body: TeamMemberAddRequest,
+    current_user: TokenPayload = Depends(get_current_user)
+):
+    if users_collection is None:
+        raise HTTPException(
+            status_code=503,
+            detail="Database offline"
+        )
+
+    # 1. Fetch current manager details
+    manager = users_collection.find_one({"_id": ObjectId(current_user.sub)})
+    if not manager:
+        raise HTTPException(
+            status_code=404,
+            detail="Manager not found"
+        )
+
+    manager_email = str(manager.get("email", "")).lower().strip()
+    manager_id_str = str(manager.get("_id"))
+
+    # Validate Name
+    name = body.name.strip() if body.name else ""
+    if not name or not re.match(r"^[a-zA-Z\s]{2,50}$", name):
+        raise HTTPException(
+            status_code=400,
+            detail="Please enter a valid Full Name (letters and spaces only, 2-50 characters)."
+        )
+
+    # Validate Email
+    email = body.email.lower().strip() if body.email else ""
+    email_pattern = re.compile(r"^[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}$", re.IGNORECASE)
+    if not email or not email_pattern.match(email):
+        raise HTTPException(
+            status_code=400,
+            detail="Please enter a valid email address (e.g. employee@company.com)."
+        )
+
+    # Validate Employee ID
+    employee_id = body.employeeId.strip() if body.employeeId else ""
+    if not employee_id or not re.match(r"^(EMP|emp)\d{3,}$", employee_id):
+        raise HTTPException(
+            status_code=400,
+            detail="Please enter a valid Employee ID (e.g. EMP101, EMP001)."
+        )
+
+    # Validate Contact
+    contact = body.contact.strip() if body.contact else ""
+    if not contact or not re.match(r"^[0-9]{10}$", contact):
+        raise HTTPException(
+            status_code=400,
+            detail="Contact number must be exactly 10 digits."
+        )
+
+    # Validate Shift
+    shift = body.shift.strip() if body.shift else ""
+    if not shift or shift.lower() not in {"day", "night", "morning", "evening"}:
+        raise HTTPException(
+            status_code=400,
+            detail="Please enter a valid shift (e.g. Day, Night, Morning, Evening)."
+        )
+
+    # Check if user already exists
+    existing_user = users_collection.find_one({"email": email})
+
+    # Parse skills
+    skills_list = []
+    if body.skills:
+        skills_list = [s.strip() for s in body.skills.split(",") if s.strip()]
+
+    # Parse projects
+    projects_list = []
+    if body.projects:
+        projects_list = [p.strip() for p in body.projects.split(",") if p.strip()]
+
+    if existing_user:
+        # Update existing user to associate with this manager and update details
+        update_data = {
+            "manager_id": manager_id_str,
+            "managerId": manager_id_str,
+            "manager_email": manager_email,
+            "managerEmail": manager_email,
+            "manager": manager_email,
+            "role": "employee",  # Make sure they are employee
+        }
+        if body.name:
+            update_data["fullName"] = body.name.strip()
+            update_data["name"] = body.name.strip()
+        if body.employeeId:
+            update_data["employeeId"] = body.employeeId.strip()
+        if body.contact:
+            update_data["phoneNumber"] = body.contact.strip()
+            update_data["contact"] = body.contact.strip()
+        if projects_list:
+            update_data["projects"] = projects_list
+        if skills_list:
+            update_data["skills"] = skills_list
+        if body.shift:
+            update_data["shift"] = body.shift.strip()
+
+        users_collection.update_one(
+            {"_id": existing_user["_id"]},
+            {"$set": update_data}
+        )
+        updated_member = users_collection.find_one({"_id": existing_user["_id"]})
+    else:
+        # Create new user
+        default_pwd = pwd_context.hash("Zenvora@123")
+        new_user = {
+            "fullName": body.name.strip(),
+            "name": body.name.strip(),
+            "email": email,
+            "phoneNumber": str(body.contact or "").strip(),
+            "contact": str(body.contact or "").strip(),
+            "employeeId": str(body.employeeId or "").strip(),
+            "role": "employee",
+            "department": manager.get("department") or "General",
+            "password": default_pwd,
+            "createdAt": datetime.utcnow().isoformat(),
+            "manager_id": manager_id_str,
+            "managerId": manager_id_str,
+            "manager_email": manager_email,
+            "managerEmail": manager_email,
+            "manager": manager_email,
+            "projects": projects_list,
+            "skills": skills_list,
+            "shift": str(body.shift or "").strip()
+        }
+        result = users_collection.insert_one(new_user)
+        new_user["_id"] = result.inserted_id
+        updated_member = new_user
+
+    # Create summary for response
+    summary = {
+        "_id": str(updated_member.get("_id", "")),
+        "name": updated_member.get("fullName") or updated_member.get("name") or "",
+        "email": updated_member.get("email", ""),
+        "role": updated_member.get("role", "employee"),
+        "employeeId": updated_member.get("employeeId") or "",
+        "contact": updated_member.get("phoneNumber") or updated_member.get("contact") or "",
+        "projects": updated_member.get("projects") or [],
+        "skills": updated_member.get("skills") or [],
+        "shift": updated_member.get("shift") or "",
+    }
+
+    return {"success": True, "message": "Member added successfully", "data": summary}

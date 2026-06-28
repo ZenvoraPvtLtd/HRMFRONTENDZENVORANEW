@@ -98,6 +98,7 @@ export default function MembersDrawer({ onClose, tasks = [] }: Props) {
   useEffect(() => {
     const load = async () => {
       try {
+        const token = localStorage.getItem("accessToken") || "";
         const collected = new Map<string, Member>();
 
         const addMember = (member: Member) => {
@@ -106,7 +107,9 @@ export default function MembersDrawer({ onClose, tasks = [] }: Props) {
           collected.set(key, member);
         };
 
-        const employeesRes = await fetch(`${getApiBaseUrl()}/api/employees`);
+        const employeesRes = await fetch(`${getApiBaseUrl()}/api/employees`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         if (employeesRes.ok) {
           const employees = await employeesRes.json();
           if (Array.isArray(employees)) {
@@ -120,7 +123,9 @@ export default function MembersDrawer({ onClose, tasks = [] }: Props) {
           }
         }
 
-        const teamRes = await fetch(`${getApiBaseUrl()}/api/auth/team-users`);
+        const teamRes = await fetch(`${getApiBaseUrl()}/api/auth/team-users`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         if (teamRes.ok) {
           const teamData = await teamRes.json();
           if (teamData.success && Array.isArray(teamData.data)) {
