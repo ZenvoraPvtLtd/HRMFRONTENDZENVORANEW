@@ -75,7 +75,7 @@ export function getQrNetworkWarning(): string {
   if (configured) return "";
 
   return LOOPBACK_HOSTS.has(window.location.hostname)
-    ? "Mobile scan ke liye app ko LAN IP se open karein ya VITE_QR_FRONTEND_URL set karein; localhost mobile par open nahi hota."
+    ? ""
     : "";
 }
 

@@ -50,9 +50,9 @@ export type NavSection = {
   items: NavItem[];
 };
 
-// ---------------------------------------------------------------------------
+
 // HR nav sections
-// ---------------------------------------------------------------------------
+
 export const hrNavSections: NavSection[] = [
   {
     label: "",
@@ -64,7 +64,7 @@ export const hrNavSections: NavSection[] = [
         label: "Sprint Board",
         children: [
           { to: "/sprint-board", icon: <LayoutGrid size={15} />, label: "Boards" },
-          { to: "/my-tasks", icon: <CheckSquare size={15} />, label: "" },
+          { to: "/my-tasks", icon: <CheckSquare size={15} />, label: "Tasks " },
         ],
       },
       { to: "/leave", icon: <Clock3 size={18} />, label: "Leave" },
@@ -128,9 +128,9 @@ export const hrNavSections: NavSection[] = [
   },
 ];
 
-// ---------------------------------------------------------------------------
+
 // Candidate nav sections
-// ---------------------------------------------------------------------------
+
 export const candidateNavSections: NavSection[] = [
   {
     label: "",
@@ -142,9 +142,9 @@ export const candidateNavSections: NavSection[] = [
   },
 ];
 
-// ---------------------------------------------------------------------------
+
 // Employee nav sections
-// ---------------------------------------------------------------------------
+
 export const employeeNavSections: NavSection[] = [
   {
     label: "",
@@ -175,9 +175,9 @@ export const employeeNavSections: NavSection[] = [
   },
 ];
 
-// ---------------------------------------------------------------------------
+
 // Manager nav sections
-// ---------------------------------------------------------------------------
+
 export const managerNavSections: NavSection[] = [
   {
     label: "",
@@ -212,9 +212,9 @@ export const managerNavSections: NavSection[] = [
   },
 ];
 
-// ---------------------------------------------------------------------------
+
 // Admin nav sections
-// ---------------------------------------------------------------------------
+
 export const adminNavSections: NavSection[] = [
   {
     label: "",
@@ -291,9 +291,9 @@ export const adminNavSections: NavSection[] = [
   },
 ];
 
-// ---------------------------------------------------------------------------
+
 // Sidebar component
-// ---------------------------------------------------------------------------
+
 interface SidebarProps {
   isCollapsed: boolean;
   setIsCollapsed: (val: boolean) => void;

@@ -273,6 +273,7 @@ async def get_all_leave_balances(
         seen.add(emp_id)
         bal = balance_by_emp.get(emp_id)
         earned_default = round(datetime.utcnow().month * 1.5, 1)
+        print("bal =", bal)
         results.append({
             "id": emp_id,
             "employee_id": emp_id,
@@ -283,6 +284,7 @@ async def get_all_leave_balances(
             "used": bal["used"] if bal else 0.0,
             "remaining": bal["remaining"] if bal else earned_default,
         })
+    
 
     # Also include balances that exist but employee record not in users collection
     for emp_id, bal in balance_by_emp.items():
