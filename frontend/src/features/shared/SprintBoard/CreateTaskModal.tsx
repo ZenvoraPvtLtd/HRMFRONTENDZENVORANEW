@@ -179,7 +179,7 @@ export default function CreateTaskModal({ onClose, onCreated, sprintId, initialS
             </div>
             <div>
               <label style={labelStyle}>Due Date</label>
-              <input type="date" style={inputStyle} value={form.dueDate} onChange={set("dueDate")} />
+              <input type="date" style={inputStyle} value={form.dueDate} onChange={set("dueDate")} min={new Date().toISOString().split("T")[0]} />
             </div>
           </div>
 

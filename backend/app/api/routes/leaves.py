@@ -262,7 +262,9 @@ async def get_all_leave_balances(
             )
         )
 
-    balance_by_emp: dict[str, dict] = {d["employee_id"]: d for d in docs}
+    balance_by_emp: dict[str, dict] = {
+        d["employee_id"]: d for d in docs if d.get("employee_id")
+    }
 
     results = []
     seen: set[str] = set()
@@ -280,9 +282,9 @@ async def get_all_leave_balances(
             "employee_name": emp.get("fullName") or emp.get("name") or emp.get("email") or emp_id,
             "department": emp.get("department") or "Unassigned",
             "year": target_year,
-            "earned": bal["earned"] if bal else earned_default,
-            "used": bal["used"] if bal else 0.0,
-            "remaining": bal["remaining"] if bal else earned_default,
+            "earned": bal.get("earned", earned_default) if bal else earned_default,
+            "used": bal.get("used", 0.0) if bal else 0.0,
+            "remaining": bal.get("remaining", earned_default) if bal else earned_default,
         })
     
 
