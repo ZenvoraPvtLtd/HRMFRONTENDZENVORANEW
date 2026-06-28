@@ -155,9 +155,11 @@ export default function MyTasksPage() {
     if (isInitial) {
       setLoading(true);
     }
+    const token = localStorage.getItem("accessToken") || "";
+    const headers = { Authorization: `Bearer ${token}` };
     Promise.all([
-      fetch(`${getApiBaseUrl()}/api/tasks`).then((r) => r.json()).catch(() => ({ success: false, data: [] })),
-      fetch(`${getApiBaseUrl()}/api/sprints`).then((r) => r.json()).catch(() => ({ success: false, sprints: [] })),
+      fetch(`${getApiBaseUrl()}/api/tasks`, { headers }).then((r) => r.json()).catch(() => ({ success: false, data: [] })),
+      fetch(`${getApiBaseUrl()}/api/sprints`, { headers }).then((r) => r.json()).catch(() => ({ success: false, sprints: [] })),
     ])
       .then(([tasksData, sprintsData]) => {
         const sprintMap: Record<string, string> = {};

@@ -32,9 +32,13 @@ export default function CreateSprintModal({ onClose, onCreated }: Props) {
     setLoading(true);
     setError("");
     try {
+      const token = localStorage.getItem("accessToken") || "";
       const res = await fetch(`${getApiBaseUrl()}/api/sprints`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify(form),
       });
       const data = await res.json();

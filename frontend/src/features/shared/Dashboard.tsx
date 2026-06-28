@@ -7,6 +7,7 @@ import {
   ArrowRight,
   FileText,
   CheckCircle2,
+  X,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import EmployeeChatbot from "../chatbot/EmployeeChatbot";
@@ -78,6 +79,63 @@ function normalizeSprint(sprint: RawSprint): DashboardSprint {
   };
 }
 
+// ─── Mock Payslip data ───────────────────────────────────────────────────────
+export type MockPayslip = {
+  id: string;
+  month: string;
+  year: string;
+  amount: number;
+  date: string;
+  status: string;
+  basic: number;
+  hra: number;
+  allowance: number;
+  deductions: number;
+  net: number;
+};
+
+export const mockPayslips: MockPayslip[] = [
+  {
+    id: "PS-2026-05",
+    month: "May",
+    year: "2026",
+    amount: 4500,
+    date: "31 May 2026",
+    status: "Paid",
+    basic: 3000,
+    hra: 900,
+    allowance: 800,
+    deductions: 200,
+    net: 4500,
+  },
+  {
+    id: "PS-2026-04",
+    month: "April",
+    year: "2026",
+    amount: 4500,
+    date: "30 Apr 2026",
+    status: "Paid",
+    basic: 3000,
+    hra: 900,
+    allowance: 800,
+    deductions: 200,
+    net: 4500,
+  },
+  {
+    id: "PS-2026-03",
+    month: "March",
+    year: "2026",
+    amount: 4500,
+    date: "31 Mar 2026",
+    status: "Paid",
+    basic: 3000,
+    hra: 900,
+    allowance: 800,
+    deductions: 200,
+    net: 4500,
+  },
+];
+
 // ─── Main component ───────────────────────────────────────────────────────────
 export function DashboardOverview() {
   const navigate = useNavigate();
@@ -98,6 +156,7 @@ export function DashboardOverview() {
   const [employeeCount, setEmployeeCount] = useState(0);
   const [recentSprints, setRecentSprints] = useState<DashboardSprint[]>([]);
   const [lastSession, setLastSession] = useState(() => getLastWorkSession());
+  const [selectedPayslip, setSelectedPayslip] = useState<MockPayslip | null>(null);
 
   const [leavesLoading, setLeavesLoading] = useState(true);
   const [leavesError, setLeavesError] = useState(false);
@@ -178,7 +237,10 @@ export function DashboardOverview() {
       setSprintsLoading(true);
       setSprintsError(false);
       try {
-        const res = await fetch(`${getApiBaseUrl()}/api/sprints`);
+        const token = localStorage.getItem("accessToken") || "";
+        const res = await fetch(`${getApiBaseUrl()}/api/sprints`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         if (!res.ok) throw new Error("Failed");
         const data = await res.json();
         if (isMounted) {
@@ -205,7 +267,10 @@ export function DashboardOverview() {
       setStatsLoading(true);
       setStatsError(false);
       try {
-        const res = await fetch(`${getApiBaseUrl()}/api/employees/stats/summary`);
+        const token = localStorage.getItem("accessToken") || "";
+        const res = await fetch(`${getApiBaseUrl()}/api/employees/stats/summary`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         if (!res.ok) throw new Error("Failed");
         const data = await res.json();
         if (isMounted) {
@@ -566,6 +631,7 @@ export function DashboardOverview() {
                 Recent Payslips
               </h2>
               <button
+                onClick={() => setSelectedPayslip(mockPayslips[0])}
                 className="flex items-center gap-1 text-xs font-semibold"
                 style={{ color: "var(--accent)", background: "none", border: "none", cursor: "pointer" }}
               >
@@ -573,17 +639,43 @@ export function DashboardOverview() {
               </button>
             </div>
 
-            <div
-              className="rounded-2xl p-12 flex flex-col items-center justify-center"
-              style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)" }}
-            >
-              <FileText
-                size={36}
-                style={{ color: "var(--text-secondary)", opacity: 0.4, marginBottom: "0.75rem" }}
-              />
-              <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-                No payslips available
-              </p>
+            <div className="grid grid-cols-1 gap-3">
+              {mockPayslips.map((payslip) => (
+                <div
+                  key={payslip.id}
+                  onClick={() => setSelectedPayslip(payslip)}
+                  className="flex items-center justify-between p-4 rounded-2xl cursor-pointer hover:bg-hover transition-colors"
+                  style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)" }}
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="w-10 h-10 rounded-xl flex items-center justify-center"
+                      style={{ background: "rgba(16,185,129,0.12)", color: "#10b981" }}
+                    >
+                      <FileText size={18} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+                        Payslip - {payslip.month} {payslip.year}
+                      </p>
+                      <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
+                        {payslip.date} • {payslip.id}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>
+                      ${payslip.amount.toLocaleString()}
+                    </span>
+                    <span 
+                      className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full"
+                      style={{ background: "rgba(16,185,129,0.12)", color: "#10b981" }}
+                    >
+                      {payslip.status}
+                    </span>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
@@ -601,6 +693,112 @@ export function DashboardOverview() {
           </div>
         )}
       </div>
+
+      {selectedPayslip && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div
+            className="w-full max-w-lg rounded-3xl p-6 relative"
+            style={{
+              background: "var(--bg-primary)",
+              border: "1px solid var(--border)",
+              color: "var(--text-primary)",
+            }}
+          >
+            {/* Close button */}
+            <button
+              onClick={() => setSelectedPayslip(null)}
+              className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-hover transition-colors"
+              style={{ color: "var(--text-secondary)", border: "none", background: "none", cursor: "pointer" }}
+            >
+              <X size={18} />
+            </button>
+
+            {/* Header */}
+            <div className="flex items-center gap-3 mb-6 pb-4 border-b" style={{ borderColor: "var(--border)" }}>
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center"
+                style={{ background: "rgba(16,185,129,0.12)", color: "#10b981" }}
+              >
+                <FileText size={20} />
+              </div>
+              <div>
+                <h3 className="font-bold text-base">Salary Slip</h3>
+                <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
+                  {selectedPayslip.month} {selectedPayslip.year} • {selectedPayslip.id}
+                </p>
+              </div>
+            </div>
+
+            {/* Details Grid */}
+            <div className="space-y-4 text-sm mb-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <span className="text-xs block mb-1" style={{ color: "var(--text-secondary)" }}>Employee Name</span>
+                  <span className="font-semibold">{localStorage.getItem("userName") || "Zenvora Member"}</span>
+                </div>
+                <div>
+                  <span className="text-xs block mb-1" style={{ color: "var(--text-secondary)" }}>Status</span>
+                  <span className="inline-block text-[10px] uppercase font-bold px-2 py-0.5 rounded-full" style={{ background: "rgba(16,185,129,0.12)", color: "#10b981" }}>
+                    {selectedPayslip.status}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-xs block mb-1" style={{ color: "var(--text-secondary)" }}>Payment Date</span>
+                  <span>{selectedPayslip.date}</span>
+                </div>
+                <div>
+                  <span className="text-xs block mb-1" style={{ color: "var(--text-secondary)" }}>Payment Method</span>
+                  <span>Direct Deposit</span>
+                </div>
+              </div>
+
+              {/* Financial Breakdowns */}
+              <div className="mt-4 pt-4 border-t" style={{ borderColor: "var(--border)" }}>
+                <h4 className="font-bold text-xs uppercase mb-3" style={{ color: "var(--text-secondary)" }}>Earnings</h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span>Basic Salary</span>
+                    <span className="font-medium">${selectedPayslip.basic.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>HRA</span>
+                    <span className="font-medium">${selectedPayslip.hra.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Allowances</span>
+                    <span className="font-medium">${selectedPayslip.allowance.toLocaleString()}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <h4 className="font-bold text-xs uppercase mb-3" style={{ color: "var(--text-secondary)" }}>Deductions</h4>
+                <div className="flex justify-between">
+                  <span>Taxes & Pf</span>
+                  <span className="font-medium text-red-500">-${selectedPayslip.deductions.toLocaleString()}</span>
+                </div>
+              </div>
+
+              <div className="mt-4 pt-4 border-t flex justify-between items-center font-bold text-base" style={{ borderColor: "var(--border)" }}>
+                <span>Net Salary</span>
+                <span style={{ color: "var(--accent)" }}>${selectedPayslip.net.toLocaleString()}</span>
+              </div>
+            </div>
+
+            {/* Action button */}
+            <button
+              onClick={() => {
+                alert("Downloading Payslip PDF...");
+                setSelectedPayslip(null);
+              }}
+              className="w-full py-2.5 rounded-xl font-semibold text-sm transition-opacity hover:opacity-90 cursor-pointer"
+              style={{ background: "var(--accent)", color: "#fff", border: "none" }}
+            >
+              Download PDF
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Floating Chatbot */}
       <EmployeeChatbot />

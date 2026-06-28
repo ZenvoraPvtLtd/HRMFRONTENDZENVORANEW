@@ -65,14 +65,12 @@ export const hrNavSections: NavSection[] = [
         label: "Sprint Board",
         children: [
           { to: "/sprint-board", icon: <LayoutGrid size={15} />, label: "Boards" },
-          { to: "/my-tasks", icon: <CheckSquare size={15} />, label: "Tasks " },
-          { to: "/my-tasks", icon: <CheckSquare size={15} />, label: "My Tasks" },
+          { to: "/my-tasks", icon: <CheckSquare size={15} />, label: "Tasks" },
         ],
       },
       { to: "/leave", icon: <Clock3 size={18} />, label: "Leave" },
       { to: "/timesheet", icon: <Activity size={18} />, label: "Timesheet" },
       { to: "/organization", icon: <Users size={18} />, label: "Organization" },
-      { to: "/hr-management/chat", icon: <MessageCircle size={18} />, label: "Chat" },
       {
         to: "/hr-management",
         icon: <ClipboardList size={18} />,
@@ -157,7 +155,7 @@ export const employeeNavSections: NavSection[] = [
         label: "Sprint Board",
         children: [
           { to: "/dashboard/sprint-board", icon: <LayoutGrid size={15} />, label: "Boards" },
-          { to: "/dashboard/my-tasks", icon: <CheckSquare size={15} />, label: "My Tasks" },
+          { to: "/dashboard/my-tasks", icon: <CheckSquare size={15} />, label: "Tasks" },
         ],
       },
     ],
@@ -171,7 +169,6 @@ export const employeeNavSections: NavSection[] = [
       { to: "/dashboard/grievances", icon: <MessageSquare size={18} />, label: "My Grievances" },
       { to: "/dashboard/timesheet", icon: <Activity size={18} />, label: "Timesheet" },
       { to: "/dashboard/organization", icon: <Users size={18} />, label: "Organization" },
-      { to: "/dashboard/chat", icon: <MessageCircle size={18} />, label: "Chat" },
     ],
   },
 ];
@@ -190,13 +187,12 @@ export const managerNavSections: NavSection[] = [
         label: "Sprint Board",
         children: [
           { to: "/manager/sprint-board", icon: <LayoutGrid size={15} />, label: "Boards" },
-          { to: "/manager/my-tasks", icon: <CheckSquare size={15} />, label: "My Tasks" },
+          { to: "/manager/my-tasks", icon: <CheckSquare size={15} />, label: "Tasks" },
         ],
       },
       { to: "/manager/leave", icon: <Clock3 size={18} />, label: "Leave" },
       { to: "/manager/timesheet", icon: <Activity size={18} />, label: "Timesheet" },
       { to: "/manager/organization", icon: <Users size={18} />, label: "Organization" },
-      { to: "/manager/chat", icon: <MessageCircle size={18} />, label: "Chat" },
       {
         to: "/manager/tools",
         icon: <Users size={18} />,

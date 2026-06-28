@@ -26,16 +26,20 @@ function formatDate(dateStr: string) {
 
 function getStatusInfo(internalStatus?: string): { label: string; style: React.CSSProperties } {
   switch (internalStatus) {
+    case "hr_pending":
+      return { label: "Pending HR Approval", style: { background: "rgba(245,158,11,0.12)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.25)" } };
+    case "manager_pending":
+      return { label: "Pending Mgr Approval", style: { background: "rgba(245,158,11,0.12)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.25)" } };
+    case "admin_pending":
+      return { label: "Pending Admin Approval", style: { background: "rgba(245,158,11,0.12)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.25)" } };
     case "manager_approved":
       return { label: "Mgr Approved", style: { background: "rgba(16,185,129,0.12)", color: "#10b981", border: "1px solid rgba(16,185,129,0.25)" } };
     case "manager_rejected":
       return { label: "Mgr Rejected", style: { background: "rgba(239,68,68,0.12)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.25)" } };
-    case "manager_pending":
-      return { label: "Mgr Pending", style: { background: "rgba(245,158,11,0.12)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.25)" } };
     case "approved":
       return { label: "Approved", style: { background: "rgba(16,185,129,0.12)", color: "#10b981", border: "1px solid rgba(16,185,129,0.25)" } };
     case "rejected":
-      return { label: "HR Rejected", style: { background: "rgba(239,68,68,0.12)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.25)" } };
+      return { label: "Rejected", style: { background: "rgba(239,68,68,0.12)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.25)" } };
     default:
       return { label: "Pending", style: { background: "rgba(245,158,11,0.12)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.25)" } };
   }

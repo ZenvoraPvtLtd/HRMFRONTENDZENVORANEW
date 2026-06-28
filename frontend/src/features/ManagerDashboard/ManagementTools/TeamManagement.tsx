@@ -1,4 +1,4 @@
-﻿import { Loader2, Plus, X } from "lucide-react";
+import { Loader2, Plus, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { SEARCH_EVENT } from "../../../components/layout/TopHeader";
 import api from "../../../utils/axiosInstance";
@@ -56,6 +56,7 @@ export default function TeamManagementPage() {
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [modalError, setModalError] = useState<string | null>(null);
   const [team, setTeam] = useState<TeamData | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
 
@@ -135,31 +136,94 @@ export default function TeamManagementPage() {
       m.email.toLowerCase().includes(search.toLowerCase())
   );
 
-  // ── Add member locally (optimistic) ─────────────────────────────────────
+  // ── Add member via API ──────────────────────────────────────────────────
 
-  function handleAddMember(e: React.FormEvent) {
+  async function handleAddMember(e: React.FormEvent) {
     e.preventDefault();
-    const newMember: Member = {
-      _id: `local-${Date.now()}`,
-      name: form.name,
-      email: form.email,
-      employeeId: form.employeeId,
-      contact: form.contact,
-      projects: form.projects,
-      skills: form.skills.split(",").map((s) => s.trim()).filter(Boolean),
-      shift: form.shift,
-    };
-    setMembers((prev) => [...prev, newMember]);
-    setForm({
-      name: "",
-      email: "",
-      employeeId: "",
-      contact: "",
-      projects: "",
-      skills: "",
-      shift: "",
-    });
-    setShowModal(false);
+    setModalError(null);
+
+    const nameTrim = form.name.trim();
+    const emailTrim = form.email.trim();
+    const empIdTrim = form.employeeId.trim();
+    const contactTrim = form.contact.trim();
+    const shiftTrim = form.shift.trim();
+
+    if (!nameTrim) {
+      setModalError("Full Name is required.");
+      return;
+    }
+    if (!/^[a-zA-Z\s]{2,50}$/.test(nameTrim)) {
+      setModalError("Please enter a valid Full Name (letters and spaces only, 2-50 characters).");
+      return;
+    }
+
+    if (!emailTrim) {
+      setModalError("Email is required.");
+      return;
+    }
+    if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(emailTrim)) {
+      setModalError("Please enter a valid email address (e.g., employee@company.com).");
+      return;
+    }
+
+    if (!empIdTrim) {
+      setModalError("Employee ID is required.");
+      return;
+    }
+    if (!/^(EMP|emp)\d{3,}$/.test(empIdTrim)) {
+      setModalError("Please enter a valid Employee ID (e.g., EMP101, EMP001).");
+      return;
+    }
+
+    if (!contactTrim) {
+      setModalError("Contact number is required.");
+      return;
+    }
+    if (!/^[0-9]{10}$/.test(contactTrim)) {
+      setModalError("Contact number must be exactly 10 digits.");
+      return;
+    }
+
+    if (!shiftTrim) {
+      setModalError("Shift is required.");
+      return;
+    }
+    const validShifts = ["day", "night", "morning", "evening"];
+    if (!validShifts.includes(shiftTrim.toLowerCase())) {
+      setModalError("Please enter a valid shift (e.g., Day, Night, Morning, Evening).");
+      return;
+    }
+
+    try {
+      const trimmedForm = {
+        name: nameTrim,
+        email: emailTrim,
+        employeeId: empIdTrim,
+        contact: contactTrim,
+        projects: form.projects.trim(),
+        skills: form.skills.trim(),
+        shift: shiftTrim,
+      };
+      const res = await api.post<{ success: boolean; data: Member }>("/api/teams/add-member", trimmedForm);
+      if (res.data && res.data.success) {
+        setMembers((prev) => [...prev, res.data.data]);
+        setForm({
+          name: "",
+          email: "",
+          employeeId: "",
+          contact: "",
+          projects: "",
+          skills: "",
+          shift: "",
+        });
+        setShowModal(false);
+      } else {
+        setModalError("Failed to add team member.");
+      }
+    } catch (err: any) {
+      console.error(err);
+      setModalError(err.response?.data?.detail || err.message || "Failed to add team member.");
+    }
   }
 
   // ── Leader display info ──────────────────────────────────────────────────
@@ -194,7 +258,7 @@ export default function TeamManagementPage() {
         </div>
 
         <button
-          onClick={() => setShowModal(true)}
+          onClick={() => { setModalError(null); setShowModal(true); }}
           className="flex items-center justify-center gap-2 px-4 h-11 rounded-xl text-sm font-medium w-full sm:w-auto"
           style={{ background: "var(--accent)", color: "var(--accent-text)" }}
         >
@@ -539,6 +603,9 @@ export default function TeamManagementPage() {
             </div>
 
             <form onSubmit={handleAddMember} className="space-y-4">
+              {modalError && (
+                <div className="text-red-500 text-xs px-2 font-medium">{modalError}</div>
+              )}
               <ModalInput
                 placeholder="Full Name"
                 value={form.name}

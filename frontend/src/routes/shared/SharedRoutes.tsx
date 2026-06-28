@@ -19,7 +19,6 @@ export const SharedWorkRoutes = () => (
     <Route path="timesheet" element={<TimesheetPage />} />
     <Route path="organization" element={<OrganizationPage />} />
     <Route path="profile" element={<ProfilePage />} />
-    <Route path="chat" element={<ColleagueChatPage />} />
     <Route path="my-pip" element={<MyPIPPage />} />
   </>
 );

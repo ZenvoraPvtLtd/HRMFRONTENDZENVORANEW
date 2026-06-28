@@ -189,7 +189,10 @@ export default function TaskDetailModal({ task, onClose }: TaskDetailModalProps)
 
   // Load real members from API
   useEffect(() => {
-    fetch(`${getApiBaseUrl()}/api/employees`).then(r => r.json()).then(data => {
+    const token = localStorage.getItem("accessToken") || "";
+    fetch(`${getApiBaseUrl()}/api/employees`, {
+      headers: { Authorization: `Bearer ${token}` }
+    }).then(r => r.json()).then(data => {
       if (Array.isArray(data)) {
         setRealMembers(data.map((e: { name?: string; fullName?: string; email?: string }, i: number) => ({
           name: e.name || e.fullName || "Employee",
@@ -300,9 +303,13 @@ export default function TaskDetailModal({ task, onClose }: TaskDetailModalProps)
   const saveTaskDetails = async (updates: TaskUpdate) => {
     setSaveState("saving");
     try {
+      const token = localStorage.getItem("accessToken") || "";
       const res = await fetch(`${getApiBaseUrl()}/api/tasks/${task.id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify(updates),
       });
       const data = await res.json();
