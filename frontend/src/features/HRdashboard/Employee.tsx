@@ -440,15 +440,7 @@ export default function Employee() {
           <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
             {/* Search */}
             <div className="relative min-w-0 flex-1">
-              <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by name, email, ID, department..."
-                className="w-full h-11 pl-10 pr-4 rounded-lg border text-sm placeholder:text-[var(--text-secondary)] focus:outline-none"
-                style={{ borderColor: "var(--border)", background: "var(--bg-primary)", color: "var(--text-primary)" }}
-              />
+           
             </div>
 
             {/* Filter Dropdowns */}

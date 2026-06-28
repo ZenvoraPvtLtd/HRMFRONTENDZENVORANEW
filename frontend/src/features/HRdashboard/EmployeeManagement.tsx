@@ -406,14 +406,7 @@ export default function EmployeeManagement() {
 
         <div className="rounded-[24px] p-4 flex flex-col xl:flex-row gap-4 xl:items-center justify-between shadow-sm border" style={{ ...card, borderColor: "var(--border)" }}>
           <div className="relative flex-1 min-w-0">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by name, email, ID or phone..."
-              className="w-full rounded-2xl pl-11 pr-4 py-3 text-sm outline-none"
-              style={{ ...inputMuted, background: "var(--card)" }}
-            />
+           
           </div>
           <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
             <ConstrainedDropdown value={departmentFilter} onChange={setDepartmentFilter} options={departments} className="w-full sm:w-52" />

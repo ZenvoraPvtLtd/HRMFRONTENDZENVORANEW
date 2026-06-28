@@ -410,7 +410,9 @@ const ProfilePage: React.FC = () => {
   return (
     <div className="w-full animate-fade-in">
       {/* Tab navigation */}
+
       <div className="flex flex-wrap gap-2 mb-4">
+
         {TABS.map((tab) => (
           <button
             key={tab.key}
@@ -430,7 +432,10 @@ const ProfilePage: React.FC = () => {
             {tab.label}
           </button>
         ))}
+
       </div>
+
+      {activeTab === "personal" && (
       <div
         className="rounded-2xl p-5 sm:p-6"
         style={{
@@ -575,7 +580,8 @@ const ProfilePage: React.FC = () => {
             );
           })}
         </div>
-      </div>
+      </div>)}
+
 
       {activeTab === "emergency" && (
         <div className="rounded-2xl p-5 sm:p-6" style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)" }}>
