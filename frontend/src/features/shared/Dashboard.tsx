@@ -8,6 +8,7 @@ import {
   FileText,
   CheckCircle2,
   X,
+  Megaphone,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import EmployeeChatbot from "../chatbot/EmployeeChatbot";
@@ -157,6 +158,8 @@ export function DashboardOverview() {
   const [recentSprints, setRecentSprints] = useState<DashboardSprint[]>([]);
   const [lastSession, setLastSession] = useState(() => getLastWorkSession());
   const [selectedPayslip, setSelectedPayslip] = useState<MockPayslip | null>(null);
+  const [announcements, setAnnouncements] = useState<any[]>([]);
+  const [announcementsLoading, setAnnouncementsLoading] = useState(true);
 
   const [leavesLoading, setLeavesLoading] = useState(true);
   const [leavesError, setLeavesError] = useState(false);
@@ -288,7 +291,31 @@ export function DashboardOverview() {
       window.removeEventListener("focus", loadEmployeeStats);
     };
   }, []);
-
+  useEffect(() => {
+    let isMounted = true;
+    async function loadAnnouncements() {
+      setAnnouncementsLoading(true);
+      try {
+        const token = localStorage.getItem("accessToken") || "";
+        const res = await fetch(`${getApiBaseUrl()}/api/announcements`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted) {
+            setAnnouncements(Array.isArray(data) ? data : []);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load announcements:", err);
+      } finally {
+        if (isMounted) {
+          setAnnouncementsLoading(false);
+        }
+      }
+    }
+    void loadAnnouncements();
+  }, []);
   // ── Derived values ──
   const breakBudgetMin = 60;
   const breakUsedMin = Math.floor(getElapsedBreakSeconds("On-site") / 60);
@@ -331,9 +358,46 @@ export function DashboardOverview() {
       .slice(0, 4);
   }, [query, recentSprints]);
 
+  const filteredAnnouncements = useMemo(() => {
+    const list = announcements.length > 0 ? announcements : [
+      {
+        id: "dummy-1",
+        title: "Mandatory Weekly Team Meeting",
+        message: "Everyone kindly join from your respective desk at 6:00 PM. Meeting Link - https://meet.google.com/ozf-zwp-vcc",
+        priority: "Medium",
+        published: "28 Jun 2026",
+      },
+      {
+        id: "dummy-2",
+        title: "Sales Performance Notice",
+        message: "Need immediate attention and productive work to avoid any escalations.",
+        priority: "High",
+        published: "27 Jun 2026",
+      },
+      {
+        id: "dummy-3",
+        title: "Welcome Onboard to Vected EMS - Beta Version",
+        message: "Feel free to report any bugs identified while working with the platform.",
+        priority: "Low",
+        published: "26 Jun 2026",
+      }
+    ];
+
+    if (!query) return list;
+    return list.filter((ann) =>
+      [ann.title, ann.message || ann.content || "", ann.priority].some((v) =>
+        String(v).toLowerCase().includes(query)
+      )
+    );
+  }, [query, announcements]);
+
   const showPayslips =
     !query || "recent payslips no payslips available payslip salary".includes(query);
-  const hasResults = filteredStats.length > 0 || filteredSprints.length > 0 || showPayslips;
+  const hasResults =
+    filteredStats.length > 0 ||
+    filteredSprints.length > 0 ||
+    showPayslips ||
+    filteredAnnouncements.length > 0;
 
   return (
     <div className="flex flex-col md:flex-row gap-5 h-full" style={{ minHeight: 0 }}>
@@ -620,6 +684,85 @@ export function DashboardOverview() {
                 </div>
               )}
             </>
+          )}
+        </div>
+
+        {/* Announcements */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold flex items-center gap-2" style={{ color: "var(--text-primary)" }}>
+              <Megaphone size={18} style={{ color: "var(--accent)" }} /> Announcements
+            </h2>
+          </div>
+
+          {announcementsLoading && announcements.length === 0 ? (
+            <div className="grid grid-cols-1 gap-4">
+              {[1, 2].map((i) => (
+                <div key={i} className="rounded-2xl p-5 animate-pulse"
+                  style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)" }}>
+                  <div className="h-4 rounded w-1/4 mb-3" style={{ background: "var(--bg-hover)" }} />
+                  <div className="h-3 rounded w-full mb-2" style={{ background: "var(--bg-hover)" }} />
+                  <div className="h-3 rounded w-2/3" style={{ background: "var(--bg-hover)" }} />
+                </div>
+              ))}
+            </div>
+          ) : filteredAnnouncements.length === 0 ? (
+            <div
+              className="rounded-2xl p-8 text-center text-sm"
+              style={{
+                background: "var(--bg-secondary)",
+                border: "1px solid var(--border)",
+                color: "var(--text-secondary)",
+              }}
+            >
+              No announcements found.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4">
+              {filteredAnnouncements.map((ann) => {
+                const priorityColor =
+                  ann.priority?.toLowerCase() === "high"
+                    ? "#ef4444"
+                    : ann.priority?.toLowerCase() === "medium"
+                    ? "#f59e0b"
+                    : "#10b981";
+                return (
+                  <div
+                    key={ann.id || ann._id}
+                    className="rounded-2xl p-5 flex flex-col gap-2"
+                    style={{
+                      background: "var(--bg-secondary)",
+                      border: "1px solid var(--border)",
+                    }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-bold text-sm" style={{ color: "var(--text-primary)" }}>
+                        {ann.title}
+                      </h3>
+                      <span
+                        className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase"
+                        style={{
+                          background: `${priorityColor}15`,
+                          color: priorityColor,
+                        }}
+                      >
+                        {ann.priority || "Medium"}
+                      </span>
+                    </div>
+                    <p className="text-xs leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                      {ann.message || ann.content}
+                    </p>
+                    <div
+                      className="text-[10px] mt-2 pt-2 border-t flex justify-between"
+                      style={{ borderColor: "var(--border)", color: "var(--text-secondary)" }}
+                    >
+                      <span>Target: {ann.targetType || "All Employees"}</span>
+                      <span>Published: {ann.published || ann.createdAt?.slice(0, 10) || "Recent"}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           )}
         </div>
 
