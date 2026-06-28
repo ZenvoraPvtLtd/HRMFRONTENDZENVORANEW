@@ -157,7 +157,7 @@ def list_users(admin: dict = Depends(admin_only)):
         return JSONResponse(status_code=503, content={"message": "Database offline"})
 
     users = []
-    for u in col.find({}):
+    for u in col.find({}).sort("createdAt", -1):
         users.append({
             "id": str(u["_id"]),
             "fullName": u.get("fullName") or u.get("name") or "",

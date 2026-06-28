@@ -2,6 +2,7 @@ import os
 from datetime import datetime, timedelta
 from typing import Optional
 
+from bson import ObjectId
 from dotenv import load_dotenv
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -48,31 +49,25 @@ def get_current_user(
                 detail="Invalid authentication token",
             )
 
+        # Enforce suspension: re-check current status in DB on every authenticated request
+        # so a token issued before suspension cannot be used after the account is suspended.
+        try:
+            from app.core.database import db
+            if db is not None and ObjectId.is_valid(user_id):
+                user = db["users"].find_one({"_id": ObjectId(user_id)}, {"status": 1})
+                if user and str(user.get("status", "")).strip().lower() == "suspended":
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail="Your Account is Suspended by Admin.",
+                    )
+        except HTTPException:
+            raise
+        except Exception:
+            pass  # DB errors don't revoke valid tokens; suspension check is best-effort
+
         return TokenPayload(sub=str(user_id), role=payload.get("role"))
     except JWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired authentication token",
         )
-
-def require_roles(allowed_roles: list[str]):
-    """Dependency that ensures the user's role is in the allowed_roles list."""
-    def role_checker(current_user: TokenPayload = Depends(get_current_user)):
-        if not current_user.role or current_user.role.lower() not in [r.lower() for r in allowed_roles]:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Access denied for your role",
-            )
-        return current_user
-    return role_checker
-
-def exclude_roles(disallowed_roles: list[str]):
-    """Dependency that ensures the user's role is NOT in the disallowed_roles list."""
-    def role_checker(current_user: TokenPayload = Depends(get_current_user)):
-        if current_user.role and current_user.role.lower() in [r.lower() for r in disallowed_roles]:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Access denied for your role",
-            )
-        return current_user
-    return role_checker
