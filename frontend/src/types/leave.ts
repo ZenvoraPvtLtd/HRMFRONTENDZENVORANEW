@@ -18,6 +18,7 @@ export interface LeaveRequest {
   hr_reviewed_at: string | null;
   manager_comment?: string | null;
   hr_comment?: string | null;
+  employee_role?: string;
 }
 
 export interface LeaveBalance {

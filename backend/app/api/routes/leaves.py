@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Any
 
 from bson import ObjectId
 from fastapi import APIRouter, Header, HTTPException
@@ -88,6 +88,18 @@ def _parse_token(authorization: Optional[str]) -> dict:
         return {}
 
 
+def safe_object_id(val: Any) -> Optional[ObjectId]:
+    if not val:
+        return None
+    val_str = str(val)
+    if len(val_str) == 24 and all(c in "0123456789abcdefABCDEF" for c in val_str):
+        try:
+            return ObjectId(val_str)
+        except Exception:
+            return None
+    return None
+
+
 def _fmt(leave: dict) -> dict:
     internal_status = leave.get("status", "hr_pending")
     if internal_status in ("hr_pending", "manager_pending", MANAGER_PENDING):
@@ -99,10 +111,25 @@ def _fmt(leave: dict) -> dict:
     else:  # rejected, MANAGER_REJECTED, etc.
         frontend_status = "Rejected"
 
+    # Look up employee role
+    role = "employee"
+    employee_id = leave.get("employee_id")
+    if employee_id and users_col is not None:
+        try:
+            oid = safe_object_id(employee_id)
+            emp = users_col.find_one({"_id": oid}) if oid else None
+            if not emp:
+                emp = users_col.find_one({"email": str(employee_id)})
+            if emp:
+                role = emp.get("role") or "employee"
+        except Exception:
+            pass
+
     return {
         "id": str(leave["_id"]),
-        "employee_id": leave.get("employee_id", ""),
+        "employee_id": str(employee_id) if employee_id else "",
         "employee_name": leave.get("employee_name", ""),
+        "employee_role": role,
         "leave_type": leave.get("leave_type", ""),
         "duration_type": leave.get("duration_type", ""),
         "leave_date": leave.get("leave_date", ""),
@@ -174,9 +201,10 @@ async def create_leave(
     user_role = "employee"
     if users_col is not None:
         try:
-            emp_user = users_col.find_one({"_id": ObjectId(employee_id)}) if len(employee_id) == 24 else None
+            oid = safe_object_id(employee_id)
+            emp_user = users_col.find_one({"_id": oid}) if oid else None
             if emp_user is None:
-                emp_user = users_col.find_one({"email": employee_id})
+                emp_user = users_col.find_one({"email": str(employee_id)})
             if emp_user:
                 manager_id = emp_user.get("manager_id")
                 user_role = emp_user.get("role") or "employee"
@@ -185,14 +213,14 @@ async def create_leave(
 
     # Determine initial status and notify role based on applicant's role
     if user_role == "employee":
-        initial_status = "hr_pending"
-        notify_role = "hr"
-    elif user_role == "manager":
-        initial_status = "admin_pending"
-        notify_role = "admin"
-    elif user_role == "hr":
         initial_status = "manager_pending"
         notify_role = "manager"
+    elif user_role == "manager":
+        initial_status = "hr_pending"
+        notify_role = "hr"
+    elif user_role == "hr":
+        initial_status = "admin_pending"
+        notify_role = "admin"
     else:  # admin
         initial_status = "approved"
         notify_role = None
@@ -284,7 +312,7 @@ async def get_all_leave_balances(
             )
         )
 
-    balance_by_emp: dict[str, dict] = {d["employee_id"]: d for d in docs}
+    balance_by_emp: dict[str, dict] = {d.get("employee_id", ""): d for d in docs if d.get("employee_id")}
 
     results = []
     seen: set[str] = set()
@@ -301,9 +329,9 @@ async def get_all_leave_balances(
             "employee_name": emp.get("fullName") or emp.get("name") or emp.get("email") or emp_id,
             "department": emp.get("department") or "Unassigned",
             "year": target_year,
-            "earned": bal["earned"] if bal else earned_default,
-            "used": bal["used"] if bal else 0.0,
-            "remaining": bal["remaining"] if bal else earned_default,
+            "earned": bal.get("earned", earned_default) if bal else earned_default,
+            "used": bal.get("used", 0.0) if bal else 0.0,
+            "remaining": bal.get("remaining", earned_default) if bal else earned_default,
         })
 
     # Also include balances that exist but employee record not in users collection
@@ -519,14 +547,53 @@ async def get_manager_leaves(
     if role not in ("manager", "hr", "admin"):
         raise HTTPException(status_code=403, detail="Manager access required")
 
+    excluded_ids = []
+    if role == "manager" and users_col is not None:
+        try:
+            # Exclude leaves requested by HR, Admin, and Managers from Manager dashboard approvals
+            non_employees = list(users_col.find({"role": {"$in": ["hr", "admin", "manager"]}}, {"_id": 1, "email": 1}))
+            for x in non_employees:
+                excluded_ids.append(str(x["_id"]))
+                if x.get("email"):
+                    excluded_ids.append(x["email"])
+        except Exception:
+            pass
+
     manager_sub = payload.get("sub")
-    if manager_sub:
+    manager_ids = [manager_sub] if manager_sub else []
+    if manager_sub and users_col is not None:
+        try:
+            oid = safe_object_id(manager_sub)
+            mgr_user = users_col.find_one({"_id": oid}) if oid else None
+            if not mgr_user:
+                mgr_user = users_col.find_one({"email": str(manager_sub)})
+            if mgr_user:
+                mgr_id_str = str(mgr_user["_id"])
+                mgr_email = mgr_user.get("email")
+                if mgr_id_str not in manager_ids:
+                    manager_ids.append(mgr_id_str)
+                if mgr_email and mgr_email not in manager_ids:
+                    manager_ids.append(mgr_email)
+        except Exception:
+            pass
+
+    role = payload.get("role") or x_user_role or ""
+    if role in ("hr", "admin"):
         query = {
-            "status": {"$in": ["manager_pending", "admin_pending", "approved", "rejected", MANAGER_PENDING, MANAGER_APPROVED, MANAGER_REJECTED]},
-            "$or": [{"manager_id": manager_sub}, {"manager_id": None}, {"manager_id": {"$exists": False}}],
+            "status": {"$in": ["manager_pending", "hr_pending", "admin_pending", "approved", "rejected", MANAGER_PENDING, MANAGER_APPROVED, MANAGER_REJECTED]}
+        }
+    elif manager_ids:
+        or_clauses = [{"manager_id": m_id} for m_id in manager_ids]
+        or_clauses.extend([{"manager_id": None}, {"manager_id": {"$exists": False}}])
+        query = {
+            "status": {"$in": ["manager_pending", "hr_pending", "admin_pending", "approved", "rejected", MANAGER_PENDING, MANAGER_APPROVED, MANAGER_REJECTED]},
+            "$or": or_clauses,
         }
     else:
-        query = {"status": {"$in": ["manager_pending", "admin_pending", "approved", "rejected", MANAGER_PENDING, MANAGER_APPROVED, MANAGER_REJECTED]}}
+        query = {"status": {"$in": ["manager_pending", "hr_pending", "admin_pending", "approved", "rejected", MANAGER_PENDING, MANAGER_APPROVED, MANAGER_REJECTED]}}
+
+    if excluded_ids:
+        query["employee_id"] = {"$nin": excluded_ids}
 
     docs = list(leaves_col.find(query).sort("applied_date", -1).limit(limit))
     return {"data": [_fmt(d) for d in docs]}
@@ -564,7 +631,7 @@ async def manager_update_status(
         raise HTTPException(status_code=400, detail="Leave is not in manager_pending state")
 
     if body.status == MANAGER_APPROVED:
-        db_status = "admin_pending"
+        db_status = "hr_pending"
     else:
         db_status = "rejected"
 
@@ -579,20 +646,20 @@ async def manager_update_status(
     leave_type = leave.get("leave_type", "Leave")
     employee_name = leave.get("employee_name", "Employee")
 
-    if db_status == "admin_pending":
+    if db_status == "hr_pending":
         _notify_employee(
             employee_id,
-            "Leave Under Admin Review",
-            f'Your {leave_type} request has been approved by manager and is now under Admin review.',
+            "Leave Under HR Review",
+            f'Your {leave_type} request has been approved by manager and is now under HR review.',
             "leave_status_updated",
         )
         if _create_notif:
             try:
                 _create_notif(
-                    title="Leave Awaiting Admin Approval",
+                    title="Leave Awaiting HR Approval",
                     message=f"{employee_name}'s {leave_type} request approved by manager and pending your approval.",
-                    type_="leave_pending_admin",
-                    role="admin",
+                    type_="leave_pending_hr",
+                    role="hr",
                 )
             except Exception:
                 pass
@@ -641,8 +708,9 @@ async def hr_update_status(
     if role not in ("hr", "admin"):
         raise HTTPException(status_code=403, detail="HR access required")
 
-    if body.status not in (APPROVED, REJECTED):
-        raise HTTPException(status_code=400, detail="Status must be 'approved' or 'rejected'")
+    comment = (body.comment or "").strip()
+    if len(comment) < 3:
+        raise HTTPException(status_code=400, detail="Reason/comment is required (minimum 3 characters)")
 
     try:
         oid = ObjectId(leave_id)
@@ -655,9 +723,23 @@ async def hr_update_status(
 
     current_status = leave.get("status")
 
+    # Fetch applicant role to handle manager leaves bypass
+    applicant_role = "employee"
+    employee_id = leave.get("employee_id")
+    if employee_id and users_col is not None:
+        try:
+            oid = safe_object_id(employee_id)
+            emp = users_col.find_one({"_id": oid}) if oid else None
+            if not emp:
+                emp = users_col.find_one({"email": str(employee_id)})
+            if emp:
+                applicant_role = emp.get("role") or "employee"
+        except Exception:
+            pass
+
     if current_status == "hr_pending":
         if body.status == APPROVED:
-            db_status = "manager_pending"
+            db_status = "approved" if applicant_role == "manager" else "admin_pending"
         else:
             db_status = "rejected"
     elif current_status == "admin_pending":
@@ -678,7 +760,7 @@ async def hr_update_status(
     updates = {
         "status": db_status,
         "hr_reviewed_at": datetime.utcnow().isoformat(),
-        "hr_comment": body.comment,
+        "hr_comment": comment,
     }
     leaves_col.update_one({"_id": oid}, {"$set": updates})
 
@@ -686,20 +768,20 @@ async def hr_update_status(
     leave_type = leave.get("leave_type", "Leave")
     employee_name = leave.get("employee_name", "Employee")
 
-    if db_status == "manager_pending":
+    if db_status == "admin_pending":
         _notify_employee(
             employee_id,
-            "Leave Under Manager Review",
-            f'Your {leave_type} request has been approved by HR and is now under manager review.',
+            "Leave Under Admin Review",
+            f'Your {leave_type} request has been approved by HR and is now under Admin review.',
             "leave_status_updated",
         )
         if _create_notif:
             try:
                 _create_notif(
-                    title="New Leave Request",
-                    message=f"{employee_name} has applied for {leave_type} and is pending your approval.",
-                    type_="leave_pending_manager",
-                    role="manager",
+                    title="Leave Awaiting Admin Approval",
+                    message=f"{employee_name}'s {leave_type} request approved by HR and pending your approval.",
+                    type_="leave_pending_admin",
+                    role="admin",
                 )
             except Exception:
                 pass
@@ -710,15 +792,15 @@ async def hr_update_status(
             {"$inc": {"used": leave.get("days", 0), "remaining": -leave.get("days", 0)}},
             upsert=True,
         )
+        reviewer_name = "HR" if applicant_role == "manager" else "Admin"
         _notify_employee(
             employee_id,
             "Leave Request Approved",
-            f'Your {leave_type} request has been approved by Admin.',
+            f'Your {leave_type} request has been approved by {reviewer_name}.',
             "leave_approved",
         )
     elif db_status == "rejected":
         reviewer = "Admin" if current_status == "admin_pending" else "HR"
-        comment = body.comment or ""
         reason = f' Reason: {comment}' if comment else ''
         _notify_employee(
             employee_id,

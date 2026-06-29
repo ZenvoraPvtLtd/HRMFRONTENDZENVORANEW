@@ -57,8 +57,9 @@ export default function ApplyLeaveModal({ onClose, onSubmit, initialData, mode =
     try {
       await onSubmit({ leave_type: leaveType, duration_type: durationType, leave_date: fromDate, days, reason });
       onClose();
-    } catch {
-      setError('');
+    } catch (err) {
+      console.error("[ApplyLeaveModal] Submission failed:", err);
+      setError(err instanceof Error ? err.message : 'An error occurred while submitting.');
     } finally {
       setLoading(false);
     }

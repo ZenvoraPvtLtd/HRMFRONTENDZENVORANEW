@@ -91,7 +91,7 @@ export const hrNavSections: NavSection[] = [
           { to: "/hr-management/candidates", icon: <Users size={15} />, label: "Candidates" },
           { to: "/hr-management/candidate-screening", icon: <UserCheck size={15} />, label: "Candidate Screening" },
           { to: "/interview-modules", icon: <Video size={15} />, label: "Interview Modules" },
-          { to: "/ai-video-interview", icon: <Video size={15} />, label: "AI Video Interview" },
+          { to: "/hr-management/ai-interview", icon: <Video size={15} />, label: "AI Interview" },
           { to: "/whatsapp", icon: <MessageSquare size={15} />, label: "WhatsApp" },
           { to: "/ai-predictivity", icon: <BarChart3 size={15} />, label: "AI Predictivity" },
           { to: "/ai-analytics", icon: <BarChart3 size={15} />, label: "AI Analytics" },
@@ -100,9 +100,7 @@ export const hrNavSections: NavSection[] = [
           { to: "/hr-management/documents", icon: <FileText size={15} />, label: "Documents" },
           { to: "/hr-management/compliance", icon: <ShieldCheck size={15} />, label: "Compliance" },
           { to: "/hr-management/exit-management", icon: <UserX size={15} />, label: "Exit Management" },
-          // Module 07 — Resume Screening
-          { to: "/resume-screening", icon: <FileSearch size={15} />, label: "Resume Screening" },
-          { to: "/interview-dashboard", icon: <Video size={15} />, label: "Interview Dashboard" },
+
           // Salary, Offers & Reports
           { to: "/salary-slips", icon: <Briefcase size={15} />, label: "Salary Slips" },
           { to: "/offer-letters", icon: <FileText size={15} />, label: "Offer Letters" },
@@ -166,6 +164,9 @@ export const employeeNavSections: NavSection[] = [
       { to: "/dashboard/grievances", icon: <MessageSquare size={18} />, label: "My Grievances" },
       { to: "/dashboard/timesheet", icon: <Activity size={18} />, label: "Timesheet" },
       { to: "/dashboard/organization", icon: <Users size={18} />, label: "Organization" },
+      { to: "/dashboard/announcements", icon: <MessageSquare size={18} />, label: "Announcements" },
+      { to: "/dashboard/events", icon: <Calendar size={18} />, label: "Events" },
+      { to: "/dashboard/holiday-calendar", icon: <Calendar size={18} />, label: "Holiday Calendar" },
     ],
   },
 ];
@@ -200,6 +201,9 @@ export const managerNavSections: NavSection[] = [
           { to: "/manager/productivity", icon: <BarChart3 size={15} />, label: "Productivity" },
           { to: "/manager/projects", icon: <FolderKanban size={15} />, label: "Projects" },
           { to: "/manager/team-management", icon: <Users size={15} />, label: "Team Management" },
+          { to: "/manager/announcements", icon: <MessageSquare size={15} />, label: "Announcements" },
+          { to: "/manager/events", icon: <Calendar size={15} />, label: "Events" },
+          { to: "/manager/holiday-calendar", icon: <Calendar size={15} />, label: "Holiday Calendar" },
         ],
       },
     ],
@@ -214,15 +218,6 @@ export const adminNavSections: NavSection[] = [
     label: "",
     items: [
       { to: "/admin", icon: <LayoutDashboard size={18} />, label: "Dashboard", exact: true },
-      {
-        to: "/admin/sprint-board",
-        icon: <BarChart3 size={18} />,
-        label: "Sprint Board",
-        children: [
-          { to: "/admin/sprint-board", icon: <LayoutGrid size={15} />, label: "Boards" },
-          { to: "/admin/my-tasks", icon: <CheckSquare size={15} />, label: "Tasks" },
-        ],
-      },
      // { to: "/admin/leave", icon: <Clock3 size={18} />, label: "Leave" },
       {
         to: "/admin/users",
@@ -253,15 +248,13 @@ export const adminNavSections: NavSection[] = [
           { to: "/admin/performance-improvement-plan", icon: <TriangleAlert size={15} />, label: "PIP" },
           { to: "/admin/exit-management", icon: <UserX size={15} />, label: "Exit Management" },
           { to: "/admin/interview-modules", icon: <Video size={15} />, label: "Interview Modules" },
-          { to: "/admin/ai-video-interview", icon: <Video size={15} />, label: "AI Video Interview" },
+          { to: "/admin/recruitment/ai-interview", icon: <Video size={15} />, label: "AI Interview" },
           { to: "/admin/whatsapp", icon: <MessageSquare size={15} />, label: "WhatsApp" },
           { to: "/admin/ai-predictivity", icon: <BarChart3 size={15} />, label: "AI Predictivity" },
           { to: "/admin/ai-analytics", icon: <BarChart3 size={15} />, label: "AI Analytics" },
           { to: "/admin/candidates", icon: <Users size={15} />, label: "Candidates" },
           { to: "/admin/candidate-screening", icon: <UserCheck size={15} />, label: "Candidate Screening" },
-          // Module 07 — Resume Screening
-          { to: "/admin/resume-screening", icon: <FileSearch size={15} />, label: "Resume Screening" },
-          { to: "/admin/interview-dashboard", icon: <Video size={15} />, label: "Interview Dashboard" },
+
           // Salary, Offers & Reports
           { to: "/admin/salary-slips", icon: <Briefcase size={15} />, label: "Salary Slips" },
           { to: "/admin/offer-letters", icon: <FileText size={15} />, label: "Offer Letters" },
@@ -315,7 +308,7 @@ const Sidebar = ({
     "/manager/sprint-board": true,
     "/manager/tools": true,
     "/admin/sprint-board": false,
-    "/admin/employees": false,
+    "/admin/employees": true,
     "/admin/attendance": true,
     "/admin/users": false,
   });

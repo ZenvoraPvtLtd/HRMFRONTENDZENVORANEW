@@ -1,4 +1,4 @@
-﻿import type { ReactNode } from "react";
+import type { ReactNode } from "react";
 
 import {
   Download,
@@ -33,6 +33,7 @@ type LeaveRequest = {
   id: string;
   employee: string;
   employee_id?: string;
+  employee_role?: string;
   type: string;
   days: number;
   status: string;
@@ -49,7 +50,8 @@ const statusIcons: Record<string, ReactNode> = {
 };
 
 // Derive manager status from internal_status
-function getManagerStatus(ist?: string): "Approved" | "Rejected" | "Pending" {
+function getManagerStatus(ist?: string, employeeRole?: string): string {
+  if (employeeRole === "hr" || employeeRole === "manager") return "N/A";
   if (ist === "manager_approved" || ist === "approved" || ist === "rejected") return "Approved";
   if (ist === "manager_rejected") return "Rejected";
   return "Pending";
@@ -62,11 +64,22 @@ function getLeaveYear(date?: string) {
   return date.match(/\d{4}/)?.[0] || "";
 }
 
-function hrCanAct(status?: string) {
-  return status === "manager_approved";
+function canUserAct(internalStatus?: string, employeeRole?: string) {
+  const currentUserRole = localStorage.getItem("hr_userRole") || localStorage.getItem("userRole") || "hr";
+
+  if (currentUserRole === "admin") {
+    return internalStatus === "admin_pending";
+  }
+
+  // HR can approve Manager's requests at hr_pending stage, and Employee's requests at manager_approved stage
+  if (employeeRole === "manager") {
+    return internalStatus === "hr_pending";
+  }
+  return internalStatus === "manager_approved";
 }
 
-function getHrStatus(status?: string) {
+function getHrStatus(status?: string, employeeRole?: string): string {
+  if (employeeRole === "hr") return "N/A";
   if (status === "approved") return "Approved";
   if (status === "rejected") return "Rejected";
   return "Pending";
@@ -230,9 +243,13 @@ export default function ModernLeaveManagement() {
   };
 
   const confirmModal = async () => {
-    if (!modalReason.trim()) return;
+    const reason = modalReason.trim();
+    if (reason.length < 3) {
+      alert("Reason/comment must be at least 3 characters.");
+      return;
+    }
     setModalOpen(false);
-    await handleStatusChange(modalLeaveId, modalAction, modalReason.trim());
+    await handleStatusChange(modalLeaveId, modalAction, reason);
   };
 
   const exportCSV = () => {
@@ -440,7 +457,7 @@ export default function ModernLeaveManagement() {
             <tbody>
               {paginatedLeaves.map((leave) => {
                 const _ist = leave.internal_status;
-                const _canAct = hrCanAct(_ist);
+                const _canAct = canUserAct(_ist, leave.employee_role);
                 const _isApproved = _ist === "approved";
                 const _isRejected = _ist === "rejected";
                 return (
@@ -477,39 +494,7 @@ export default function ModernLeaveManagement() {
                         </div>
                       </div>
                     </td>
-                  <td className="px-5 py-4 text-right">
-  <div className="flex items-center justify-end gap-2">
-    <button
-      onClick={() => _canAct ? openModal(leave.id, "Approved", leave.employee, leave.type) : undefined}
-      disabled={!_canAct || submitting === leave.id}
-      className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-opacity"
-      style={
-        _isApproved
-          ? { background: "rgba(16,185,129,0.18)", color: "#10b981", border: "1px solid rgba(16,185,129,0.4)" }
-          : _canAct
-          ? { background: "rgba(16,185,129,0.12)", color: "#10b981", border: "1px solid rgba(16,185,129,0.25)", cursor: "pointer" }
-          : { background: "transparent", color: "var(--text-secondary)", border: "1px solid var(--border)", opacity: 0.4, cursor: "default" }
-      }
-    >
-      <CheckCircle2 size={13} /> Approve
-    </button>
-    <button
-      onClick={() => _canAct ? openModal(leave.id, "Rejected", leave.employee, leave.type) : undefined}
-      disabled={!_canAct || submitting === leave.id}
-      className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-opacity"
-      style={
-        _isRejected
-          ? { background: "rgba(239,68,68,0.18)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.4)" }
-          : _canAct
-          ? { background: "rgba(239,68,68,0.12)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.25)", cursor: "pointer" }
-          : { background: "transparent", color: "var(--text-secondary)", border: "1px solid var(--border)", opacity: 0.4, cursor: "default" }
-      }
-    >
-      <XCircle size={13} /> Reject
-    </button>
-</div>
-</td>
-<td className="px-5 py-4 text-sm" style={textSecondary}>
+                    <td className="px-5 py-4 text-sm" style={textSecondary}>
                       <div
                         className="px-3 py-1.5 rounded-xl text-xs font-medium inline-flex"
                         style={inputMuted}
@@ -549,7 +534,7 @@ export default function ModernLeaveManagement() {
 
                     <td className="px-5 py-4">
                       {(() => {
-                        const ms = getManagerStatus(leave.internal_status);
+                        const ms = getManagerStatus(leave.internal_status, leave.employee_role);
                         const color = ms === "Approved" ? "#10b981" : ms === "Rejected" ? "#ef4444" : "#f59e0b";
                         return <span className="inline-flex items-center gap-1 text-xs font-semibold" style={{ color }}>{ms}</span>;
                       })()}
@@ -557,7 +542,7 @@ export default function ModernLeaveManagement() {
 
                     <td className="px-5 py-4">
                       {(() => {
-                        const hs = getHrStatus(leave.internal_status);
+                        const hs = getHrStatus(leave.internal_status, leave.employee_role);
                         const color = hs === "Approved" ? "#10b981" : hs === "Rejected" ? "#ef4444" : "#f59e0b";
                         return <span className="inline-flex items-center gap-1 text-xs font-semibold" style={{ color }}>{hs}</span>;
                       })()}
@@ -629,7 +614,7 @@ export default function ModernLeaveManagement() {
       <div className="grid grid-cols-1 gap-4 lg:hidden">
         {paginatedLeaves.map((leave) => {
           const _mist = leave.internal_status;
-          const _mCanAct = hrCanAct(_mist);
+          const _mCanAct = canUserAct(_mist, leave.employee_role);
           const _mIsApproved = _mist === "approved";
           const _mIsRejected = _mist === "rejected";
           return (

@@ -779,8 +779,6 @@ useEffect(() => {
               { value: "", label: "Select your role" },
               { value: "admin", label: "Admin" },
               { value: "hr", label: "HR" },
-              { value: "manager", label: "Manager" },
-              { value: "employee", label: "Employee" },
             ]}
             buttonStyle={{ colorScheme: isDark ? "dark" : "light" }}
           />

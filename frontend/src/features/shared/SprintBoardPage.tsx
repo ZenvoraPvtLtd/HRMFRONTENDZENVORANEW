@@ -20,6 +20,12 @@ interface Sprint {
   created_at?: string;
 }
 
+type SprintTaskSummary = {
+  sprintId?: string;
+  sprint_id?: string;
+  status?: string;
+};
+
 function SprintCard({ sprint, onClick }: { sprint: Sprint; onClick: () => void }) {
   const title = sprint.name || sprint.title || "Sprint";
   const startDate = sprint.start_date
@@ -84,7 +90,12 @@ export default function SprintBoardPage() {
 
   const loadSprints = async () => {
     try {
-      const token = localStorage.getItem("accessToken") || "";
+      const token =
+        localStorage.getItem("accessToken") ||
+        localStorage.getItem("hr_accessToken") ||
+        localStorage.getItem("admin_accessToken") ||
+        localStorage.getItem("manager_accessToken") ||
+        "";
       const [sprintsRes, tasksRes] = await Promise.all([
         fetch(`${getApiBaseUrl()}/api/sprints`, {
           headers: { Authorization: `Bearer ${token}` }
