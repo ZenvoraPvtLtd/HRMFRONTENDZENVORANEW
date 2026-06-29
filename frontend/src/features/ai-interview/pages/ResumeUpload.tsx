@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { FileText } from "lucide-react";
 import { resumeApi } from "../services/resumeApi";
 import { useInterviewStore } from "../services/store";
 
@@ -37,7 +38,14 @@ export default function ResumeUpload() {
             Choose File
             <input type="file" hidden accept=".pdf,.docx,.doc" onChange={(e) => setFile(e.target.files?.[0] || null)} />
           </label>
-          {file && <p className="mt-4 text-sm text-slate-700">📄 {file.name} <span className="text-slate-400">({(file.size/1024).toFixed(1)} KB)</span></p>}
+          {file && (
+            <p className="mt-4 flex items-center justify-center gap-2 text-sm text-slate-700">
+              <FileText size={16} className="text-indigo-500" />
+              <span>
+                {file.name} <span className="text-slate-400">({(file.size / 1024).toFixed(1)} KB)</span>
+              </span>
+            </p>
+          )}
         </div>
 
         {err && <p className="text-red-600 text-sm mt-3">{err}</p>}

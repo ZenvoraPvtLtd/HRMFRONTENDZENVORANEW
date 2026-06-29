@@ -37,12 +37,14 @@ import RecruitmentTalentAcquisition from "../features/HRdashboard/RequirmentNTal
 import TimeSheetApprovals from "../features/HRdashboard/TimeSheetApprovals";
 import TimeSheetTracker from "../features/HRdashboard/TimeSheetTracker";
 import InterviewModules from "../features/HRdashboard/InterviewModules";
-import AIVideoInterview from "../features/HRdashboard/AIVideoInterview";
+// AI Video Interview removed
+// import AIVideoInterview from "../features/HRdashboard/AIVideoInterview";
 import WhatsAppIntegration from "../features/HRdashboard/WhatsAppIntegration";
 import AIPredictivity from "../features/HRdashboard/AIPredictivity";
 import AIAnalytics from "../features/HRdashboard/AIAnalytics";
 import CandidatesPage from "../features/HRdashboard/CandidatesPage";
 import CandidateScreeningPage from "../features/HRdashboard/CandidateScreeningPage";
+// AI interview pages removed
 import AIInterviewDashboard from "../features/ai-interview/pages/InterviewDashboard";
 import AICreateInterview from "../features/ai-interview/pages/CreateInterview";
 import AIInterviewHistory from "../features/ai-interview/pages/InterviewHistory";
@@ -53,12 +55,12 @@ import AIPreInterviewCheck from "../features/ai-interview/pages/PreInterviewChec
 import AIInterviewRoom from "../features/ai-interview/pages/InterviewRoom";
 import AIInterviewResult from "../features/ai-interview/pages/InterviewResult";
 
-// Module 07 — Resume Screening
-import ResumeScreening from "../features/module07/Resumescreening";
-import InterviewDashboard from "../features/module07/InterviewDashboard";
+// Module 07 — Resume Screening (removed)
+// import ResumeScreening from "../features/module07/Resumescreening";
+// import InterviewDashboard from "../features/module07/InterviewDashboard";
 
-// AI Video Interview Live Page (with instructions + live interview)
-import AIVideoInterviewPage from "../features/dashboard/AIVideoInterviewPage";
+// AI Video Interview Live Page (removed)
+// import AIVideoInterviewPage from "../features/dashboard/AIVideoInterviewPage";
 
 // New feature pages
 import SalarySlipPage from "../features/dashboard/SalarySlipPage";
@@ -228,6 +230,14 @@ const AppRoutes = () => (
         {/* HR AI */}
         <Route path="interview-modules" element={<InterviewModules />} />
         <Route path="hr-management/interview-modules" element={<InterviewModules />} />
+        <Route path="recruitment/ai-interview" element={<AIInterviewDashboard />} />
+        <Route path="recruitment/ai-interview/create" element={<AICreateInterview />} />
+        <Route path="recruitment/ai-interview/history" element={<AIInterviewHistory />} />
+        <Route path="recruitment/ai-interview/link/:id" element={<AIInterviewLink />} />
+        <Route path="hr-management/ai-interview" element={<AIInterviewDashboard />} />
+        <Route path="hr-management/ai-interview/create" element={<AICreateInterview />} />
+        <Route path="hr-management/ai-interview/history" element={<AIInterviewHistory />} />
+        <Route path="hr-management/ai-interview/link/:id" element={<AIInterviewLink />} />
 
         <Route path="whatsapp" element={<WhatsAppIntegration />} />
         <Route path="hr-management/whatsapp" element={<WhatsAppIntegration />} />
@@ -239,10 +249,7 @@ const AppRoutes = () => (
         <Route path="hr-management/candidates" element={<CandidatesPage />} />
         <Route path="candidate-screening" element={<CandidateScreeningPage />} />
         <Route path="hr-management/candidate-screening" element={<CandidateScreeningPage />} />
-        <Route path="recruitment/ai-interview" element={<AIInterviewDashboard />} />
-        <Route path="recruitment/ai-interview/create" element={<AICreateInterview />} />
-        <Route path="recruitment/ai-interview/history" element={<AIInterviewHistory />} />
-        <Route path="recruitment/ai-interview/link/:id" element={<AIInterviewLink />} />
+
 
 
 
@@ -376,9 +383,6 @@ const AppRoutes = () => (
         <Route path="users" element={<AdminUserManagement />} />
 
         {/* Shared */}
-        <Route path="sprint-board" element={<SprintBoardPage />} />
-        <Route path="sprint-board/:boardId" element={<SprintBoardDetailPage />} />
-        <Route path="my-tasks" element={<MyTasksPage />} />
         <Route path="leave" element={<LeavePage />} />
         <Route path="timesheet" element={<TimesheetPage />} />
         <Route path="organization" element={<OrganizationPage />} />
@@ -407,16 +411,17 @@ const AppRoutes = () => (
         <Route path="attendance-correction" element={<AttendanceCorrection />} />
         <Route path="attendance-management" element={<ManagerAttendancePage />} />
         <Route path="interview-modules" element={<InterviewModules />} />
+        <Route path="recruitment/ai-interview" element={<AIInterviewDashboard />} />
+        <Route path="recruitment/ai-interview/create" element={<AICreateInterview />} />
+        <Route path="recruitment/ai-interview/history" element={<AIInterviewHistory />} />
+        <Route path="recruitment/ai-interview/link/:id" element={<AIInterviewLink />} />
 
         <Route path="whatsapp" element={<WhatsAppIntegration />} />
         <Route path="ai-predictivity" element={<AIPredictivity />} />
         <Route path="ai-analytics" element={<AIAnalytics />} />
         <Route path="candidates" element={<CandidatesPage />} />
         <Route path="candidate-screening" element={<CandidateScreeningPage />} />
-        <Route path="recruitment/ai-interview" element={<AIInterviewDashboard />} />
-        <Route path="recruitment/ai-interview/create" element={<AICreateInterview />} />
-        <Route path="recruitment/ai-interview/history" element={<AIInterviewHistory />} />
-        <Route path="recruitment/ai-interview/link/:id" element={<AIInterviewLink />} />
+
 
 
         <Route path="salary-slips" element={<SalarySlipPage />} />
@@ -443,8 +448,14 @@ const AppRoutes = () => (
     {/* Fallback */}
     <Route path="*" element={<Navigate to="/login" replace />} />
 
-    {/* Standalone — AI Video Interview Live (outside layout, fullscreen) */}
-    <Route path="/interview/live" element={<AIVideoInterviewPage />} />
+
+
+    {/* AI Interview Candidate Routes */}
+    <Route path="/candidate/interview/:id" element={<AIResumeUpload />} />
+    <Route path="/candidate/interview/:id/analysis" element={<AIResumeAnalysis />} />
+    <Route path="/candidate/interview/:id/check" element={<AIPreInterviewCheck />} />
+    <Route path="/candidate/interview/:id/start" element={<AIInterviewRoom />} />
+    <Route path="/candidate/interview/:id/result" element={<AIInterviewResult />} />
 
     {/* Standalone — QR Attendance Scan (mobile-friendly, no auth required) */}
     <Route path="/qr-attendance" element={<QrAttendanceScanPage />} />

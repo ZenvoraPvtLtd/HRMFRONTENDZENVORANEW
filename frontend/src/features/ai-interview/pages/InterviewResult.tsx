@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { AlertTriangle, Check, AlertCircle, ArrowRight } from "lucide-react";
 import { interviewApi } from "../services/interviewApi";
 import { useInterviewStore } from "../services/store";
 import type { Result } from "../types/interview";
@@ -40,7 +41,9 @@ export default function InterviewResult() {
       <div className="max-w-5xl mx-auto space-y-6">
         {terminated && (
           <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-200 px-6 py-4 flex items-start gap-4 shadow-lg animate-pulse">
-            <span className="text-2xl mt-0.5">⚠️</span>
+            <span className="mt-0.5">
+              <AlertTriangle className="text-rose-400" size={24} />
+            </span>
             <div>
               <h3 className="font-bold text-rose-400 text-lg">Interview Session Terminated</h3>
               <p className="text-sm mt-1 text-rose-300">
@@ -80,9 +83,9 @@ export default function InterviewResult() {
 
         {/* Analysis */}
         <div className="grid md:grid-cols-3 gap-4">
-          <Panel title="Strengths" items={r.strengths} icon="✓" tone="emerald" />
-          <Panel title="Areas to Improve" items={r.weaknesses} icon="!" tone="rose" />
-          <Panel title="Suggestions" items={r.suggestions} icon="→" tone="indigo" />
+          <Panel title="Strengths" items={r.strengths} icon={<Check size={16} />} tone="emerald" />
+          <Panel title="Areas to Improve" items={r.weaknesses} icon={<AlertCircle size={16} />} tone="rose" />
+          <Panel title="Suggestions" items={r.suggestions} icon={<ArrowRight size={16} />} tone="indigo" />
         </div>
 
         <div className="flex gap-3 justify-end pt-2">
@@ -116,7 +119,7 @@ function Metric({ label, value, accent }: { label: string; value: number; accent
   );
 }
 
-function Panel({ title, items, icon, tone }: { title: string; items: string[]; icon: string; tone: string }) {
+function Panel({ title, items, icon, tone }: { title: string; items: string[]; icon: React.ReactNode; tone: string }) {
   const toneClasses: Record<string, string> = {
     emerald: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
     rose: "text-rose-400 bg-rose-500/10 border-rose-500/20",
