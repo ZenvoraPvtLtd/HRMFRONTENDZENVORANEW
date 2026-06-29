@@ -45,7 +45,21 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status !== 401 || originalRequest._retry) {
+    if (error.response?.status === 401 && !(originalRequest.url?.includes('/api/auth/login'))) {
+      // Clear auth tokens and redirect to login page
+      const tokenKeys = [
+        "accessToken", "refreshToken",
+        "admin_accessToken", "admin_refreshToken",
+        "hr_accessToken", "hr_refreshToken",
+        "candidate_accessToken", "candidate_refreshToken",
+        "manager_accessToken", "manager_refreshToken",
+      ];
+      tokenKeys.forEach((key) => localStorage.removeItem(key));
+      sessionStorage.setItem("suspensionMessage", "Session expired. Please log in again.");
+      window.location.replace("/login");
+      return Promise.reject(error);
+    }
+    if (error.response?.status === 403 || originalRequest._retry) {
       return Promise.reject(error);
     }
 
