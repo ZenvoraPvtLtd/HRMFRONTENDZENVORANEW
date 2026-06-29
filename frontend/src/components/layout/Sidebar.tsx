@@ -317,7 +317,7 @@ const Sidebar = ({
     "/manager/sprint-board": true,
     "/manager/tools": true,
     "/admin/sprint-board": false,
-    "/admin/employees": false,
+    "/admin/employees": true,
     "/admin/attendance": true,
     "/admin/users": false,
   });
