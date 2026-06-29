@@ -8,6 +8,18 @@ from bson import ObjectId
 from ..db.database import get_collection
 
 
+def safe_object_id(val: Any) -> Any:
+    if not val:
+        return None
+    val_str = str(val)
+    if len(val_str) == 24 and all(c in "0123456789abcdefABCDEF" for c in val_str):
+        try:
+            return ObjectId(val_str)
+        except Exception:
+            return val_str
+    return val_str
+
+
 def create_notification(
     title: str,
     message: str,
@@ -16,7 +28,6 @@ def create_notification(
     recipient_id: Optional[str] = None,
 ) -> None:
     notifications = get_collection("notifications")
-    now = dt.datetime.utcnow() if False else None
     from datetime import datetime as _dt
 
     now = _dt.utcnow()
@@ -24,15 +35,16 @@ def create_notification(
     if role:
         doc["role"] = role
     if recipient_id:
-        doc["recipientId"] = ObjectId(recipient_id)
+        doc["recipientId"] = safe_object_id(recipient_id)
     notifications.insert_one(doc)
 
 
 def get_notifications_for_user(user_id: str, user_role: Optional[str]) -> List[Dict[str, Any]]:
     notifications = get_collection("notifications")
+    recipient_filter = safe_object_id(user_id)
     query: Dict[str, Any] = {
         "$or": [
-            {"recipientId": ObjectId(user_id)},
+            {"recipientId": recipient_filter},
         ]
     }
     if user_role:
@@ -64,16 +76,17 @@ def mark_notification_as_read(notification_id: str, user_id: str) -> bool:
         return False
     read_by = n.get("readBy") or []
     if not any(str(x) == str(user_id) for x in read_by):
-        read_by.append(ObjectId(user_id))
+        read_by.append(safe_object_id(user_id))
         notifications.update_one({"_id": ObjectId(notification_id)}, {"$set": {"readBy": read_by}})
     return True
 
 
 def mark_all_as_read(user_id: str, user_role: Optional[str]) -> int:
     notifications = get_collection("notifications")
+    recipient_filter = safe_object_id(user_id)
     query: Dict[str, Any] = {
         "$or": [
-            {"recipientId": ObjectId(user_id)},
+            {"recipientId": recipient_filter},
         ]
     }
     if user_role:
@@ -86,7 +99,7 @@ def mark_all_as_read(user_id: str, user_role: Optional[str]) -> int:
         read_by = n.get("readBy") or []
         if any(str(x) == str(user_id) for x in read_by):
             continue
-        read_by.append(ObjectId(user_id))
+        read_by.append(safe_object_id(user_id))
         notifications.update_one({"_id": n["_id"]}, {"$set": {"readBy": read_by}})
         updated += 1
     return updated

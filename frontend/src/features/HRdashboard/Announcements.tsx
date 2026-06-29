@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Edit3, Plus, Save, Trash2, X } from "lucide-react";
 import { useTopHeaderSearch } from "../../hooks/useTopHeaderSearch";
 import {
@@ -10,12 +10,17 @@ import {
   textPrimary,
   textSecondary,
 } from "./hrTheme";
+import {
+  announcementApi,
+  mapApiToFrontend,
+  mapFrontendToApi,
+} from "../../services/announcementApi";
 
 type Priority = "High" | "Medium" | "Low";
 type AnnouncementStatus = "Published" | "Draft";
 
 type Announcement = {
-  id: number;
+  id: number | string;
   title: string;
   message: string;
   priority: Priority;
@@ -72,10 +77,31 @@ const emptyAnnouncement: Omit<Announcement, "id"> = {
 
 function Announcements() {
   const [search] = useTopHeaderSearch();
-  const [announcements, setAnnouncements] = useState(initialAnnouncements);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [showModal, setShowModal] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | number | null>(null);
   const [draft, setDraft] = useState(emptyAnnouncement);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  async function loadAnnouncements() {
+    try {
+      setIsLoading(true);
+      setError("");
+      const data = await announcementApi.fetchAnnouncements();
+      const formatted = data.map(mapApiToFrontend);
+      setAnnouncements(formatted);
+    } catch (err) {
+      console.error("Failed to load announcements:", err);
+      setError("Failed to load announcements from database.");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    void loadAnnouncements();
+  }, []);
 
   const filteredAnnouncements = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -115,29 +141,50 @@ function Announcements() {
     setShowModal(true);
   };
 
-  const saveAnnouncement = () => {
+  const saveAnnouncement = async () => {
     if (!draft.title.trim() || !draft.message.trim()) return;
 
-    if (editingId) {
-      setAnnouncements((prev) =>
-        prev.map((announcement) =>
-          announcement.id === editingId
-            ? { ...announcement, ...draft }
-            : announcement,
-        ),
-      );
-    } else {
-      setAnnouncements((prev) => [{ id: Date.now(), ...draft }, ...prev]);
-    }
+    try {
+      setError("");
+      const apiPayload = mapFrontendToApi(draft);
+      if (editingId) {
+        const response = await announcementApi.updateAnnouncement(String(editingId), apiPayload);
+        const updated = mapApiToFrontend(response.announcement);
+        setAnnouncements((prev) =>
+          prev.map((announcement) =>
+            announcement.id === editingId
+              ? { ...announcement, ...updated }
+              : announcement,
+          ),
+        );
+      } else {
+        const response = await announcementApi.createAnnouncement(apiPayload);
+        const created = mapApiToFrontend(response.announcement);
+        setAnnouncements((prev) => [created, ...prev]);
+      }
 
-    setShowModal(false);
-    setEditingId(null);
-    setDraft(emptyAnnouncement);
+      setShowModal(false);
+      setEditingId(null);
+      setDraft(emptyAnnouncement);
+    } catch (err) {
+      console.error("Failed to save announcement:", err);
+      setError("Failed to save announcement. Please try again.");
+    }
   };
 
   return (
     <div className={hrPageWrap}>
       <div className="max-w-7xl mx-auto">
+        {error && (
+          <div className="mb-4 rounded-lg px-4 py-3 text-sm font-medium" style={{ background: "rgba(239, 68, 68, 0.12)", color: "#ef4444", border: "1px solid rgba(239, 68, 68, 0.25)" }}>
+            {error}
+          </div>
+        )}
+        {isLoading && (
+          <div className="mb-4 rounded-lg px-4 py-3 text-sm font-medium" style={{ background: "rgba(59, 130, 246, 0.12)", color: "#3b82f6", border: "1px solid rgba(59, 130, 246, 0.25)" }}>
+            Loading announcements...
+          </div>
+        )}
         <div className="flex justify-end mb-4">
           <button
             onClick={openCreateModal}
@@ -174,11 +221,18 @@ function Announcements() {
                     <Edit3 size={14} />
                   </button>
                   <button
-                    onClick={() =>
-                      setAnnouncements((prev) =>
-                        prev.filter((item) => item.id !== announcement.id),
-                      )
-                    }
+                    onClick={async () => {
+                      try {
+                        setError("");
+                        await announcementApi.deleteAnnouncement(String(announcement.id));
+                        setAnnouncements((prev) =>
+                          prev.filter((item) => item.id !== announcement.id),
+                        );
+                      } catch (err) {
+                        console.error("Failed to delete announcement:", err);
+                        setError("Failed to delete announcement.");
+                      }
+                    }}
                     className="w-8 h-8 rounded-lg inline-flex items-center justify-center"
                     style={getStatusStyle("Rejected")}
                     aria-label={`Delete ${announcement.title}`}

@@ -100,11 +100,31 @@ export default function CreateSprintModal({ onClose, onCreated }: Props) {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
             <div>
               <label style={labelStyle}>Start Date</label>
-              <input type="datetime-local" style={inputStyle} value={form.start_date} onChange={set("start_date")} />
+              <input
+                type="date"
+                style={inputStyle}
+                value={form.start_date}
+                min={new Date().toISOString().split("T")[0]}
+                onChange={(e) => {
+                  const newStart = e.target.value;
+                  setForm((p) => ({
+                    ...p,
+                    start_date: newStart,
+                    // If end_date is before the new start_date, reset it
+                    end_date: p.end_date && p.end_date < newStart ? "" : p.end_date,
+                  }));
+                }}
+              />
             </div>
             <div>
               <label style={labelStyle}>End Date</label>
-              <input type="datetime-local" style={inputStyle} value={form.end_date} onChange={set("end_date")} />
+              <input
+                type="date"
+                style={inputStyle}
+                value={form.end_date}
+                min={form.start_date || new Date().toISOString().split("T")[0]}
+                onChange={set("end_date")}
+              />
             </div>
           </div>
 

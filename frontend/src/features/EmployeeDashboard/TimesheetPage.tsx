@@ -193,6 +193,7 @@ const isClockedIn = localStorage.getItem(clockedInKey) === "true";
               ref={dateInputRef}
               type="date"
               value={formatInputDate(weekStart)}
+              min={formatInputDate(new Date())}
               onChange={(event) => {
                 if (event.target.value) {
                   setWeekStart(new Date(`${event.target.value}T00:00:00`));
