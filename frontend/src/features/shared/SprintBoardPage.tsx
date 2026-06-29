@@ -90,7 +90,12 @@ export default function SprintBoardPage() {
 
   const loadSprints = async () => {
     try {
-      const token = localStorage.getItem("accessToken") || "";
+      const token =
+        localStorage.getItem("accessToken") ||
+        localStorage.getItem("hr_accessToken") ||
+        localStorage.getItem("admin_accessToken") ||
+        localStorage.getItem("manager_accessToken") ||
+        "";
       const [sprintsRes, tasksRes] = await Promise.all([
         fetch(`${getApiBaseUrl()}/api/sprints`, {
           headers: { Authorization: `Bearer ${token}` }

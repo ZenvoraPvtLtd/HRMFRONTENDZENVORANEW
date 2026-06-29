@@ -49,11 +49,11 @@ import AIInterviewDashboard from "../features/ai-interview/pages/InterviewDashbo
 import AICreateInterview from "../features/ai-interview/pages/CreateInterview";
 import AIInterviewHistory from "../features/ai-interview/pages/InterviewHistory";
 import AIInterviewLink from "../features/ai-interview/pages/InterviewLink";
-// import AIResumeUpload from "../features/ai-interview/pages/ResumeUpload";
-// import AIResumeAnalysis from "../features/ai-interview/pages/ResumeAnalysis";
-// import AIPreInterviewCheck from "../features/ai-interview/pages/PreInterviewCheck";
-// import AIInterviewRoom from "../features/ai-interview/pages/InterviewRoom";
-// import AIInterviewResult from "../features/ai-interview/pages/InterviewResult";
+import AIResumeUpload from "../features/ai-interview/pages/ResumeUpload";
+import AIResumeAnalysis from "../features/ai-interview/pages/ResumeAnalysis";
+import AIPreInterviewCheck from "../features/ai-interview/pages/PreInterviewCheck";
+import AIInterviewRoom from "../features/ai-interview/pages/InterviewRoom";
+import AIInterviewResult from "../features/ai-interview/pages/InterviewResult";
 
 // Module 07 — Resume Screening (removed)
 // import ResumeScreening from "../features/module07/Resumescreening";
@@ -234,6 +234,10 @@ const AppRoutes = () => (
         <Route path="recruitment/ai-interview/create" element={<AICreateInterview />} />
         <Route path="recruitment/ai-interview/history" element={<AIInterviewHistory />} />
         <Route path="recruitment/ai-interview/link/:id" element={<AIInterviewLink />} />
+        <Route path="hr-management/ai-interview" element={<AIInterviewDashboard />} />
+        <Route path="hr-management/ai-interview/create" element={<AICreateInterview />} />
+        <Route path="hr-management/ai-interview/history" element={<AIInterviewHistory />} />
+        <Route path="hr-management/ai-interview/link/:id" element={<AIInterviewLink />} />
 
         <Route path="whatsapp" element={<WhatsAppIntegration />} />
         <Route path="hr-management/whatsapp" element={<WhatsAppIntegration />} />
@@ -379,9 +383,6 @@ const AppRoutes = () => (
         <Route path="users" element={<AdminUserManagement />} />
 
         {/* Shared */}
-        <Route path="sprint-board" element={<SprintBoardPage />} />
-        <Route path="sprint-board/:boardId" element={<SprintBoardDetailPage />} />
-        <Route path="my-tasks" element={<MyTasksPage />} />
         <Route path="leave" element={<LeavePage />} />
         <Route path="timesheet" element={<TimesheetPage />} />
         <Route path="organization" element={<OrganizationPage />} />
@@ -448,6 +449,13 @@ const AppRoutes = () => (
     <Route path="*" element={<Navigate to="/login" replace />} />
 
 
+
+    {/* AI Interview Candidate Routes */}
+    <Route path="/candidate/interview/:id" element={<AIResumeUpload />} />
+    <Route path="/candidate/interview/:id/analysis" element={<AIResumeAnalysis />} />
+    <Route path="/candidate/interview/:id/check" element={<AIPreInterviewCheck />} />
+    <Route path="/candidate/interview/:id/start" element={<AIInterviewRoom />} />
+    <Route path="/candidate/interview/:id/result" element={<AIInterviewResult />} />
 
     {/* Standalone — QR Attendance Scan (mobile-friendly, no auth required) */}
     <Route path="/qr-attendance" element={<QrAttendanceScanPage />} />

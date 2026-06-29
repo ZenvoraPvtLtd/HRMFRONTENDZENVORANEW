@@ -30,13 +30,12 @@ router = APIRouter()
 def create_interview(data: InterviewCreate, db: Session = Depends(get_db)):
     iv = Interview(**data.model_dump())
     db.add(iv); db.commit(); db.refresh(iv)
-    # Live interview questions are generated dynamically through Hugging Face.
-    # Keep placeholder rows only so clients can preserve count/order without
-    # showing legacy template questions.
     for i in range(iv.question_count):
         db.add(Question(interview_id=iv.id, question_text="", order=i))
     db.commit()
     return iv
+
+
 
 @router.get("/list", response_model=List[InterviewOut])
 def list_interviews(db: Session = Depends(get_db)):

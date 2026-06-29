@@ -45,13 +45,15 @@ def init_mongo(mongo_uri: str, database_name: Optional[str] = None) -> None:
         for host in ("localhost", "127.0.0.1", "::1")
     )
     kwargs: dict = {
-        "serverSelectionTimeoutMS": 10000,
-        "connectTimeoutMS": 10000,
+        "serverSelectionTimeoutMS": 2000,
+        "connectTimeoutMS": 2000,
         "maxPoolSize": 50,
     }
     if not is_local:
         import certifi
         kwargs["tlsCAFile"] = certifi.where()
+        kwargs["tlsAllowInvalidCertificates"] = True
+
 
     _client = pymongo.MongoClient(mongo_uri, **kwargs)
     db_name = database_name or _infer_database_name(mongo_uri)

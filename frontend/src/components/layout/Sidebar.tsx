@@ -91,6 +91,7 @@ export const hrNavSections: NavSection[] = [
           { to: "/hr-management/candidates", icon: <Users size={15} />, label: "Candidates" },
           { to: "/hr-management/candidate-screening", icon: <UserCheck size={15} />, label: "Candidate Screening" },
           { to: "/interview-modules", icon: <Video size={15} />, label: "Interview Modules" },
+          { to: "/hr-management/ai-interview", icon: <Video size={15} />, label: "AI Interview" },
           { to: "/whatsapp", icon: <MessageSquare size={15} />, label: "WhatsApp" },
           { to: "/ai-predictivity", icon: <BarChart3 size={15} />, label: "AI Predictivity" },
           { to: "/ai-analytics", icon: <BarChart3 size={15} />, label: "AI Analytics" },
@@ -217,15 +218,6 @@ export const adminNavSections: NavSection[] = [
     label: "",
     items: [
       { to: "/admin", icon: <LayoutDashboard size={18} />, label: "Dashboard", exact: true },
-      {
-        to: "/admin/sprint-board",
-        icon: <BarChart3 size={18} />,
-        label: "Sprint Board",
-        children: [
-          { to: "/admin/sprint-board", icon: <LayoutGrid size={15} />, label: "Boards" },
-          { to: "/admin/my-tasks", icon: <CheckSquare size={15} />, label: "Tasks" },
-        ],
-      },
      // { to: "/admin/leave", icon: <Clock3 size={18} />, label: "Leave" },
       {
         to: "/admin/users",
@@ -256,6 +248,7 @@ export const adminNavSections: NavSection[] = [
           { to: "/admin/performance-improvement-plan", icon: <TriangleAlert size={15} />, label: "PIP" },
           { to: "/admin/exit-management", icon: <UserX size={15} />, label: "Exit Management" },
           { to: "/admin/interview-modules", icon: <Video size={15} />, label: "Interview Modules" },
+          { to: "/admin/recruitment/ai-interview", icon: <Video size={15} />, label: "AI Interview" },
           { to: "/admin/whatsapp", icon: <MessageSquare size={15} />, label: "WhatsApp" },
           { to: "/admin/ai-predictivity", icon: <BarChart3 size={15} />, label: "AI Predictivity" },
           { to: "/admin/ai-analytics", icon: <BarChart3 size={15} />, label: "AI Analytics" },

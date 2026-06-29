@@ -22,7 +22,7 @@ import TimeSheetTracker from "../../features/HRdashboard/TimeSheetTracker";
 import TrainingNDevlopment from "../../features/HRdashboard/TrainingNDevlopment";
 import AttendanceManagement from "../../features/HRdashboard/AttendanceManagement";
 import InterviewModules from "../../features/HRdashboard/InterviewModules";
-// import AIVideoInterview from "../../features/HRdashboard/AIVideoInterview"; // removed
+import AIVideoInterview from "../../features/HRdashboard/AIVideoInterview";
 import WhatsAppIntegration from "../../features/HRdashboard/WhatsAppIntegration";
 import AIPredictivity from "../../features/HRdashboard/AIPredictivity";
 import AIAnalytics from "../../features/HRdashboard/AIAnalytics";
