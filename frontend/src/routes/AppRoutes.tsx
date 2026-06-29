@@ -85,6 +85,7 @@ import MyPerformancePage from "../features/shared/MyPerformancePage";
 import MyGrievancesPage from "../features/shared/MyGrievancesPage";
 import EmployeeEventsPage from "../features/shared/EmployeeEventsPage";
 import EmployeeAnnouncementsPage from "../features/shared/EmployeeAnnouncementsPage";
+import EmployeePayslipsPage from "../features/shared/EmployeePayslipsPage";
 
 // Auth
 import ForgotPassword from "../pages/auth/ForgotPassword";
@@ -236,6 +237,9 @@ const AppRoutes = () => (
         <Route path="interview-dashboard" element={<InterviewDashboard />} />
         <Route path="hr-management/interview-dashboard" element={<InterviewDashboard />} />
 
+        {/* Payslips */}
+        <Route path="payslips" element={<EmployeePayslipsPage />} />
+
         {/* Salary & Offer Letters */}
         <Route path="salary-slips" element={<SalarySlipPage />} />
         <Route path="hr-management/salary-slips" element={<SalarySlipPage />} />
@@ -285,6 +289,7 @@ const AppRoutes = () => (
         <Route path="grievances" element={<MyGrievancesPage />} />
         <Route path="events" element={<EmployeeEventsPage />} />
         <Route path="announcements" element={<EmployeeAnnouncementsPage />} />
+        <Route path="payslips" element={<EmployeePayslipsPage />} />
         <Route path="attendance" element={<Navigate to="timesheet" replace />} />
 
         <Route
@@ -321,6 +326,7 @@ const AppRoutes = () => (
         <Route path="projects" element={<ProjectsPages />} />
         <Route path="projects/create" element={<CreateProjectPage />} />
         <Route path="team-management" element={<ManagerTeamManagement />} />
+        <Route path="payslips" element={<EmployeePayslipsPage />} />
 
         <Route
           path="chatbot"

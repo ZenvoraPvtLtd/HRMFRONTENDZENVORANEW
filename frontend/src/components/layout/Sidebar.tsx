@@ -69,6 +69,7 @@ export const hrNavSections: NavSection[] = [
       },
       { to: "/leave", icon: <Clock3 size={18} />, label: "Leave" },
       { to: "/timesheet", icon: <Activity size={18} />, label: "Timesheet" },
+      { to: "/payslips", icon: <FileText size={18} />, label: "Payslips" },
       { to: "/organization", icon: <Users size={18} />, label: "Organization" },
       {
         to: "/hr-management",
@@ -170,6 +171,7 @@ export const employeeNavSections: NavSection[] = [
       { to: "/dashboard/my-pip", icon: <TriangleAlert size={18} />, label: "My PIP" },
       { to: "/dashboard/grievances", icon: <MessageSquare size={18} />, label: "My Grievances" },
       { to: "/dashboard/timesheet", icon: <Activity size={18} />, label: "Timesheet" },
+      { to: "/dashboard/payslips", icon: <FileText size={18} />, label: "Payslips" },
       { to: "/dashboard/organization", icon: <Users size={18} />, label: "Organization" },
     ],
   },
@@ -194,6 +196,7 @@ export const managerNavSections: NavSection[] = [
       },
       { to: "/manager/leave", icon: <Clock3 size={18} />, label: "Leave" },
       { to: "/manager/timesheet", icon: <Activity size={18} />, label: "Timesheet" },
+      { to: "/manager/payslips", icon: <FileText size={18} />, label: "Payslips" },
       { to: "/manager/organization", icon: <Users size={18} />, label: "Organization" },
       {
         to: "/manager/tools",

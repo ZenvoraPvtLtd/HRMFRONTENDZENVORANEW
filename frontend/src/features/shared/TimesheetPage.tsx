@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 
 import {
   ChevronLeft,
@@ -540,6 +541,10 @@ function useIsMobile() {
 export default function TimesheetPage() {
   const { isDark } = useTheme();
   const isMobile = useIsMobile();
+  // Scope On-site re-check-in restriction to the Employee Dashboard only.
+  // HR/Manager/Admin routes never start with "/dashboard".
+  const location = useLocation();
+  const isEmployeeDashboard = location.pathname.startsWith("/dashboard");
   const initialClock = readWorkClock("Remote (WFH)");
 
   // Clock state
@@ -775,11 +780,85 @@ export default function TimesheetPage() {
     };
   }, [onBreak, workMode]);
 
+  // Derived calendar state — must be declared before the face auto clock-in
+  // useEffect because todayOnsiteCompleted appears in that effect's deps array.
+  // Referencing a const before its declaration is a TDZ error that crashes render.
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  const weekCells = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(weekStart);
+    d.setDate(d.getDate() + i);
+    return d;
+  });
+  const calendarLogs = useMemo(() => {
+    const generated: Record<string, DayLog> = { ...logs };
+
+    if (clockInAt) {
+      const liveKey = toKey(clockInAt);
+      const existing = generated[liveKey];
+      generated[liveKey] = {
+        date: liveKey,
+        status: existing?.status ?? statusFromClockIn(clockInAt, workMode),
+        mode: workMode,
+        clockIn: clockInAt,
+        clockOut: existing?.clockOut ?? null,
+        sessions: existing?.sessions?.length
+          ? existing.sessions
+          : [{ start: clockInAt, end: existing?.clockOut ?? null }],
+        breaks: existing?.breaks ?? [],
+        location: existing?.location ?? attendanceLocation,
+      };
+    }
+
+    const addDay = (date: Date) => {
+      const key = toKey(date);
+      if (generated[key]) return;
+
+      if (isFutureDate(date, today)) return;
+
+      if (isSundayDate(date)) {
+        generated[key] = emptyDayLog(key, "weekend");
+        return;
+      }
+
+      if (isPastDate(date, today) || isSameDay(date, today)) {
+        generated[key] = emptyDayLog(key, "absent");
+      }
+    };
+
+    for (let day = 1; day <= daysInMonth; day += 1) {
+      addDay(new Date(calYear, calMonth, day));
+    }
+
+    weekCells.forEach(addDay);
+    return generated;
+  }, [
+    attendanceLocation,
+    calMonth,
+    calYear,
+    clockInAt,
+    daysInMonth,
+    logs,
+    today,
+    weekCells,
+    workMode,
+  ]);
+  const todayKey = toKey(today);
+  const todayLog = calendarLogs[todayKey] ?? null;
+  // True only on the Employee Dashboard when the employee has both clocked in
+  // AND clocked out today using On-site mode. Automatically false the next day
+  // (clockOut stays null for a new day) and false for Remote/Hybrid sessions.
+  const todayOnsiteCompleted =
+    isEmployeeDashboard &&
+    todayLog?.mode === "On-site" &&
+    !!todayLog?.clockOut;
+
   // ── Face auto clock-in ──────────────────────────────────────────────────────
   useEffect(() => {
     const handleFaceClockIn = async (e: Event) => {
       // Block only if already clocked in AND not yet clocked out
       if (clockedIn && !clockedOut) return;
+      // Block face-recognition On-site re-check-in when today's session is done
+      if (clockInModalMode === "On-site" && todayOnsiteCompleted) return;
 
       // Use the location that was already verified by the geofence check
       // in AttendancePage — no need to re-check geofence here.
@@ -840,7 +919,7 @@ export default function TimesheetPage() {
     return () => {
       window.removeEventListener(FACE_AUTO_CLOCK_IN_EVENT, handleFaceClockIn);
     };
-  }, [clockedIn, clockedOut, clockInModalMode]);
+  }, [clockedIn, clockedOut, clockInModalMode, todayOnsiteCompleted]);
 
   // ── Face auto clock-out ─────────────────────────────────────────────────────
   useEffect(() => {
@@ -990,6 +1069,9 @@ export default function TimesheetPage() {
 
   // ── Clock In ────────────────────────────────────────────────────────────────
   const handleClockIn = async () => {
+    // Safety net: block On-site re-check-in after today's On-site session is done.
+    // The UI already prevents reaching here, but guard defensively.
+    if (clockInModalMode === "On-site" && todayOnsiteCompleted) return;
     setGeofenceError(null);
     setLocationCheckLoading(true);
     setLocationStatus("Checking your location...");
@@ -1160,76 +1242,12 @@ export default function TimesheetPage() {
   // Build calendar cells
   const firstDow = new Date(calYear, calMonth, 1).getDay();
   const mondayOffset = (firstDow + 6) % 7;
-  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
   const calCells: (number | null)[] = [
     ...Array(mondayOffset).fill(null),
     ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
   ];
 
-  // Week cells (Mon–Sun of current week)
-  const weekCells = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(weekStart);
-    d.setDate(d.getDate() + i);
-    return d;
-  });
-
-  const calendarLogs = useMemo(() => {
-    const generated: Record<string, DayLog> = { ...logs };
-
-    if (clockInAt) {
-      const liveKey = toKey(clockInAt);
-      const existing = generated[liveKey];
-      generated[liveKey] = {
-        date: liveKey,
-        status: existing?.status ?? statusFromClockIn(clockInAt, workMode),
-        mode: workMode,
-        clockIn: clockInAt,
-        clockOut: existing?.clockOut ?? null,
-        sessions: existing?.sessions?.length
-          ? existing.sessions
-          : [{ start: clockInAt, end: existing?.clockOut ?? null }],
-        breaks: existing?.breaks ?? [],
-        location: existing?.location ?? attendanceLocation,
-      };
-    }
-
-    const addDay = (date: Date) => {
-      const key = toKey(date);
-      if (generated[key]) return;
-
-      if (isFutureDate(date, today)) return;
-
-      if (isSundayDate(date)) {
-        generated[key] = emptyDayLog(key, "weekend");
-        return;
-      }
-
-      if (isPastDate(date, today) || isSameDay(date, today)) {
-        generated[key] = emptyDayLog(key, "absent");
-      }
-    };
-
-    for (let day = 1; day <= daysInMonth; day += 1) {
-      addDay(new Date(calYear, calMonth, day));
-    }
-
-    weekCells.forEach(addDay);
-    return generated;
-  }, [
-    attendanceLocation,
-    calMonth,
-    calYear,
-    clockInAt,
-    daysInMonth,
-    logs,
-    today,
-    weekCells,
-    workMode,
-  ]);
-
   const selectedLog = selectedDay ? (calendarLogs[selectedDay] ?? null) : null;
-  const todayKey = toKey(today);
-  const todayLog = calendarLogs[todayKey] ?? null;
   const todayAttendance = getTodayAttendanceBadge(
     clockInAt,
     workMode,
@@ -1583,26 +1601,50 @@ export default function TimesheetPage() {
             style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}
           >
             {!clockedIn && (
-              <button
-                onClick={() => {
-                  setGeofenceError(null);
-                  setShowClockInModal(true);
-                }}
-                style={{
-                  ...accentBtn,
-                  padding: "0.875rem",
-                  borderRadius: "0.75rem",
-                  fontSize: "0.95rem",
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "0.5rem",
-                }}
-              >
-                <LogIn size={18} /> Clock In
-              </button>
+              todayOnsiteCompleted && clockInModalMode === "On-site" ? (
+                /* On-site session already completed today — show info instead of button */
+                <div
+                  style={{
+                    padding: "0.875rem",
+                    borderRadius: "0.75rem",
+                    background: "rgba(239,68,68,0.07)",
+                    border: "1px solid rgba(239,68,68,0.2)",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: "0.4rem",
+                    textAlign: "center",
+                  }}
+                >
+                  <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#ef4444" }}>
+                    On-Site Attendance Complete
+                  </span>
+                  <span style={{ fontSize: "0.72rem", color: "var(--text-secondary)", lineHeight: 1.5 }}>
+                    You have already completed today's On-Site attendance. You can check in again tomorrow.
+                  </span>
+                </div>
+              ) : (
+                <button
+                  onClick={() => {
+                    setGeofenceError(null);
+                    setShowClockInModal(true);
+                  }}
+                  style={{
+                    ...accentBtn,
+                    padding: "0.875rem",
+                    borderRadius: "0.75rem",
+                    fontSize: "0.95rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "0.5rem",
+                  }}
+                >
+                  <LogIn size={18} /> Clock In
+                </button>
+              )
             )}
             {/* Break Buttons with order enforcement */}
             {clockedIn && !clockedOut && !onBreak && (
@@ -1886,6 +1928,30 @@ export default function TimesheetPage() {
                 borderRadius: "0.5rem",
               }}
             />
+
+            {/* Block On-site re-check-in for today — employee dashboard only */}
+            {todayOnsiteCompleted && clockInModalMode === "On-site" && (
+              <div
+                style={{
+                  marginTop: "0.75rem",
+                  padding: "0.75rem",
+                  borderRadius: "0.5rem",
+                  background: "rgba(239,68,68,0.08)",
+                  border: "1px solid rgba(239,68,68,0.3)",
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: "0.5rem",
+                  fontSize: "0.8rem",
+                  color: "#ef4444",
+                }}
+              >
+                <AlertTriangle size={15} style={{ flexShrink: 0, marginTop: "0.1rem" }} />
+                <span>
+                  You have already completed today's On-Site attendance. Please select a different work mode or check in again tomorrow.
+                </span>
+              </div>
+            )}
+
             <label
               style={{
                 fontSize: "0.8rem",
@@ -2062,18 +2128,18 @@ export default function TimesheetPage() {
               </button>
               <button
                 onClick={handleClockIn}
-                disabled={locationCheckLoading}
+                disabled={locationCheckLoading || (todayOnsiteCompleted && clockInModalMode === "On-site")}
                 style={{
                   padding: "0.6rem 1.5rem",
                   borderRadius: "0.5rem",
                   border: "1px solid var(--border)",
-                  background: locationCheckLoading
+                  background: (locationCheckLoading || (todayOnsiteCompleted && clockInModalMode === "On-site"))
                     ? "var(--bg-secondary)"
                     : "var(--bg-primary)",
-                  color: locationCheckLoading
+                  color: (locationCheckLoading || (todayOnsiteCompleted && clockInModalMode === "On-site"))
                     ? "var(--text-secondary)"
                     : "var(--text-primary)",
-                  cursor: locationCheckLoading ? "not-allowed" : "pointer",
+                  cursor: (locationCheckLoading || (todayOnsiteCompleted && clockInModalMode === "On-site")) ? "not-allowed" : "pointer",
                   fontWeight: 700,
                   fontSize: "0.875rem",
                   display: "flex",
