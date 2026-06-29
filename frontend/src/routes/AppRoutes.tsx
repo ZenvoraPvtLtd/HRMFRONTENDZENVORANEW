@@ -43,6 +43,15 @@ import AIPredictivity from "../features/HRdashboard/AIPredictivity";
 import AIAnalytics from "../features/HRdashboard/AIAnalytics";
 import CandidatesPage from "../features/HRdashboard/CandidatesPage";
 import CandidateScreeningPage from "../features/HRdashboard/CandidateScreeningPage";
+import AIInterviewDashboard from "../features/ai-interview/pages/InterviewDashboard";
+import AICreateInterview from "../features/ai-interview/pages/CreateInterview";
+import AIInterviewHistory from "../features/ai-interview/pages/InterviewHistory";
+import AIInterviewLink from "../features/ai-interview/pages/InterviewLink";
+import AIResumeUpload from "../features/ai-interview/pages/ResumeUpload";
+import AIResumeAnalysis from "../features/ai-interview/pages/ResumeAnalysis";
+import AIPreInterviewCheck from "../features/ai-interview/pages/PreInterviewCheck";
+import AIInterviewRoom from "../features/ai-interview/pages/InterviewRoom";
+import AIInterviewResult from "../features/ai-interview/pages/InterviewResult";
 
 // Module 07 — Resume Screening
 import ResumeScreening from "../features/module07/Resumescreening";
@@ -226,6 +235,10 @@ const AppRoutes = () => (
         <Route path="hr-management/candidates" element={<CandidatesPage />} />
         <Route path="candidate-screening" element={<CandidateScreeningPage />} />
         <Route path="hr-management/candidate-screening" element={<CandidateScreeningPage />} />
+        <Route path="recruitment/ai-interview" element={<AIInterviewDashboard />} />
+        <Route path="recruitment/ai-interview/create" element={<AICreateInterview />} />
+        <Route path="recruitment/ai-interview/history" element={<AIInterviewHistory />} />
+        <Route path="recruitment/ai-interview/link/:id" element={<AIInterviewLink />} />
 
         {/* Module 07 — Resume Screening */}
         <Route path="resume-screening" element={<ResumeScreening />} />
@@ -391,6 +404,10 @@ const AppRoutes = () => (
         <Route path="ai-analytics" element={<AIAnalytics />} />
         <Route path="candidates" element={<CandidatesPage />} />
         <Route path="candidate-screening" element={<CandidateScreeningPage />} />
+        <Route path="recruitment/ai-interview" element={<AIInterviewDashboard />} />
+        <Route path="recruitment/ai-interview/create" element={<AICreateInterview />} />
+        <Route path="recruitment/ai-interview/history" element={<AIInterviewHistory />} />
+        <Route path="recruitment/ai-interview/link/:id" element={<AIInterviewLink />} />
 
         {/* Module 07 — Resume Screening (admin access) */}
         <Route path="resume-screening" element={<ResumeScreening />} />
@@ -427,6 +444,11 @@ const AppRoutes = () => (
 
     {/* Standalone — Interview Dashboard */}
     <Route path="/interview-dashboard" element={<InterviewDashboard />} />
+    <Route path="/candidate/interview/:id" element={<AIResumeUpload />} />
+    <Route path="/candidate/interview/:id/analysis" element={<AIResumeAnalysis />} />
+    <Route path="/candidate/interview/:id/check" element={<AIPreInterviewCheck />} />
+    <Route path="/candidate/interview/:id/start" element={<AIInterviewRoom />} />
+    <Route path="/candidate/interview/:id/result" element={<AIInterviewResult />} />
   </Routes>
 );
 
