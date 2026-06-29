@@ -20,6 +20,12 @@ interface Sprint {
   created_at?: string;
 }
 
+type SprintTaskSummary = {
+  sprintId?: string;
+  sprint_id?: string;
+  status?: string;
+};
+
 function SprintCard({ sprint, onClick }: { sprint: Sprint; onClick: () => void }) {
   const title = sprint.name || sprint.title || "Sprint";
   const startDate = sprint.start_date

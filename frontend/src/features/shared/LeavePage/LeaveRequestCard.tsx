@@ -72,17 +72,19 @@ function formatAppliedDate(dateStr: string) {
 export default function LeaveRequestCard({ request }: LeaveRequestCardProps) {
   const ist = request.internal_status;
   const managerStatus =
-    ist === 'manager_approved' || ist === 'approved' || ist === 'rejected'
+    ist === 'manager_approved' || ist === 'hr_pending' || ist === 'admin_pending' || ist === 'approved' || ist === 'rejected'
       ? 'Approved'
       : ist === 'manager_rejected'
       ? 'Rejected'
       : 'Pending';
   const hrStatus =
-    ist === 'approved' ? 'Approved' : ist === 'rejected' ? 'Rejected' : 'Pending';
+    ist === 'admin_pending' || ist === 'approved' ? 'Approved' : ist === 'rejected' ? 'Rejected' : 'Pending';
   const managerDone = managerStatus !== 'Pending';
   const managerRejected = managerStatus === 'Rejected';
   const hrDone = hrStatus !== 'Pending';
   const hrRejected = hrStatus === 'Rejected';
+
+  const isNonEmployee = ['manager', 'hr', 'admin'].includes(request.employee_role || '');
 
   return (
     <div className="rounded-2xl p-4 border shadow-sm hover:shadow-md transition-shadow" style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)' }}>
@@ -112,10 +114,19 @@ export default function LeaveRequestCard({ request }: LeaveRequestCardProps) {
 
           <div className="flex items-center flex-wrap gap-y-2 gap-x-2 sm:gap-x-3">
             <ApprovalStep label="Submitted" done={true} />
-            <div className="w-3 sm:w-4 h-px hidden sm:block flex-shrink-0" style={{ background: 'var(--border)' }} />
-            <ApprovalStep label="Manager" done={managerDone} rejected={managerRejected} />
-            <div className="w-3 sm:w-4 h-px hidden sm:block flex-shrink-0" style={{ background: 'var(--border)' }} />
-            <ApprovalStep label="HR" done={hrDone} rejected={hrRejected} />
+            {isNonEmployee ? (
+              <>
+                <div className="w-3 sm:w-4 h-px hidden sm:block flex-shrink-0" style={{ background: 'var(--border)' }} />
+                <ApprovalStep label="Admin" done={ist === 'approved' || ist === 'rejected'} rejected={ist === 'rejected'} />
+              </>
+            ) : (
+              <>
+                <div className="w-3 sm:w-4 h-px hidden sm:block flex-shrink-0" style={{ background: 'var(--border)' }} />
+                <ApprovalStep label="Manager" done={managerDone} rejected={managerRejected} />
+                <div className="w-3 sm:w-4 h-px hidden sm:block flex-shrink-0" style={{ background: 'var(--border)' }} />
+                <ApprovalStep label="HR" done={hrDone} rejected={hrRejected} />
+              </>
+            )}
             {(ist === 'approved' || managerRejected || hrRejected) && (
               <>
                 <div className="w-3 sm:w-4 h-px hidden sm:block flex-shrink-0" style={{ background: 'var(--border)' }} />

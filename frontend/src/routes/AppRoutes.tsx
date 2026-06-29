@@ -84,6 +84,11 @@ import MyPIPPage from "../features/shared/MyPIPPage";
 import MyPerformancePage from "../features/shared/MyPerformancePage";
 import MyGrievancesPage from "../features/shared/MyGrievancesPage";
 
+// Employee read-only views
+import EmployeeAnnouncements from "../features/EmployeeDashboard/EmployeeAnnouncements";
+import EmployeeEvents from "../features/EmployeeDashboard/EmployeeEvents";
+import EmployeeHolidays from "../features/EmployeeDashboard/EmployeeHolidays";
+
 // Auth
 import ForgotPassword from "../pages/auth/ForgotPassword";
 import Login from "../pages/auth/Login";
@@ -214,8 +219,7 @@ const AppRoutes = () => (
         {/* HR AI */}
         <Route path="interview-modules" element={<InterviewModules />} />
         <Route path="hr-management/interview-modules" element={<InterviewModules />} />
-        <Route path="ai-video-interview" element={<AIVideoInterview />} />
-        <Route path="hr-management/ai-video-interview" element={<AIVideoInterview />} />
+
         <Route path="whatsapp" element={<WhatsAppIntegration />} />
         <Route path="hr-management/whatsapp" element={<WhatsAppIntegration />} />
         <Route path="ai-predictivity" element={<AIPredictivity />} />
@@ -227,11 +231,7 @@ const AppRoutes = () => (
         <Route path="candidate-screening" element={<CandidateScreeningPage />} />
         <Route path="hr-management/candidate-screening" element={<CandidateScreeningPage />} />
 
-        {/* Module 07 — Resume Screening */}
-        <Route path="resume-screening" element={<ResumeScreening />} />
-        <Route path="hr-management/resume-screening" element={<ResumeScreening />} />
-        <Route path="interview-dashboard" element={<InterviewDashboard />} />
-        <Route path="hr-management/interview-dashboard" element={<InterviewDashboard />} />
+
 
         {/* Salary & Offer Letters */}
         <Route path="salary-slips" element={<SalarySlipPage />} />
@@ -281,6 +281,9 @@ const AppRoutes = () => (
         <Route path="performance" element={<MyPerformancePage />} />
         <Route path="grievances" element={<MyGrievancesPage />} />
         <Route path="attendance" element={<Navigate to="timesheet" replace />} />
+        <Route path="announcements" element={<EmployeeAnnouncements />} />
+        <Route path="events" element={<EmployeeEvents />} />
+        <Route path="holiday-calendar" element={<EmployeeHolidays />} />
 
         <Route
           path="chatbot"
@@ -316,6 +319,9 @@ const AppRoutes = () => (
         <Route path="projects" element={<ProjectsPages />} />
         <Route path="projects/create" element={<CreateProjectPage />} />
         <Route path="team-management" element={<ManagerTeamManagement />} />
+        <Route path="announcements" element={<HRAnnouncements />} />
+        <Route path="events" element={<Events />} />
+        <Route path="holiday-calendar" element={<HolidayCalendar />} />
 
         <Route
           path="chatbot"
@@ -344,6 +350,9 @@ const AppRoutes = () => (
         <Route path="projects" element={<ProjectsPages />} />
         <Route path="projects/create" element={<CreateProjectPage />} />
         <Route path="team-management" element={<ManagerTeamManagement />} />
+        <Route path="announcements" element={<HRAnnouncements />} />
+        <Route path="events" element={<Events />} />
+        <Route path="holiday-calendar" element={<HolidayCalendar />} />
       </Route>
     </Route>
 
@@ -385,16 +394,14 @@ const AppRoutes = () => (
         <Route path="attendance-correction" element={<AttendanceCorrection />} />
         <Route path="attendance-management" element={<ManagerAttendancePage />} />
         <Route path="interview-modules" element={<InterviewModules />} />
-        <Route path="ai-video-interview" element={<AIVideoInterview />} />
+
         <Route path="whatsapp" element={<WhatsAppIntegration />} />
         <Route path="ai-predictivity" element={<AIPredictivity />} />
         <Route path="ai-analytics" element={<AIAnalytics />} />
         <Route path="candidates" element={<CandidatesPage />} />
         <Route path="candidate-screening" element={<CandidateScreeningPage />} />
 
-        {/* Module 07 — Resume Screening (admin access) */}
-        <Route path="resume-screening" element={<ResumeScreening />} />
-        <Route path="interview-dashboard" element={<InterviewDashboard />} />
+
         <Route path="salary-slips" element={<SalarySlipPage />} />
         <Route path="offer-letters" element={<OfferLetterPage />} />
         <Route path="shortlist-report" element={<ShortlistReportPage />} />
@@ -425,8 +432,7 @@ const AppRoutes = () => (
     {/* Standalone — QR Attendance Scan (mobile-friendly, no auth required) */}
     <Route path="/qr-attendance" element={<QrAttendanceScanPage />} />
 
-    {/* Standalone — Interview Dashboard */}
-    <Route path="/interview-dashboard" element={<InterviewDashboard />} />
+
   </Routes>
 );
 

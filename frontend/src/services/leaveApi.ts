@@ -11,6 +11,7 @@ type ApiLeave = {
   id: string;
   employee_id: string;
   employee_name?: string;
+  employee_role?: string;
   leave_type: LeaveRequest["leave_type"];
   duration_type: LeaveRequest["duration_type"];
   leave_date: string;
@@ -31,6 +32,7 @@ export type HrLeaveRequest = {
   id: string;
   employee: string;
   employee_id: string;
+  employee_role?: string;
   department: string;
   type: string;
   days: number;
@@ -108,6 +110,7 @@ function normalizeLeave(leave: ApiLeave): LeaveRequest {
     hr_reviewed_at: leave.hr_reviewed_at ?? null,
     manager_comment: leave.manager_comment ?? null,
     hr_comment: leave.hr_comment ?? null,
+    employee_role: leave.employee_role,
   };
 }
 
@@ -231,6 +234,7 @@ function toHrLeaveFromApi(leave: ApiLeave): HrLeaveRequest {
     id: leave.id,
     employee: getDisplayEmployeeName(leave.employee_name, leave.employee_id),
     employee_id: leave.employee_id,
+    employee_role: leave.employee_role,
     department: "Employee",
     type: leave.leave_type,
     days: leave.days,
@@ -475,7 +479,6 @@ export async function updateHrLeaveStatus(leaveId: string, status: "approved" | 
     headers: getAuthHeaders(),
 
     body: JSON.stringify({ status, comment: comment || "" }),
-    body: JSON.stringify({ status, comment }),
   });
 
   if (!response.ok) throw new Error("Unable to update leave status");
