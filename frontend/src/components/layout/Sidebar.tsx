@@ -91,7 +91,8 @@ export const hrNavSections: NavSection[] = [
           { to: "/hr-management/candidates", icon: <Users size={15} />, label: "Candidates" },
           { to: "/hr-management/candidate-screening", icon: <UserCheck size={15} />, label: "Candidate Screening" },
           { to: "/interview-modules", icon: <Video size={15} />, label: "Interview Modules" },
-
+          { to: "/ai-video-interview", icon: <Video size={15} />, label: "AI Video Interview" },
+          { to: "/recruitment/ai-interview", icon: <Video size={15} />, label: "AI Interview" },
           { to: "/whatsapp", icon: <MessageSquare size={15} />, label: "WhatsApp" },
           { to: "/ai-predictivity", icon: <BarChart3 size={15} />, label: "AI Predictivity" },
           { to: "/ai-analytics", icon: <BarChart3 size={15} />, label: "AI Analytics" },
@@ -257,7 +258,8 @@ export const adminNavSections: NavSection[] = [
           { to: "/admin/performance-improvement-plan", icon: <TriangleAlert size={15} />, label: "PIP" },
           { to: "/admin/exit-management", icon: <UserX size={15} />, label: "Exit Management" },
           { to: "/admin/interview-modules", icon: <Video size={15} />, label: "Interview Modules" },
-
+          { to: "/admin/ai-video-interview", icon: <Video size={15} />, label: "AI Video Interview" },
+          { to: "/admin/recruitment/ai-interview", icon: <Video size={15} />, label: "AI Interview" },
           { to: "/admin/whatsapp", icon: <MessageSquare size={15} />, label: "WhatsApp" },
           { to: "/admin/ai-predictivity", icon: <BarChart3 size={15} />, label: "AI Predictivity" },
           { to: "/admin/ai-analytics", icon: <BarChart3 size={15} />, label: "AI Analytics" },
@@ -317,7 +319,7 @@ const Sidebar = ({
     "/manager/sprint-board": true,
     "/manager/tools": true,
     "/admin/sprint-board": false,
-    "/admin/employees": false,
+    "/admin/employees": true,
     "/admin/attendance": true,
     "/admin/users": false,
   });

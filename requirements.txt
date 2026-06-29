@@ -3,6 +3,7 @@ fastapi-mail==1.5.0
 face-recognition-models==0.3.0
 uvicorn==0.30.6
 pymongo==4.6.0
+SQLAlchemy==2.0.51
 certifi>=2024.2.2
 python-dotenv==1.2.2
 python-jose==3.5.0
@@ -11,6 +12,7 @@ PyJWT==2.10.1
 pytz==2025.2
 numpy==1.26.4
 pdfplumber==0.11.9
+PyPDF2==3.0.1
 PyMuPDF==1.24.14
 Pillow==10.4.0
 python-multipart==0.0.20
