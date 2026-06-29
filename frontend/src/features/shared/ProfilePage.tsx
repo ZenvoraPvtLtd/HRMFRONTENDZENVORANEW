@@ -6,7 +6,6 @@ import type { UserProfile, ProfileUpdateRequest, ProfileFieldKey } from "../../t
 import api from "../../utils/axiosInstance";
 import ConstrainedDropdown from "../../components/ConstrainedDropdown";
 import { storeAuthUser } from "../../utils/auth";
-import { SEARCH_EVENT } from "../../components/layout/TopHeader";
 
 type DocumentStatus = "Pending For Review" | "Approved" | "Rejected" | "Expired";
 
@@ -104,7 +103,7 @@ const Field: React.FC<FieldProps> = ({
  * - Loading and error states
  */
 const ProfilePage: React.FC = () => {
-  // â"€â"€ State Management â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
+  // â”€â”€ State Management â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -152,15 +151,8 @@ const ProfilePage: React.FC = () => {
     reportingTime: "09:00 AM",
     workingHoursPerDay: "8",
   });
-  const [search, setSearch] = useState("");
 
-  useEffect(() => {
-    const handler = (e: Event) => setSearch((e as CustomEvent<string>).detail || "");
-    window.addEventListener(SEARCH_EVENT, handler);
-    return () => window.removeEventListener(SEARCH_EVENT, handler);
-  }, []);
-
-  // â"€â"€ Fetch Profile on Component Mount â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
+  // â”€â”€ Fetch Profile on Component Mount â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   /**
    * useEffect hook to fetch user profile when component loads
    * Makes GET /api/profile/me request
@@ -243,7 +235,7 @@ const ProfilePage: React.FC = () => {
 
 
   const uploadDocument = async () => {
-    if (!profile || !selectedFile) {
+    if (!selectedFile) {
       setDocumentMessage("Please choose a file before uploading.");
       return;
     }
@@ -337,23 +329,6 @@ const ProfilePage: React.FC = () => {
   };
 
   const updatePassword = async () => {
-    const pw = passwordForm.newPassword;
-    const isStrong =
-      pw.length >= 8 &&
-      /[A-Z]/.test(pw) &&
-      /[a-z]/.test(pw) &&
-      /[0-9]/.test(pw) &&
-      /[^A-Za-z0-9]/.test(pw);
-    if (!isStrong) {
-      setPasswordMessage(
-        "Password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, one number, and one special character."
-      );
-      return;
-    }
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      setPasswordMessage("New password and confirm password do not match");
-      return;
-    }
     setPasswordSaving(true);
     setPasswordMessage(null);
     try {
@@ -385,7 +360,7 @@ const ProfilePage: React.FC = () => {
     }
   };
 
-  // â"€â"€ Loading State â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
+  // â”€â”€ Loading State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (loading) {
     return (
       <div
@@ -406,7 +381,7 @@ const ProfilePage: React.FC = () => {
     );
   }
 
-  // â"€â"€ Error State â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
+  // â”€â”€ Error State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (error || !profile) {
     return (
       <div
@@ -425,38 +400,12 @@ const ProfilePage: React.FC = () => {
 
   const roleFields = getProfileFields(profile.role);
 
-  const q = (search ?? "").trim().toLowerCase();
-
-  const filteredRoleFields = q
-    ? roleFields.filter((field) => {
-        const rawValue = profile[field.key as keyof UserProfile];
-        const value = (Array.isArray(rawValue) ? rawValue.join(", ") : String(rawValue ?? "")).toLowerCase();
-        return field.label.toLowerCase().includes(q) || value.includes(q);
-      })
-    : roleFields;
-
-  const filteredDocuments = q
-    ? documents.filter((doc) =>
-        [doc.file_name, doc.document_type, doc.status].some((v) =>
-          (v ?? "").toLowerCase().includes(q)
-        )
-      )
-    : documents;
-
-  const filteredSkillsList = q
-    ? skillsList.filter((skill) => skill.toLowerCase().includes(q))
-    : skillsList;
-
-  const isAdmin = String(profile.role || "").toLowerCase() === "admin";
-
-  const TABS = (
-    [
-      { key: "personal", label: "Personal Info" },
-      { key: "documents", label: "Documents" },
-      { key: "skills", label: "Skills" },
-      { key: "security", label: "Security" },
-    ] as const
-  ).filter((tab) => !isAdmin || (tab.key !== "documents" && tab.key !== "skills"));
+  const TABS = [
+    { key: "personal", label: "Personal Info" },
+    { key: "documents", label: "Documents" },
+    { key: "skills", label: "Skills" },
+    { key: "security", label: "Security" },
+  ] as const;
 
   return (
     <div className="w-full animate-fade-in">
@@ -517,8 +466,7 @@ const ProfilePage: React.FC = () => {
                 setEditAllValues(vals);
                 setIsEditingAll(true);
               }}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition-opacity hover:opacity-[0.85] active:opacity-[0.7] cursor-pointer"
-              style={{ background: "var(--text-primary)", color: "var(--bg-primary)" }}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-zinc-900 dark:bg-zinc-100 hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black border border-zinc-800 dark:border-zinc-200 transition-colors cursor-pointer"
             >
               <Edit2 size={14} /> Edit Profile
             </button>
@@ -569,12 +517,7 @@ const ProfilePage: React.FC = () => {
 
         {/* Dynamic field rendering based on role */}
         <div className="flex flex-col">
-          {filteredRoleFields.length === 0 && q ? (
-            <p className="py-8 text-sm text-center" style={{ color: "var(--text-secondary)" }}>
-              No fields match your search
-            </p>
-          ) : null}
-          {filteredRoleFields.map((field) => {
+          {roleFields.map((field) => {
             const rawValue = profile[field.key as keyof UserProfile];
             const fieldValue = Array.isArray(rawValue) ? rawValue.join(", ") : rawValue;
 
@@ -647,7 +590,7 @@ const ProfilePage: React.FC = () => {
             <input value={profileForm.emergencyContactName} onChange={(e) => setProfileForm({ ...profileForm, emergencyContactName: e.target.value })} placeholder="Emergency Contact Name" className="rounded-xl px-3 py-2.5 text-sm outline-none" style={{ background: "var(--bg-primary)", border: "1px solid var(--border)", color: "var(--text-primary)" }} />
             <input value={profileForm.emergencyContactPhone} onChange={(e) => setProfileForm({ ...profileForm, emergencyContactPhone: e.target.value })} placeholder="Emergency Contact Phone" className="rounded-xl px-3 py-2.5 text-sm outline-none" style={{ background: "var(--bg-primary)", border: "1px solid var(--border)", color: "var(--text-primary)" }} />
           </div>
-          <button type="button" onClick={saveProfileSection} disabled={saving} className="mt-4 px-4 py-2.5 rounded-xl text-sm font-semibold transition-opacity hover:opacity-[0.85] disabled:opacity-50 disabled:cursor-not-allowed" style={{ background: "var(--text-primary)", color: "var(--bg-primary)" }}>Save Changes</button>
+          <button type="button" onClick={saveProfileSection} disabled={saving} className="mt-4 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-blue-600">Save Changes</button>
         </div>
       )}
 
@@ -655,22 +598,20 @@ const ProfilePage: React.FC = () => {
         <div className="rounded-2xl p-5 sm:p-6" style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)" }}>
           <h3 className="text-base sm:text-lg font-bold mb-4" style={{ color: "var(--accent)" }}>Finance</h3>
           <textarea value={profileForm.bankAccountDetails} onChange={(e) => setProfileForm({ ...profileForm, bankAccountDetails: e.target.value })} placeholder="Bank account details" rows={4} className="w-full rounded-xl px-3 py-2.5 text-sm outline-none" style={{ background: "var(--bg-primary)", border: "1px solid var(--border)", color: "var(--text-primary)" }} />
-          <button type="button" onClick={saveProfileSection} disabled={saving} className="mt-4 px-4 py-2.5 rounded-xl text-sm font-semibold transition-opacity hover:opacity-[0.85] disabled:opacity-50 disabled:cursor-not-allowed" style={{ background: "var(--text-primary)", color: "var(--bg-primary)" }}>Save Changes</button>
+          <button type="button" onClick={saveProfileSection} disabled={saving} className="mt-4 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-blue-600">Save Changes</button>
         </div>
       )}
 
-      {activeTab === "skills" && !isAdmin && (
+      {activeTab === "skills" && (
         <div className="rounded-2xl p-5 sm:p-6" style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)" }}>
           <h3 className="text-base sm:text-lg font-bold mb-2" style={{ color: "var(--accent)" }}>Technical Skills</h3>
           <p className="text-sm mb-4" style={{ color: "var(--text-secondary)" }}>Add your technical skills — these will be visible to HR and your manager.</p>
           <div className="rounded-xl p-4 mb-4 min-h-[72px]" style={{ background: "var(--bg-primary)", border: "1px solid var(--border)" }}>
             {skillsList.length === 0 ? (
               <p className="text-sm" style={{ color: "var(--text-secondary)" }}>No skills added yet. Add your first skill below.</p>
-            ) : filteredSkillsList.length === 0 ? (
-              <p className="text-sm" style={{ color: "var(--text-secondary)" }}>No skills match your search.</p>
             ) : (
               <div className="flex flex-wrap gap-2">
-                {filteredSkillsList.map((skill) => (
+                {skillsList.map((skill) => (
                   <span key={skill} className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold" style={{ background: "rgba(59,130,246,0.12)", color: "#3b82f6" }}>
                     {skill}
                     <button type="button" onClick={() => removeSkill(skill)} aria-label={`Remove ${skill}`}>
@@ -694,7 +635,7 @@ const ProfilePage: React.FC = () => {
               <Plus size={14} /> Add
             </button>
           </div>
-          <button type="button" onClick={saveProfileSection} disabled={saving} className="px-4 py-2.5 rounded-xl text-sm font-semibold transition-opacity hover:opacity-[0.85] disabled:opacity-50 disabled:cursor-not-allowed" style={{ background: "var(--text-primary)", color: "var(--bg-primary)" }}>Save Changes</button>
+          <button type="button" onClick={saveProfileSection} disabled={saving} className="px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-blue-600">Save Changes</button>
         </div>
       )}
 
@@ -702,8 +643,6 @@ const ProfilePage: React.FC = () => {
         <div className="rounded-2xl p-5 sm:p-6" style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)" }}>
           <h3 className="text-base sm:text-lg font-bold mb-4" style={{ color: "var(--accent)" }}>Security Settings</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl">
-            {/* Dummy input to catch browser credentials autofill and prevent it from targetting the top header search bar */}
-            <input type="text" style={{ display: "none" }} autoComplete="username" />
             <PasswordField
               label="Current Password"
               value={passwordForm.currentPassword}
@@ -734,7 +673,7 @@ const ProfilePage: React.FC = () => {
               {passwordMessage}
             </p>
           )}
-          <button type="button" onClick={updatePassword} disabled={passwordSaving} className="mt-4 px-4 py-2.5 rounded-xl text-sm font-semibold transition-opacity hover:opacity-[0.85] disabled:opacity-50 disabled:cursor-not-allowed" style={{ background: "var(--text-primary)", color: "var(--bg-primary)" }}>
+          <button type="button" onClick={updatePassword} disabled={passwordSaving} className="mt-4 px-4 py-2.5 rounded-xl text-sm font-semibold bg-zinc-900 dark:bg-zinc-100 hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black border border-zinc-800 dark:border-zinc-200 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
             {passwordSaving ? "Updating..." : "Update Password"}
           </button>
         </div>
@@ -780,7 +719,7 @@ const ProfilePage: React.FC = () => {
         </div>
       )}
 
-      {activeTab === "documents" && !isAdmin && (
+      {activeTab === "documents" && (
         <div
           className="rounded-2xl p-5 sm:p-6"
           style={{
@@ -868,8 +807,7 @@ const ProfilePage: React.FC = () => {
             type="button"
             onClick={uploadDocument}
             disabled={uploadingDocument || !selectedFile}
-            className="mt-4 w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-opacity hover:opacity-[0.85] disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{ background: "var(--text-primary)", color: "var(--bg-primary)" }}
+            className="mt-4 w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Upload size={16} />
             {uploadingDocument ? "Uploading..." : "Upload Document"}
@@ -894,13 +832,7 @@ const ProfilePage: React.FC = () => {
               </p>
             )}
 
-            {!documentsLoading && documents.length > 0 && filteredDocuments.length === 0 && (
-              <p className="py-4 text-sm" style={{ color: "var(--text-secondary)" }}>
-                No documents match your search.
-              </p>
-            )}
-
-            {filteredDocuments.map((document) => (
+            {documents.map((document) => (
               <div key={document.id} className="py-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
                 <div className="min-w-0 flex items-start gap-3">
                   <FileText size={18} className="shrink-0 mt-0.5" style={{ color: "var(--accent)" }} />

@@ -172,7 +172,7 @@ def build_frontend_analysis(
             "recommendation": ranking.get("ranking") or "Analysis Complete",
         },
         "resume": {
-            "url": f"/uploads/resumes/{resume.get('filename')}",
+            "url": resume.get("secure_url"),
             "originalName": resume.get("originalname"),
             "mimeType": resume.get("mimetype"),
         },

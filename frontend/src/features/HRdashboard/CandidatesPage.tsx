@@ -15,8 +15,19 @@ type Candidate = {
   company: string;
   status: string;
   appliedDate: string;
+
+  // Legacy fields
   resumeUrl: string;
   resumeOriginalName: string;
+
+  // New nested format (Cloudinary URLs)
+  resume?: {
+    url?: string;
+    originalName?: string;
+    mimeType?: string;
+  };
+
+
   portfolio: string;
   linkedin: string;
   technicalSkills: string[];
@@ -40,6 +51,12 @@ const statusColors: Record<string, { bg: string; color: string }> = {
 
 const API_BASE = getApiBaseUrl();
 const PAGE_SIZE = 10;
+
+const RESUME_VIEWER_CONFIG = {
+  keyName: "resume",
+  apiKey: "839936453459116",
+  environment: "drynl8beg",
+} as const; // (legacy; query params are no longer added)
 
 export default function CandidatesPage() {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -72,11 +89,12 @@ export default function CandidatesPage() {
           throw new Error(body?.message || `HTTP ${res.status}`);
         }
         const data = await res.json();
+        // console.log(rows);
         console.log("[CandidatesPage] Candidate applications API response:", data);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const rows: any[] = Array.isArray(data) ? data : data?.candidates || [];
         setCandidates(
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
           rows.map((c: any, i: number) => ({
             id: c.id || c._id || String(i + 1),
             name: c.name || `${c.firstName || ""} ${c.lastName || ""}`.trim() || "Unknown",
@@ -86,8 +104,11 @@ export default function CandidatesPage() {
             company: c.company || "",
             status: c.status || "pending",
             appliedDate: c.appliedDate || c.createdAt || "",
-            resumeUrl: c.resumeUrl || "",
-            resumeOriginalName: c.resumeOriginalName || "",
+
+            // Prefer nested Cloudinary URL when available (resume?.url), fallback to multiple legacy shapes.
+            resumeUrl: c.resume?.url || c.resumeUrl || "",
+            resumeOriginalName: c.resume?.originalName || c.resumeOriginalName || "",
+
             portfolio: c.portfolio || "",
             linkedin: c.linkedin || "",
             technicalSkills: Array.isArray(c.technicalSkills) ? c.technicalSkills : [],
@@ -150,47 +171,78 @@ export default function CandidatesPage() {
   };
 
   const resolveResumeUrl = (resumeUrl: string) => {
-    if (/^https?:\/\//i.test(resumeUrl)) return resumeUrl;
-    const path = resumeUrl.startsWith("/") ? resumeUrl : `/${resumeUrl}`;
+    const trimmed = resumeUrl.trim();
+    if (!trimmed) return "";
+
+    // Cloudinary URLs (and any http(s) URL) are already fully qualified.
+    if (/^https?:\/\//i.test(trimmed)) return trimmed;
+
+    // If the backend (legacy) still sends a local path like /uploads/resumes/...
+    // do NOT try to fetch it from the API_BASE; we only want Cloudinary for preview.
+    if (trimmed.startsWith("/uploads/") || trimmed.includes("/uploads/resumes/")) return "";
+
+
+    // As a last resort, keep old relative-path behavior.
+    const path = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
     return `${API_BASE}${path}`;
   };
 
-  const handleViewResume = async (candidate: Candidate) => {
-    if (!candidate.resumeUrl) return;
+  const getResumeDisabledReason = (resumeUrl: string) => {
+    const raw = (resumeUrl || "").trim();
+    if (!raw) return "Resume not uploaded.";
 
-    const fileUrl = resolveResumeUrl(candidate.resumeUrl);
-    console.log("[CandidatesPage] Resume URL being used:", fileUrl);
+    const resolved = resolveResumeUrl(raw);
+    if (!resolved) return "Resume link is present but cannot be resolved for preview.";
+
+    if (!/^https?:\/\//i.test(resolved)) return "Resolved resume URL is not a valid http(s) URL.";
+
+    return null;
+  };
+
+  const isValidResumeUrl = (resumeUrl: string) => {
+    return getResumeDisabledReason(resumeUrl) === null;
+  };
+
+  const handleViewResume = async (candidate: Candidate) => {
+    console.log("View button clicked", candidate);
+    console.log("Resume URL:", candidate.resumeUrl);
+    console.log("Resolved URL:", resolveResumeUrl(candidate.resumeUrl));
+
+    const resolved = resolveResumeUrl(candidate.resumeUrl);
+
+    const disabledReason = getResumeDisabledReason(candidate.resumeUrl);
+    if (disabledReason) {
+      setResumeError(disabledReason);
+      console.warn("[handleViewResume] refusing to open viewer:", disabledReason);
+      return;
+    }
+
+    // Ensure we open Cloudinary directly (no API_BASE, no query params)
+    if (resolved && /^https?:\/\//i.test(resolved)) {
+      console.log("[handleViewResume] opening iframe with:", resolved);
+    }
+
+
+    const fileUrl = resolved;
     setResumeLoadingId(candidate.id);
     setResumeError(null);
 
     try {
-      const res = await fetch(fileUrl, { method: "HEAD" });
-      const contentType = res.headers.get("content-type") || "";
-      const exists = res.ok && contentType.toLowerCase().includes("application/pdf");
-      console.log("[CandidatesPage] Resume file existence check result:", {
+      // Viewer integration point. The current app renders the resume in a modal,
+      // while the config is centralized so a vendor SDK can be swapped in cleanly.
+      const viewerUrl = new URL(fileUrl);
+      // viewerUrl.searchParams.set("keyName", RESUME_VIEWER_CONFIG.keyName);
+      // viewerUrl.searchParams.set("apiKey", RESUME_VIEWER_CONFIG.apiKey);
+      // viewerUrl.searchParams.set("environment", RESUME_VIEWER_CONFIG.environment);
+
+      setResumePreview({
         url: fileUrl,
-        status: res.status,
-        ok: res.ok,
-        contentType,
-        exists,
+        name: candidate.resumeOriginalName || candidate.resume?.originalName || "",
       });
 
-      if (exists) {
-        setResumePreview({
-          url: fileUrl,
-          name: candidate.resumeOriginalName || `${candidate.name} resume`,
-        });
-        return;
-      }
-
-      setResumeError("Resume is currently unavailable.");
     } catch (err) {
-      console.log("[CandidatesPage] Resume file existence check result:", {
-        url: fileUrl,
-        exists: false,
-        error: err instanceof Error ? err.message : String(err),
-      });
-      setResumeError("Resume is currently unavailable.");
+      setResumeError(err instanceof Error ? err.message : "Unable to open the resume viewer.");
+      console.error("[handleViewResume] failed", err);
     } finally {
       setResumeLoadingId(null);
     }
@@ -291,7 +343,13 @@ export default function CandidatesPage() {
         </div>
 
         {/* Table */}
-        <div className="overflow-x-auto px-4 sm:px-6 pb-6">
+        <div
+          className="overflow-x-auto px-4 sm:px-6 pb-6"
+          onMouseDownCapture={() => {
+            // Useful to detect if some overlay/container is capturing pointer events.
+            console.log("[CandidatesPage] table mousedown capture");
+          }}
+        >
           <table className="w-full text-left border-collapse">
             <thead>
               <tr
@@ -450,40 +508,70 @@ export default function CandidatesPage() {
 
                     {/* Resume */}
                     <td className="py-4 px-4">
-                      {c.resumeUrl ? (
-                        <button
-                          type="button"
-                          onClick={() => handleViewResume(c)}
-                          disabled={resumeLoadingId === c.id}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
-                          style={{
-                            background: "var(--icon-accent-bg)",
-                            color: "var(--accent)",
-                            border: "none",
-                            cursor: resumeLoadingId === c.id ? "wait" : "pointer",
-                            opacity: resumeLoadingId === c.id ? 0.75 : 1,
-                          }}
-                        >
-                          {resumeLoadingId === c.id ? <Loader2 size={13} className="animate-spin" /> : <Eye size={13} />}
-                          {resumeLoadingId === c.id ? "Loading" : "View"}
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          disabled
-                          title="Resume not uploaded."
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
-                          style={{
-                            background: "var(--bg-hover)",
-                            color: "var(--text-secondary)",
-                            border: "none",
-                            cursor: "not-allowed",
-                            opacity: 0.65,
-                          }}
-                        >
-                          <Eye size={13} /> View
-                        </button>
-                      )}
+                      {(() => {
+                        const disabledReason = getResumeDisabledReason(c.resumeUrl);
+                        const canPreview = !disabledReason;
+                        const resolved = resolveResumeUrl(c.resumeUrl);
+                        const isLoading = resumeLoadingId === c.id;
+
+                        if (!canPreview) {
+                          return (
+                            <button
+                              type="button"
+                              disabled
+                              title={disabledReason || "Resume not available."}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
+                              style={{
+                                background: "var(--bg-hover)",
+                                color: "var(--text-secondary)",
+                                border: "none",
+                                cursor: "not-allowed",
+                                opacity: 0.65,
+                              }}
+                            >
+                              <Eye size={13} /> View
+                            </button>
+                          );
+                        }
+
+                        return (
+                          <button
+                            type="button"
+                            onMouseEnter={() => {
+                              console.log("[ViewButton] hover", {
+                                candidateId: c.id,
+                                resumeUrl: c.resumeUrl,
+                                resolved,
+                                disabledReason,
+                                isLoading,
+                              });
+                            }}
+                            onClick={() => {
+                              console.log("[ViewButton] click", {
+                                candidateId: c.id,
+                                resumeUrl: c.resumeUrl,
+                                resolved,
+                                isLoading,
+                                disabledReason,
+                              });
+                              handleViewResume(c);
+                            }}
+                            disabled={isLoading}
+                            aria-disabled={isLoading}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
+                            style={{
+                              background: "var(--icon-accent-bg)",
+                              color: "var(--accent)",
+                              border: "none",
+                              cursor: isLoading ? "wait" : "pointer",
+                              opacity: isLoading ? 0.75 : 1,
+                            }}
+                          >
+                            {isLoading ? <Loader2 size={13} className="animate-spin" /> : <Eye size={13} />}
+                            {isLoading ? "Loading" : "View"}
+                          </button>
+                        );
+                      })()}
                     </td>
                   </tr>
                 ))}
@@ -538,7 +626,8 @@ export default function CandidatesPage() {
               title="Resume preview"
               src={resumePreview.url}
               className="block w-full"
-              style={{ height: "min(78vh, 760px)", background: "var(--bg-primary)", border: 0 }}
+              loading="lazy"
+              style={{ height: "min(78vh, 760px)", background: "var(--bg-primary)", border: 0, pointerEvents: "auto" }}
             />
           </div>
         </div>
