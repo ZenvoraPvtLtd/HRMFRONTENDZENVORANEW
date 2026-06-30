@@ -491,7 +491,7 @@ export default function LeavePage() {
                       </p>
                     )}
 
-                    {/* Progress steps: Submitted → Manager → HR → ✓ */}
+                    {/* Progress steps: Submitted → Manager → HR */}
                     <div className="mt-3 flex items-center gap-1.5 text-xs flex-wrap">
                       {/* Submitted */}
                       <span className="flex items-center gap-1" style={{ color: "#10b981" }}>
@@ -527,12 +527,6 @@ export default function LeavePage() {
                           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/></svg>
                         )}
                         HR
-                      </span>
-                      <span style={{ color: "var(--border)" }}>—</span>
-
-                      {/* Final check */}
-                      <span style={{ color: cist === "approved" ? "#10b981" : "var(--border)" }}>
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                       </span>
                     </div>
 

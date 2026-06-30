@@ -94,6 +94,9 @@ import ProfilePage from "../features/shared/ProfilePage";
 import MyPIPPage from "../features/shared/MyPIPPage";
 import MyPerformancePage from "../features/shared/MyPerformancePage";
 import MyGrievancesPage from "../features/shared/MyGrievancesPage";
+import EmployeeEventsPage from "../features/shared/EmployeeEventsPage";
+import EmployeeAnnouncementsPage from "../features/shared/EmployeeAnnouncementsPage";
+import EmployeePayslipsPage from "../features/shared/EmployeePayslipsPage";
 
 // Employee read-only views
 import EmployeeAnnouncements from "../features/EmployeeDashboard/EmployeeAnnouncements";
@@ -253,6 +256,9 @@ const AppRoutes = () => (
 
 
 
+        {/* Payslips */}
+        <Route path="payslips" element={<EmployeePayslipsPage />} />
+
         {/* Salary & Offer Letters */}
         <Route path="salary-slips" element={<SalarySlipPage />} />
         <Route path="hr-management/salary-slips" element={<SalarySlipPage />} />
@@ -300,6 +306,9 @@ const AppRoutes = () => (
         {/* Employee-specific */}
         <Route path="performance" element={<MyPerformancePage />} />
         <Route path="grievances" element={<MyGrievancesPage />} />
+        <Route path="events" element={<EmployeeEventsPage />} />
+        <Route path="announcements" element={<EmployeeAnnouncementsPage />} />
+        <Route path="payslips" element={<EmployeePayslipsPage />} />
         <Route path="attendance" element={<Navigate to="timesheet" replace />} />
         <Route path="announcements" element={<EmployeeAnnouncements />} />
         <Route path="events" element={<EmployeeEvents />} />

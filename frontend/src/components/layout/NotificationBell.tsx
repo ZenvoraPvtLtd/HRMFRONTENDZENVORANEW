@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, Briefcase, FileText, Calendar, CheckCheck, CheckCircle2, Trash2, Clock, Inbox } from "lucide-react";
+import { Bell, Briefcase, FileText, Calendar, CheckCheck, CheckCircle2, MessageSquare, Trash2, Clock, Inbox } from "lucide-react";
 import api from "../../utils/axiosInstance";
 
 interface NotificationItem {
@@ -88,19 +88,39 @@ export default function NotificationBell() {
     };
   }, []);
 
-  const markAsRead = async (id: string, type: string) => {
+  const markAsRead = async (id: string, type: string, message = "") => {
     try {
       await api.put(`/api/notifications/${id}/read`);
       // Update local state
       setNotifications((prev) =>
         prev.map((n) => (n.id === id ? { ...n, read: true } : n))
       );
-      
+
       // Close dropdown and navigate to relevant section based on notification type
       setIsOpen(false);
       const isEmployee = window.location.pathname.startsWith("/dashboard");
 
-      if (type.includes("job")) {
+      if (type === "event") {
+        // Extract the event title from the message format:
+        // "<title> is scheduled on <date> at <time>."
+        const match = message.match(/^(.+?) is scheduled on /);
+        const eventTitle = match?.[1] ?? "";
+        navigate(
+          eventTitle
+            ? `/dashboard/events?highlight=${encodeURIComponent(eventTitle)}`
+            : "/dashboard/events"
+        );
+      } else if (type === "announcement") {
+        // Extract the announcement title from the message format:
+        // "<title> has been published."
+        const match = message.match(/^(.+?) has been published\./);
+        const announcementTitle = match?.[1] ?? "";
+        navigate(
+          announcementTitle
+            ? `/dashboard/announcements?highlight=${encodeURIComponent(announcementTitle)}`
+            : "/dashboard/announcements"
+        );
+      } else if (type.includes("job")) {
         navigate("/createjobs");
       } else if (type.includes("application")) {
         navigate("/candidates");
@@ -123,6 +143,8 @@ export default function NotificationBell() {
         prev.map((n) => (n.id === id ? { ...n, read: true } : n))
       );
       setIsOpen(false);
+      if (type === "event") navigate("/dashboard/events");
+      if (type === "announcement") navigate("/dashboard/announcements");
       if (type.includes("leave")) navigate("/leave-management");
       if (type.includes("grievance")) navigate("/dashboard/grievances");
     }
@@ -156,6 +178,10 @@ export default function NotificationBell() {
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
+      case "announcement":
+        return <MessageSquare size={16} style={{ color: "var(--accent)" }} />;
+      case "event":
+        return <Calendar size={16} className="text-emerald-400" />;
       case "job_created":
       case "job_updated":
       case "job_deleted":
@@ -374,7 +400,7 @@ export default function NotificationBell() {
               notifications.map((item) => (
                 <div
                   key={item.id}
-                  onClick={() => markAsRead(item.id, item.type)}
+                  onClick={() => markAsRead(item.id, item.type, item.message)}
                   style={{
                     display: "flex",
                     gap: "12px",
