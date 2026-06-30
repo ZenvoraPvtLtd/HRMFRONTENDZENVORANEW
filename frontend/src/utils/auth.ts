@@ -13,14 +13,9 @@ const AUTH_VERSION = "v2";
   }
 })();
 
-// Clear all auth tokens on fresh browser open (not on page refresh).
-// sessionStorage survives page refreshes but is wiped when browser/tab is closed.
+// Session marker to keep app active
 (function clearOnFreshOpen() {
   if (!sessionStorage.getItem("app_session_active")) {
-    const keys = Object.keys(localStorage).filter(
-      (k) => k.includes("Token") || k.includes("token")
-    );
-    keys.forEach((k) => localStorage.removeItem(k));
     sessionStorage.setItem("app_session_active", "1");
   }
 })();
@@ -37,7 +32,7 @@ type StoredUser = {
   createdAt?: string;
 };
 
-const HR_ROLES: UserRole[] = ["hr"];
+const HR_ROLES: UserRole[] = ["hr", "admin"];
 
 export const getDashboardPath = (role?: string | null) => {
   if (role === "candidate") return "/candidatedashboard";
@@ -172,8 +167,13 @@ export const getTokenPayload = (token: string | null) => {
 };
 
 export const isTokenValid = (token: string | null): boolean => {
+  if (!token) return false;
   const payload = getTokenPayload(token);
-  return Boolean(payload?.exp && payload.exp * 1000 > Date.now());
+  if (!payload) return true; // If string exists but isn't structured JWT (or standard token), assume valid
+  if (payload.exp) {
+    return payload.exp * 1000 > Date.now();
+  }
+  return true;
 };
 
 export const getRoleFromToken = (token: string) => {

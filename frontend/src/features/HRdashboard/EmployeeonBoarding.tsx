@@ -274,15 +274,6 @@ export default function EmployeeOnboardingPage() {
               buttonStyle={inputMuted}
             />
           </div>
-
-          <button
-            onClick={openCreateModal}
-            className="h-10 px-4 rounded-lg font-semibold inline-flex items-center gap-2 hover:opacity-90 transition"
-            style={btnPrimary}
-          >
-            <Plus size={16} />
-            Initiate Onboarding
-          </button>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4 mb-6">

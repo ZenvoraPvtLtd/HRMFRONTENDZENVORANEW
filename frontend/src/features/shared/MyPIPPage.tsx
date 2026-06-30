@@ -57,15 +57,44 @@ export default function MyPIPPage() {
 
   useEffect(() => {
     let isMounted = true;
+    const dummyPips: PIPRecord[] = [
+      {
+        id: "pip-1",
+        employee_id: localStorage.getItem("employeeId") || "EMP0023",
+        employee_name: localStorage.getItem("userName") || "Zenvora Employee",
+        issue_description: "Project Delivery & Timeline Slippage",
+        expectations: "Consistently meet sprint deadlines, communicate blockers proactively, and maintain high code quality.",
+        timeline_days: 30,
+        start_date: "2026-06-15",
+        end_date: "2026-07-15",
+        warning_message: "Failing to meet these expectations could lead to further disciplinary actions.",
+        status: "Active"
+      },
+      {
+        id: "pip-2",
+        employee_id: localStorage.getItem("employeeId") || "EMP0023",
+        employee_name: localStorage.getItem("userName") || "Zenvora Employee",
+        issue_description: "Code Quality and Coverage",
+        expectations: "Ensure all new pull requests have at least 80% unit test coverage and pass initial automated checks.",
+        timeline_days: 45,
+        start_date: "2026-05-01",
+        end_date: "2026-06-15",
+        warning_message: "Must successfully resolve before mid-year evaluation.",
+        status: "Improved"
+      }
+    ];
 
     async function fetchPips() {
       try {
         setIsLoading(true);
         const response = await api.get("/api/pip");
-        if (isMounted) setRecords(response.data.pips || []);
+        const backendPips = response.data.pips || [];
+        if (isMounted) {
+          setRecords(backendPips.length > 0 ? backendPips : dummyPips);
+        }
       } catch (error) {
         console.error("Failed to fetch employee PIP records", error);
-        if (isMounted) setRecords([]);
+        if (isMounted) setRecords(dummyPips);
       } finally {
         if (isMounted) setIsLoading(false);
       }

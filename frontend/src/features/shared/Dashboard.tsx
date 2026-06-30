@@ -18,6 +18,7 @@ import {
   getSprintBoardBasePath,
 } from "../../utils/sprintBoardPath";
 import { getApiBaseUrl } from "../../config/apiConfig";
+import { getStoredUserRole } from "../../utils/auth";
 import {
   getElapsedBreakSeconds,
   getElapsedWorkSeconds,
@@ -384,6 +385,7 @@ export function DashboardOverview() {
   const navigate = useNavigate();
   const location = useLocation();
   const sprintBoardBasePath = getSprintBoardBasePath(location.pathname);
+  const role = getStoredUserRole();
 
   // Per-user localStorage keys — computed once using ref so they never change
   const initialClock = readWorkClock("On-site");
@@ -870,6 +872,7 @@ export function DashboardOverview() {
             </>
           )}
         </div>
+
 
         {/* Recent Payslips */}
         {showPayslips && (

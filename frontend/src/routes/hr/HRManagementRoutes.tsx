@@ -89,8 +89,7 @@ export const HRManagementRoutes = () => (
     {/* Timesheet */}
     <Route path="timesheet-approvals" element={<TimeSheetApprovals />} />
     <Route path="hr-management/timesheet-approvals" element={<TimeSheetApprovals />} />
-    <Route path="timesheet-tracker" element={<TimeSheetTracker />} />
-    <Route path="hr-management/timesheet-tracker" element={<TimeSheetTracker />} />
+
 
     {/* Training */}
     <Route path="training-development" element={<TrainingNDevlopment />} />
@@ -99,8 +98,7 @@ export const HRManagementRoutes = () => (
     {/* New HR AI Pages */}
     <Route path="interview-modules" element={<InterviewModules />} />
     <Route path="hr-management/interview-modules" element={<InterviewModules />} />
-    <Route path="ai-video-interview" element={<AIVideoInterview />} />
-    <Route path="hr-management/ai-video-interview" element={<AIVideoInterview />} />
+
     <Route path="whatsapp" element={<WhatsAppIntegration />} />
     <Route path="hr-management/whatsapp" element={<WhatsAppIntegration />} />
     <Route path="ai-predictivity" element={<AIPredictivity />} />

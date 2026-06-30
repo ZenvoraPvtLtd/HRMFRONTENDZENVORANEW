@@ -1,4 +1,4 @@
-import { CalendarDays, ChevronDown, Loader2, Mail, RefreshCw, CheckCircle2, XCircle } from "lucide-react";
+import { CalendarDays, ChevronDown, Loader2, RefreshCw, CheckCircle2 } from "lucide-react";
 
 import { useState, useEffect } from "react";
 import { SEARCH_EVENT } from "../../../components/layout/TopHeader";
@@ -12,6 +12,60 @@ interface Employee {
   workMode?: string;
   status?: string;
   clockIn?: string;
+  clockOut?: string;
+}
+
+function formatTimeDisplay(val?: string): string {
+  if (!val || val === "Absent" || val === "--" || val === "None") return val || "--";
+  try {
+    const d = new Date(val);
+    if (!isNaN(d.getTime())) {
+      return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+    }
+  } catch {}
+  return val;
+}
+
+function calculateTotalTime(clockIn?: string, clockOut?: string): string {
+  if (!clockIn || clockIn === "Absent" || clockIn === "--") return "--";
+  if (!clockOut || clockOut === "Absent" || clockOut === "--" || clockOut === "None") return "--";
+
+  try {
+    const inDate = new Date(clockIn);
+    const outDate = new Date(clockOut);
+    if (isNaN(inDate.getTime()) || isNaN(outDate.getTime())) {
+      const parseTime = (str: string) => {
+        const parts = str.match(/(\d+):(\d+)(?::(\d+))?\s*(AM|PM)?/i);
+        if (!parts) return null;
+        let hrs = parseInt(parts[1], 10);
+        const mins = parseInt(parts[2], 10);
+        const ampm = parts[4];
+        if (ampm) {
+          if (ampm.toUpperCase() === "PM" && hrs < 12) hrs += 12;
+          if (ampm.toUpperCase() === "AM" && hrs === 12) hrs = 0;
+        }
+        return hrs * 60 + mins;
+      };
+      const inMins = parseTime(clockIn);
+      const outMins = parseTime(clockOut);
+      if (inMins !== null && outMins !== null) {
+        const diff = outMins - inMins;
+        if (diff < 0) return "--";
+        const h = Math.floor(diff / 60);
+        const m = diff % 60;
+        return `${h}h ${m}m`;
+      }
+      return "--";
+    }
+    const diffMs = outDate.getTime() - inDate.getTime();
+    if (diffMs < 0) return "--";
+    const totalMins = Math.floor(diffMs / 60000);
+    const hrs = Math.floor(totalMins / 60);
+    const mins = totalMins % 60;
+    return `${hrs}h ${mins}m`;
+  } catch {
+    return "--";
+  }
 }
 
 const tabs = [
@@ -80,16 +134,6 @@ export default function AttendancePage() {
   const [loading, setLoading] = useState(true);
   const [metrics, setMetrics] = useState({ total: 0, checkedIn: 0, active: 0 });
 
-  // Auto-report state
-  const [reportConfig, setReportConfig] = useState<{
-    admin_email: string;
-    weekly: { enabled: boolean; schedule: string };
-    monthly: { enabled: boolean; schedule: string };
-    _open?: boolean;
-  } | null>(null);
-  const [reportSending, setReportSending] = useState<"today" | "weekly" | "monthly" | null>(null);
-  const [reportSuccess, setReportSuccess] = useState<string | null>(null);
-
   // Listen to navbar search
   useEffect(() => {
     const handleSearch = (event: Event) => {
@@ -100,12 +144,38 @@ export default function AttendancePage() {
     return () => window.removeEventListener(SEARCH_EVENT, handleSearch);
   }, []);
 
-  // Fetch auto-report config once
-  useEffect(() => {
-    api.get("/api/attendance/reports/config")
-      .then((res) => setReportConfig(res.data))
-      .catch(() => { /* silently ignore if endpoint unavailable */ });
-  }, []);
+  const getDateRange = (tab: string, selectedDate: string) => {
+    const start = selectedDate;
+    const end = selectedDate;
+
+    if (tab === "Today") {
+      const todayStr = new Date().toISOString().split('T')[0];
+      return { start: todayStr, end: todayStr };
+    } else if (tab === "This Week") {
+      const curr = new Date();
+      const first = curr.getDate() - curr.getDay() + 1; // Monday
+      const last = first + 6; // Sunday
+      const monday = new Date(curr.setDate(first)).toISOString().split('T')[0];
+      const sunday = new Date(curr.setDate(last)).toISOString().split('T')[0];
+      return { start: monday, end: sunday };
+    } else if (tab === "This Month") {
+      const curr = new Date();
+      const firstDay = new Date(curr.getFullYear(), curr.getMonth(), 1).toISOString().split('T')[0];
+      const lastDay = new Date(curr.getFullYear(), curr.getMonth() + 1, 0).toISOString().split('T')[0];
+      return { start: firstDay, end: lastDay };
+    } else if (tab === "Day") {
+      return { start: selectedDate, end: selectedDate };
+    } else if (tab === "Range") {
+      const baseDate = new Date(selectedDate);
+      if (!isNaN(baseDate.getTime())) {
+        const startRange = new Date(baseDate);
+        startRange.setDate(startRange.getDate() - 30);
+        const startStr = startRange.toISOString().split('T')[0];
+        return { start: startStr, end: selectedDate };
+      }
+    }
+    return { start, end };
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -123,7 +193,11 @@ export default function AttendancePage() {
           }
         });
         if (isMounted && response.data) {
-          const list: Employee[] = response.data.data || [];
+          type EmployeeAttendance = Employee & {
+            clockIn: string;
+            status: string;
+          };
+          const list: EmployeeAttendance[] = response.data.data || [];
           setEmployees(list);
           setMembers(response.data.members || []);
           if (response.data.summary) {
@@ -163,21 +237,7 @@ export default function AttendancePage() {
     setDate(`${yyyy}-${mm}-${dd}`);
   };
 
-  // SEND REPORT NOW
-  const handleSendReport = async (type: "today" | "weekly" | "monthly") => {
-    setReportSending(type);
-    setReportSuccess(null);
-    try {
-      await api.post(`/api/attendance/reports/send-now?report_type=${type}`);
-      const label = type === "today" ? "Today's" : type === "weekly" ? "Weekly" : "Monthly";
-      setReportSuccess(`${label} report sent to admin email!`);
-      setTimeout(() => setReportSuccess(null), 5000);
-    } catch {
-      setReportSuccess("Failed to send report. Check server logs.");
-    } finally {
-      setReportSending(null);
-    }
-  };
+
 
   return (
     <div className="min-h-screen font-[Inter]" style={{ background: "var(--bg-primary)", color: "var(--text-primary)" }}>
@@ -378,189 +438,6 @@ export default function AttendancePage() {
               >
                 Reset
               </button>
-
-              {/* AUTO REPORT BUTTON */}
-              <div className="relative">
-                <button
-                  type="button"
-                  aria-expanded={reportConfig?._open ?? false}
-                  aria-haspopup="true"
-                  onClick={() => setReportConfig(rc => rc ? { ...rc, _open: !rc._open } : rc)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition"
-                  style={{
-                    background: "var(--bg-primary)",
-                    color: "var(--text-primary)",
-                    border: "1px solid var(--border)",
-                  }}
-                >
-                  <Mail size={15} />
-                  Auto Report
-                  <ChevronDown size={13} />
-                </button>
-
-                {/* DROPDOWN PANEL */}
-                {reportConfig && reportConfig._open && (
-                  <div
-                    className="absolute right-0 top-full mt-2 z-50 rounded-2xl shadow-2xl"
-                    style={{
-                      width: 320,
-                      background: "var(--bg-secondary)",
-                      border: "1px solid var(--border)",
-                      padding: "1.25rem",
-                    }}
-                  >
-                    <p className="text-xs font-semibold mb-1" style={{ color: "var(--text-secondary)", letterSpacing: "0.06em" }}>
-                      AUTO-GENERATED REPORTS
-                    </p>
-                    <p className="text-xs mb-4" style={{ color: "var(--text-secondary)" }}>
-                      Reports are emailed automatically to:<br />
-                      <strong style={{ color: "var(--text-primary)" }}>{reportConfig.admin_email}</strong>
-                    </p>
-
-                    {/* Today */}
-                    <div
-                      className="rounded-xl p-3 mb-3"
-                      style={{ background: "var(--bg-primary)", border: "1px solid var(--border)" }}
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
-                          📊 Today's Report
-                        </span>
-                        <span
-                          className="text-xs px-2 py-0.5 rounded-full font-medium"
-                          style={{ background: "rgba(99,102,241,0.12)", color: "#6366f1" }}
-                        >
-                          On-demand
-                        </span>
-                      </div>
-                      <p className="text-xs mb-2" style={{ color: "var(--text-secondary)" }}>
-                        Today — {new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => handleSendReport("today")}
-                        disabled={reportSending === "today"}
-                        className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition"
-                        style={{
-                          background: "#6366f1",
-                          color: "#fff",
-                          border: "none",
-                          cursor: reportSending === "today" ? "not-allowed" : "pointer",
-                          opacity: reportSending === "today" ? 0.65 : 1,
-                        }}
-                      >
-                        {reportSending === "today"
-                          ? <Loader2 size={12} className="animate-spin" />
-                          : <Mail size={12} />
-                        }
-                        Send Now
-                      </button>
-                    </div>
-
-                    {/* Weekly */}
-                    <div
-                      className="rounded-xl p-3 mb-3"
-                      style={{ background: "var(--bg-primary)", border: "1px solid var(--border)" }}
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
-                          📅 Weekly Report
-                        </span>
-                        <span
-                          className="text-xs px-2 py-0.5 rounded-full font-medium"
-                          style={{ background: "rgba(22,163,74,0.12)", color: "#16a34a" }}
-                        >
-                          Active
-                        </span>
-                      </div>
-                      <p className="text-xs mb-2" style={{ color: "var(--text-secondary)" }}>
-                        {reportConfig.weekly?.schedule}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => handleSendReport("weekly")}
-                        disabled={reportSending === "weekly"}
-                        className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition"
-                        style={{
-                          background: "var(--text-primary)",
-                          color: "var(--bg-primary)",
-                          border: "none",
-                          cursor: reportSending === "weekly" ? "not-allowed" : "pointer",
-                          opacity: reportSending === "weekly" ? 0.65 : 1,
-                        }}
-                      >
-                        {reportSending === "weekly"
-                          ? <Loader2 size={12} className="animate-spin" />
-                          : <RefreshCw size={12} />
-                        }
-                        Send Now
-                      </button>
-                    </div>
-
-                    {/* Monthly */}
-                    <div
-                      className="rounded-xl p-3"
-                      style={{ background: "var(--bg-primary)", border: "1px solid var(--border)" }}
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
-                          🗓️ Monthly Report
-                        </span>
-                        <span
-                          className="text-xs px-2 py-0.5 rounded-full font-medium"
-                          style={{ background: "rgba(22,163,74,0.12)", color: "#16a34a" }}
-                        >
-                          Active
-                        </span>
-                      </div>
-                      <p className="text-xs mb-2" style={{ color: "var(--text-secondary)" }}>
-                        {reportConfig.monthly?.schedule}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => handleSendReport("monthly")}
-                        disabled={reportSending === "monthly"}
-                        className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition"
-                        style={{
-                          background: "var(--text-primary)",
-                          color: "var(--bg-primary)",
-                          border: "none",
-                          cursor: reportSending === "monthly" ? "not-allowed" : "pointer",
-                          opacity: reportSending === "monthly" ? 0.65 : 1,
-                        }}
-                      >
-                        {reportSending === "monthly"
-                          ? <Loader2 size={12} className="animate-spin" />
-                          : <RefreshCw size={12} />
-                        }
-                        Send Now
-                      </button>
-                    </div>
-
-                    {/* Success / error message */}
-                    {reportSuccess && (
-                      <div
-                        role="status"
-                        aria-live="polite"
-                        className="mt-3 flex items-center gap-2 text-xs font-medium px-3 py-2 rounded-xl"
-                        style={{
-                          background: reportSuccess.startsWith("Failed")
-                            ? "rgba(239,68,68,0.08)"
-                            : "rgba(22,163,74,0.08)",
-                          color: reportSuccess.startsWith("Failed") ? "#ef4444" : "#16a34a",
-                          border: `1px solid ${reportSuccess.startsWith("Failed") ? "rgba(239,68,68,0.2)" : "rgba(22,163,74,0.2)"}`,
-                        }}
-                      >
-                        {reportSuccess.startsWith("Failed")
-                          ? <XCircle size={13} />
-                          : <CheckCircle2 size={13} />
-                        }
-                        {reportSuccess}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
             </div>
           </div>
 
@@ -581,12 +458,14 @@ export default function AttendancePage() {
                 <table className="w-full">
                   <thead style={{ borderBottom: "1px solid var(--border)", background: "var(--bg-secondary)" }}>
                     <tr className="text-left text-sm" style={{ color: "var(--text-secondary)" }}>
-                      <th scope="col" className="px-6 py-4 font-medium">Employee</th>
-                      <th scope="col" className="px-6 py-4 font-medium">Role</th>
-                      <th scope="col" className="px-6 py-4 font-medium">Shift</th>
-                      <th scope="col" className="px-6 py-4 font-medium">Work Mode</th>
-                      <th scope="col" className="px-6 py-4 font-medium">Status</th>
-                      <th scope="col" className="px-6 py-4 font-medium">Clock-In</th>
+                      <th className="px-6 py-4 font-medium">Employee</th>
+                      <th className="px-6 py-4 font-medium">Role</th>
+                      <th className="px-6 py-4 font-medium">Shift</th>
+                      <th className="px-6 py-4 font-medium">Work Mode</th>
+                      <th className="px-6 py-4 font-medium">Status</th>
+                      <th className="px-6 py-4 font-medium">Clock-In</th>
+                      <th className="px-6 py-4 font-medium">Clock-Out</th>
+                      <th className="px-6 py-4 font-medium">Total Time</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -601,7 +480,9 @@ export default function AttendancePage() {
                         <td className="px-6 py-5">
                           <StatusBadge status={employee.status} />
                         </td>
-                        <td className="px-6 py-5 font-medium">{employee.clockIn}</td>
+                        <td className="px-6 py-5 font-medium">{formatTimeDisplay(employee.clockIn)}</td>
+                        <td className="px-6 py-5 font-medium">{formatTimeDisplay(employee.clockOut)}</td>
+                        <td className="px-6 py-5 font-medium">{calculateTotalTime(employee.clockIn, employee.clockOut)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -622,7 +503,9 @@ export default function AttendancePage() {
                     <div className="mt-5 space-y-3 text-sm">
                       <MobileInfo label="Shift" value={employee.shift} />
                       <MobileInfo label="Work Mode" value={employee.workMode} />
-                      <MobileInfo label="Clock-In" value={employee.clockIn} />
+                      <MobileInfo label="Clock-In" value={formatTimeDisplay(employee.clockIn)} />
+                      <MobileInfo label="Clock-Out" value={formatTimeDisplay(employee.clockOut)} />
+                      <MobileInfo label="Total Time" value={calculateTotalTime(employee.clockIn, employee.clockOut)} />
                     </div>
                   </div>
                 ))}

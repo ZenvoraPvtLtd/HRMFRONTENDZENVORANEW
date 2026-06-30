@@ -16,6 +16,30 @@ logging.basicConfig(
 )
 logger = logging.getLogger("WhatsAppScheduler")
 
+
+def _clean_twilio_secret(value: Optional[str]) -> Optional[str]:
+    if not value:
+        return None
+
+    cleaned = str(value).strip()
+    if not cleaned:
+        return None
+
+    # Ignore masked values that can come back from the settings UI.
+    if cleaned.count("\u2022") >= 4 or cleaned.count("*") >= 4 or "\u00e2\u20ac\u00a2" in cleaned:
+        return None
+
+    return cleaned
+
+
+def _first_configured(*values: Optional[str]) -> Optional[str]:
+    for value in values:
+        cleaned = _clean_twilio_secret(value)
+        if cleaned:
+            return cleaned
+    return None
+
+
 class WhatsAppTemplateEngine:
     """
     Renders professional, sleek notifications for all 10 HR automation events.
@@ -174,10 +198,27 @@ class WhatsAppSchedulerService:
             self.db = None
             self.queue_collection = None
             
-        # Twilio setup
-        self.twilio_sid = os.getenv("TWILIO_ACCOUNT_SID")
-        self.twilio_token = os.getenv("TWILIO_AUTH_TOKEN")
-        self.twilio_from = os.getenv("TWILIO_FROM_NUMBER") or "+14155238886"
+        # Twilio setup. Prefer environment variables, then the saved WhatsApp
+        # settings document used by the admin configuration screen.
+        saved_twilio_config: Dict[str, Any] = {}
+        if self.db is not None:
+            try:
+                saved_twilio_config = self.db["whatsapp_settings"].find_one({}) or {}
+            except Exception as exc:
+                logger.warning("Unable to read saved WhatsApp settings: %s", exc)
+
+        self.twilio_sid = _first_configured(
+            os.getenv("TWILIO_ACCOUNT_SID"),
+            saved_twilio_config.get("twilio_sid"),
+        )
+        self.twilio_token = _first_configured(
+            os.getenv("TWILIO_AUTH_TOKEN"),
+            saved_twilio_config.get("twilio_token"),
+        )
+        self.twilio_from = _first_configured(
+            os.getenv("TWILIO_FROM_NUMBER"),
+            saved_twilio_config.get("twilio_from"),
+        ) or "+14155238886"
         
         # Strip masked credentials if they were copied by mistake
         if self.twilio_sid and "••••" in self.twilio_sid:
@@ -189,7 +230,7 @@ class WhatsAppSchedulerService:
             logger.info("Twilio API configured. Live gateway active.")
             self.twilio_client = Client(self.twilio_sid, self.twilio_token)
         else:
-            logger.warning("Twilio API keys missing or masked. Running in Simulation Sandbox Mode.")
+            logger.info("Twilio API keys not configured. Running in Simulation Sandbox Mode.")
             self.twilio_client = None
 
     def queue_message(

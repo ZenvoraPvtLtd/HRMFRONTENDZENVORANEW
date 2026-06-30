@@ -721,6 +721,8 @@ const ProfilePage: React.FC = () => {
             style={{ position: "absolute", opacity: 0, width: "1px", height: "1px", pointerEvents: "none", overflow: "hidden" }}
           />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl">
+            {/* Dummy input to catch browser credentials autofill and prevent it from targetting the top header search bar */}
+            <input type="text" style={{ display: "none" }} autoComplete="username" />
             <PasswordField
               label="Current Password"
               value={passwordForm.currentPassword}

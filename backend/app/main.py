@@ -81,6 +81,10 @@ from app.core.import_paths import configure_legacy_import_paths
 from app.core.smtp import reload_backend_env
 from app.services.scheduler import start_scheduler, stop_scheduler
 from app.api.routes import google_calendar_oauth
+from app.ai_interview import init_ai_interview
+from app.ai_interview.api import interview as ai_interview_api
+from app.ai_interview.api import recruitment as ai_recruitment_api
+from app.ai_interview.api import resume as ai_resume_api
 
 configure_legacy_import_paths()
 reload_backend_env()
@@ -161,6 +165,9 @@ app.include_router(offer_letters.router)
 app.include_router(meeting_reminders.router)
 app.include_router(project_deadlines.router)
 app.include_router(resume_router)
+app.include_router(ai_interview_api.router, prefix="/api/ai-interview/interview", tags=["ai-interview"])
+app.include_router(ai_resume_api.router, prefix="/api/ai-interview/resume", tags=["ai-interview"])
+app.include_router(ai_recruitment_api.router, prefix="/api/ai-interview/recruitment", tags=["ai-interview"])
 
 
 
@@ -173,6 +180,7 @@ def on_startup():
     db_name = settings.get("DATABASE_NAME")
     if mongo_uri:
         init_mongo(mongo_uri, db_name)
+    init_ai_interview()
     start_scheduler()
     _ensure_attendance_index()
 

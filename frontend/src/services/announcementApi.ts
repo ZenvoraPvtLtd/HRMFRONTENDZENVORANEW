@@ -44,7 +44,7 @@ function getHeaders(): Record<string, string> {
  */
 export async function fetchAnnouncements(): Promise<Announcement[]> {
   try {
-    const response = await fetch(ANNOUNCEMENTS_API_BASE, {
+    const response = await fetch(`${ANNOUNCEMENTS_API_BASE}/`, {
       method: "GET",
       headers: getHeaders(),
     });
@@ -92,7 +92,7 @@ export async function createAnnouncement(
   payload: CreateAnnouncementPayload
 ): Promise<{ message: string; announcement: Announcement }> {
   try {
-    const response = await fetch(ANNOUNCEMENTS_API_BASE, {
+    const response = await fetch(`${ANNOUNCEMENTS_API_BASE}/`, {
       method: "POST",
       headers: getHeaders(),
       body: JSON.stringify(payload),

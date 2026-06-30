@@ -20,6 +20,12 @@ interface Sprint {
   created_at?: string;
 }
 
+type SprintTaskSummary = {
+  sprintId?: string;
+  sprint_id?: string;
+  status?: string;
+};
+
 function SprintCard({ sprint, onClick }: { sprint: Sprint; onClick: () => void }) {
   const title = sprint.name || sprint.title || "Sprint";
   const startDate = sprint.start_date
@@ -59,14 +65,7 @@ function SprintCard({ sprint, onClick }: { sprint: Sprint; onClick: () => void }
         <p className="text-xs leading-relaxed line-clamp-2" style={{ color: "var(--text-secondary)" }}>{sprint.description}</p>
       )}
 
-      <div>
-        <div className="flex items-center gap-2">
-          <div className="flex-1 rounded-full h-1" style={{ background: "var(--bg-hover)" }}>
-            <div className="h-1 rounded-full transition-all duration-500" style={{ width: `${sprint.progress}%`, background: "var(--accent)" }} />
-          </div>
-          <span className="text-xs shrink-0" style={{ color: "var(--text-secondary)" }}>{sprint.progress}%</span>
-        </div>
-      </div>
+
 
       {(startDate || endDate) && (
         <div className="text-xs flex items-center gap-1" style={{ color: "var(--text-secondary)" }}>
@@ -91,7 +90,12 @@ export default function SprintBoardPage() {
 
   const loadSprints = async () => {
     try {
-      const token = localStorage.getItem("accessToken") || "";
+      const token =
+        localStorage.getItem("accessToken") ||
+        localStorage.getItem("hr_accessToken") ||
+        localStorage.getItem("admin_accessToken") ||
+        localStorage.getItem("manager_accessToken") ||
+        "";
       const [sprintsRes, tasksRes] = await Promise.all([
         fetch(`${getApiBaseUrl()}/api/sprints`, {
           headers: { Authorization: `Bearer ${token}` }

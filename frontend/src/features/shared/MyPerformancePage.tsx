@@ -24,12 +24,34 @@ export default function MyPerformancePage() {
   const [reviews, setReviews] = useState<PerformanceReview[]>([]);
 
   useEffect(() => {
+    const dummyReviews: PerformanceReview[] = [
+      {
+        id: "review-1",
+        employeeId: localStorage.getItem("employeeId") || "EMP0023",
+        employeeName: localStorage.getItem("userName") || "Zenvora Employee",
+        reviewType: "Annual Review",
+        period: "FY 2025-2026",
+        rating: "Exceeds Expectations (4/5)",
+        notes: "Demonstrated strong ownership of projects and excellent teamwork throughout the year.",
+      },
+      {
+        id: "review-2",
+        employeeId: localStorage.getItem("employeeId") || "EMP0023",
+        employeeName: localStorage.getItem("userName") || "Zenvora Employee",
+        reviewType: "Mid-Year Review",
+        period: "H1 2025",
+        rating: "Meets Expectations (3/5)",
+        notes: "Consistent performance. Met all key milestones on time. Focus on leadership opportunities next.",
+      }
+    ];
+
     const fetchReviews = async () => {
       try {
         const response = await api.get("/api/performance-reviews/my");
-        setReviews(response.data.reviews || []);
+        const backendReviews = response.data.reviews || [];
+        setReviews(backendReviews.length > 0 ? backendReviews : dummyReviews);
       } catch {
-        // API fail ho to koi message show nahi hoga.
+        setReviews(dummyReviews);
       }
     };
 

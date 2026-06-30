@@ -341,24 +341,6 @@ export default function Employee() {
     }
   };
 
-  const resendInvite = async (employee: EmployeeType) => {
-    if (!employee.email) return;
-    try {
-      const response = await fetch(`${AUTH_API_URL}/resend-invite`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: employee.email }),
-      });
-
-      if (response.ok) {
-        setSuccessMessage(`Invite resent to ${employee.email}`);
-        setTimeout(() => setSuccessMessage(""), 4000);
-      }
-    } catch {
-      // Silent fail
-    }
-    setShowActionsFor(null);
-  };
 
   const suspendEmployee = async (employee: EmployeeType) => {
     if (!employee.id) return;
@@ -399,14 +381,6 @@ export default function Employee() {
               {/* Manage employee invites, access, and workforce status. */}
             </p>
           </div>
-          <button
-            onClick={openInviteModal}
-            className="inline-flex h-11 shrink-0 items-center justify-center gap-2 self-end rounded-xl px-5 text-sm font-semibold transition-all duration-200 sm:self-auto"
-            style={{ background: "var(--text-primary)", color: "var(--bg-primary)" }}
-          >
-            <Send size={18} />
-            Send Invite
-          </button>
         </div>
 
         {/* Success Message */}
@@ -579,13 +553,6 @@ export default function Employee() {
 
                           {showActionsFor === employee.id && (
                             <div className={`absolute right-0 ${index >= filteredEmployees.length - 2 && filteredEmployees.length > 3 ? 'bottom-full mb-1' : 'top-full mt-1'} w-44 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] shadow-lg z-50 overflow-hidden`}>
-                              <button
-                                onClick={() => { resendInvite(employee); setShowActionsFor(null); }}
-                                className="w-full px-4 py-2.5 text-left text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors flex items-center gap-2"
-                              >
-                                <Send size={16} />
-                                Resend Invite
-                              </button>
                               <button
                                 onClick={() => suspendEmployee(employee)}
                                 className="w-full px-4 py-2.5 text-left text-sm font-medium transition-colors flex items-center gap-2"

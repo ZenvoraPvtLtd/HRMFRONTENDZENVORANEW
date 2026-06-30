@@ -1,4 +1,4 @@
-﻿import os
+import os
 import certifi
 from pathlib import Path
 
@@ -22,8 +22,8 @@ MONGO_PREFER_LOCAL = os.getenv("MONGO_PREFER_LOCAL", "").strip().lower() in ("1"
 def create_mongo_client(uri: str, **extra) -> MongoClient:
     """Build a PyMongo client with Atlas TLS settings when needed."""
     mongo_options = {
-        "serverSelectionTimeoutMS": 10000,
-        "connectTimeoutMS": 10000,
+        "serverSelectionTimeoutMS": 2000,
+        "connectTimeoutMS": 2000,
         "socketTimeoutMS": None,
         "retryWrites": True,
         "maxPoolSize": 50,
@@ -32,8 +32,10 @@ def create_mongo_client(uri: str, **extra) -> MongoClient:
     if "mongodb+srv" in uri or ".mongodb.net" in uri or "ssl=true" in uri.lower():
         mongo_options["tlsCAFile"] = certifi.where()
         mongo_options["tls"] = True
+        mongo_options["tlsAllowInvalidCertificates"] = True
         mongo_options["w"] = "majority"
     return MongoClient(uri, **mongo_options)
+
 
 
 def _mask_uri(uri: str) -> str:

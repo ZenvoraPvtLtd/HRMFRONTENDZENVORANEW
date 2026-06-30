@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   CheckCircle2,
-  Filter,
   RefreshCcw,
   XCircle,
+  Search,
 } from "lucide-react";
 import { AgGridReact } from "ag-grid-react";
 import type { ColDef, ICellRendererParams, ValueFormatterParams } from "ag-grid-community";
@@ -140,10 +140,6 @@ export default function TimesheetApprovals() {
     borderColor: isDark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.1)",
     oddRowBackgroundColor: isDark ? "#0d0d0d" : "#fafafa",
     cellTextColor: isDark ? "#ffffff" : "#111111",
-    secondaryForegroundColor: isDark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.5)",
-    paginationBackgroundColor: isDark ? "#0a0a0a" : "#ffffff",
-    cellFocusBorderColor: "transparent",
-    rangeSelectionBorderColor: "transparent",
   });
   const [search, setSearch] = useTopHeaderSearch();
   const [records, setRecords] = useState<TimesheetRecord[]>([]);
@@ -160,6 +156,8 @@ export default function TimesheetApprovals() {
   const [submittedOnly, setSubmittedOnly] = useState(true);
   const [department, setDepartment] = useState("All Departments");
   const [status, setStatus] = useState("All Status");
+  const [sortBy, setSortBy] = useState<"employee" | "employeeId" | "hours" | "status">("employee");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [loading, setLoading] = useState(false);
   const [submittingId, setSubmittingId] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -218,7 +216,7 @@ export default function TimesheetApprovals() {
   const filteredRecords = useMemo(() => {
     const query = search.trim().toLowerCase();
 
-    return records.filter((record) => {
+    const filtered = records.filter((record) => {
       const matchesMonth = record.month === month;
       const matchesYear = record.year === year;
       const matchesSearch =
@@ -247,7 +245,19 @@ export default function TimesheetApprovals() {
         matchesStatus
       );
     });
-  }, [department, month, records, search, status, submittedOnly, year]);
+
+    return [...filtered].sort((a, b) => {
+      let valA = a[sortBy] ?? "";
+      let valB = b[sortBy] ?? "";
+
+      if (typeof valA === "string") valA = valA.toLowerCase();
+      if (typeof valB === "string") valB = valB.toLowerCase();
+
+      if (valA < valB) return sortOrder === "asc" ? -1 : 1;
+      if (valA > valB) return sortOrder === "asc" ? 1 : -1;
+      return 0;
+    });
+  }, [department, month, records, search, status, submittedOnly, year, sortBy, sortOrder]);
 
   const handleRefresh = () => {
     setSearch("");
@@ -256,6 +266,8 @@ export default function TimesheetApprovals() {
     setSubmittedOnly(true);
     setDepartment("All Departments");
     setStatus("All Status");
+    setSortBy("employee");
+    setSortOrder("asc");
     setMessage("");
     fetchTimesheets();
   };
@@ -309,7 +321,7 @@ export default function TimesheetApprovals() {
     }
 
     const isProcessing = currentSubmittingId === record.id;
-    const status = record.status;
+    const status = record.status as any;
 
     // Final states — show compact badge only, no buttons
     if (status === "Approved") {
@@ -477,65 +489,98 @@ export default function TimesheetApprovals() {
             />
         </div>
 
-        <div className="rounded-xl p-5 sm:p-6 mb-7" style={darkCard}>
-          <div className="space-y-4">
-            <ConstrainedDropdown
-              value={department}
-              onChange={setDepartment}
-              options={departments}
-              buttonStyle={darkInput}
-            />
+        <div className="rounded-xl p-4 mb-6" style={darkCard}>
+          <div className="flex flex-wrap items-center gap-4">
+            {/* Search Input on Page */}
+            <div className="relative flex-1 min-w-[240px] max-w-sm">
+              <Search
+                size={16}
+                className="absolute left-3 top-1/2 -translate-y-1/2"
+                style={darkTextSecondary}
+              />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search timesheets..."
+                className="w-full h-10 pl-9 pr-4 rounded-lg text-sm outline-none border transition-colors"
+                style={darkInput}
+                onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
+                onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
+              />
+            </div>
 
+            {/* Sort Control */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs uppercase tracking-wider font-semibold" style={darkTextSecondary}>Sort:</span>
+              <ConstrainedDropdown
+                value={sortBy === "employee" ? "Name" : sortBy === "employeeId" ? "ID" : sortBy === "hours" ? "Hours" : "Status"}
+                onChange={(val) => {
+                  if (val === "Name") setSortBy("employee");
+                  else if (val === "ID") setSortBy("employeeId");
+                  else if (val === "Hours") setSortBy("hours");
+                  else if (val === "Status") setSortBy("status");
+                }}
+                options={["Name", "ID", "Hours", "Status"]}
+                className="w-28 h-10"
+                buttonStyle={{ ...darkInput, height: "40px" }}
+              />
+              <button
+                type="button"
+                onClick={() => setSortOrder(prev => prev === "asc" ? "desc" : "asc")}
+                className="h-10 w-10 rounded-lg flex items-center justify-center border hover:opacity-80 transition-opacity"
+                style={darkInput}
+                title={sortOrder === "asc" ? "Ascending" : "Descending"}
+              >
+                {sortOrder === "asc" ? "↑" : "↓"}
+              </button>
+            </div>
+
+            {/* Department Dropdown */}
+            <div className="w-48">
+              <ConstrainedDropdown
+                value={department}
+                onChange={setDepartment}
+                options={departments}
+                className="h-10"
+                buttonStyle={{ ...darkInput, height: "40px" }}
+              />
+            </div>
+
+            {/* Status Dropdown */}
+            <div className="w-40">
+              <ConstrainedDropdown
+                value={status}
+                onChange={setStatus}
+                options={["All Status", "Submitted", "Pending", "Approved", "Not Submitted"]}
+                className="h-10"
+                buttonStyle={{ ...darkInput, height: "40px" }}
+              />
+            </div>
+
+            {/* Submitted Only Checkbox */}
             <label
-              className="inline-flex items-center gap-2 text-sm font-medium"
+              className="inline-flex items-center gap-2 text-sm font-medium cursor-pointer"
               style={darkTextPrimary}
             >
               <input
                 type="checkbox"
                 checked={submittedOnly}
                 onChange={(event) => setSubmittedOnly(event.target.checked)}
-                className="h-4 w-4 accent-green-600"
+                className="h-4 w-4 accent-green-600 rounded"
               />
-              Submitted Only
+              <span>Submitted</span>
             </label>
 
-            <ConstrainedDropdown
-              value={status}
-              onChange={setStatus}
-              options={["All Status", "Submitted", "Pending", "Approved", "Not Submitted"]}
-              buttonStyle={darkInput}
-            />
-
-            <RefreshButton onClick={handleRefresh} style={btnPrimary} />
-            <div className="relative">
-              <Filter
-                size={16}
-                className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"
-                style={darkTextSecondary}
-              />
-              <select
-                value={status}
-                onChange={(event) => setStatus(event.target.value)}
-                className="w-full h-12 rounded-lg px-4 pr-11 text-sm outline-none"
-                style={darkInput}
-              >
-                <option>All Status</option>
-                <option>Submitted</option>
-                <option>Pending</option>
-                <option>Approved</option>
-                <option>Rejected</option>
-                <option>Not Submitted</option>
-              </select>
-            </div>
-
+            {/* Refresh Button */}
             <button
               onClick={handleRefresh}
               disabled={loading}
-              className="h-11 px-5 rounded-lg inline-flex items-center justify-center gap-2 text-sm font-semibold hover:opacity-90 transition"
+              className="h-10 px-4 ml-auto rounded-lg inline-flex items-center justify-center gap-2 text-sm font-semibold hover:opacity-90 transition disabled:opacity-50"
               style={btnPrimary}
             >
-              <RefreshCcw size={16} />
-              Refresh
+              <RefreshCcw size={15} />
+              <span>Refresh</span>
             </button>
           </div>
         </div>

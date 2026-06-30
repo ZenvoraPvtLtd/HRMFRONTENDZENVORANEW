@@ -276,9 +276,44 @@ function CreateReviewModal({
   const [employeeId, setEmployeeId] = useState(review?.employeeId || "");
   const [employeeName, setEmployeeName] = useState(review?.employeeName || "");
   const [reviewType, setReviewType] = useState(review?.reviewType || "mid-year");
-  const [period, setPeriod] = useState(review?.period || "");
   const [rating, setRating] = useState(review?.rating || "3");
   const [notes, setNotes] = useState(review?.notes || "");
+
+  // Helpers to parse and format period
+  const parsePeriod = (periodStr?: string) => {
+    if (!periodStr || !periodStr.includes(" - ")) return { start: "", end: "" };
+    const parts = periodStr.split(" - ");
+    const toYmd = (dateStr: string) => {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+      const match = dateStr.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+      if (match) return `${match[3]}-${match[2]}-${match[1]}`;
+      return dateStr;
+    };
+    return { start: toYmd(parts[0]), end: toYmd(parts[1]) };
+  };
+
+  const formatDateForPeriod = (dateStr: string) => {
+    if (!dateStr) return "";
+    const match = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (match) return `${match[3]}/${match[2]}/${match[1]}`;
+    return dateStr;
+  };
+
+  const initialDates = parsePeriod(review?.period);
+  const [startDate, setStartDate] = useState(initialDates.start);
+  const [endDate, setEndDate] = useState(initialDates.end);
+
+  const handleSubmit = () => {
+    const combinedPeriod = `${formatDateForPeriod(startDate)} - ${formatDateForPeriod(endDate)}`;
+    onCreate({
+      employeeId,
+      employeeName,
+      reviewType,
+      period: combinedPeriod,
+      rating,
+      notes,
+    });
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 px-3 py-3 sm:items-center sm:px-4 sm:py-6">
@@ -311,12 +346,18 @@ function CreateReviewModal({
             onChange={setReviewType}
             options={["mid-year", "annual", "quarterly"]}
           />
-          <Field
-            label="Period"
-            placeholder="01/01/2026 - 31/01/2026"
-            value={period}
-            onChange={setPeriod}
-          />
+          <div className="grid grid-cols-2 gap-4">
+            <DateField
+              label="Start Date *"
+              value={startDate}
+              onChange={setStartDate}
+            />
+            <DateField
+              label="End Date *"
+              value={endDate}
+              onChange={setEndDate}
+            />
+          </div>
           <SelectField
             label="Rating"
             value={rating}
@@ -337,7 +378,7 @@ function CreateReviewModal({
           </button>
           <button
             type="button"
-            onClick={() => onCreate({ employeeId, employeeName, reviewType, period, rating, notes })}
+            onClick={handleSubmit}
             className="h-10 rounded-lg px-4 text-sm font-semibold sm:h-auto sm:py-2"
             style={btnPrimary}
           >
@@ -346,6 +387,31 @@ function CreateReviewModal({
         </div>
       </div>
     </div>
+  );
+}
+
+function DateField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-xs font-semibold" style={textPrimary}>
+        {label}
+      </span>
+      <input
+        type="date"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="h-10 w-full rounded-lg px-3 text-sm outline-none"
+        style={input}
+      />
+    </label>
   );
 }
 

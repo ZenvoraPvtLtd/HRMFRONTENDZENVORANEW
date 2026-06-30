@@ -11,6 +11,11 @@ import {
   textPrimary,
   textSecondary,
 } from "./hrTheme";
+import {
+  announcementApi,
+  mapApiToFrontend,
+  mapFrontendToApi,
+} from "../../services/announcementApi";
 
 type Priority = "High" | "Medium" | "Low";
 type AnnouncementStatus = "Published" | "Draft";
@@ -133,6 +138,16 @@ function Announcements() {
   return (
     <div className={hrPageWrap}>
       <div className="max-w-7xl mx-auto">
+        {error && (
+          <div className="mb-4 rounded-lg px-4 py-3 text-sm font-medium" style={{ background: "rgba(239, 68, 68, 0.12)", color: "#ef4444", border: "1px solid rgba(239, 68, 68, 0.25)" }}>
+            {error}
+          </div>
+        )}
+        {isLoading && (
+          <div className="mb-4 rounded-lg px-4 py-3 text-sm font-medium" style={{ background: "rgba(59, 130, 246, 0.12)", color: "#3b82f6", border: "1px solid rgba(59, 130, 246, 0.25)" }}>
+            Loading announcements...
+          </div>
+        )}
         <div className="flex justify-end mb-4">
           <button
             onClick={openCreateModal}

@@ -52,12 +52,12 @@ export default function EmployeeAnnouncements() {
       try {
         setLoading(true);
         setError(null);
-        const res = await fetch(`${getApiBaseUrl()}/api/announcements`);
+        const res = await fetch(`${getApiBaseUrl()}/api/announcements/`);
         if (!res.ok) throw new Error("Failed to fetch");
         const data = await res.json();
-        // sirf published wali dikhao
+        // sirf published wali dikhao (case-insensitive)
         const published = data
-          .filter((d: Record<string, string>) => d.status === "published")
+          .filter((d: Record<string, string>) => (d.status || "").toLowerCase() === "published")
           .map(fromApi);
         setAnnouncements(published);
       } catch {

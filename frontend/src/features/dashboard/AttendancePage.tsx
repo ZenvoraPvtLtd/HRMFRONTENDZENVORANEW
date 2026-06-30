@@ -1,5 +1,5 @@
 import { CalendarDays, Download, RefreshCw } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useTopHeaderSearch } from "../../hooks/useTopHeaderSearch";
 import {
   btnPrimary,
@@ -32,6 +32,31 @@ type AttendanceProps = {
 
 import { fetchHrAttendance } from "../../services/attendanceApi";
 
+const statusOptions = ["All", "On Time", "Late", "Absent", "Early Out"];
+
+function statusStyle(status: AttendanceStatus) {
+  if (status === "On Time") {
+    return { background: "rgba(16,185,129,0.12)", color: "#10b981" };
+  }
+  if (status === "Late") {
+    return { background: "rgba(245,158,11,0.12)", color: "#f59e0b" };
+  }
+  if (status === "Early Out") {
+    return { background: "rgba(139,92,246,0.12)", color: "#8b5cf6" };
+  }
+  return { background: "rgba(239,68,68,0.12)", color: "#ef4444" };
+}
+
+export default function Attendance({ employeePortal = false }: AttendanceProps) {
+  void employeePortal;
+
+  const [search] = useTopHeaderSearch();
+  const [period, setPeriod] = useState("Today");
+  const [date, setDate] = useState("2026-06-01");
+  const [department, setDepartment] = useState("All Departments");
+  const [employee, setEmployee] = useState("All Employees");
+  const [status, setStatus] = useState("All");
+
   const [attendanceData, setAttendanceData] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -40,7 +65,17 @@ import { fetchHrAttendance } from "../../services/attendanceApi";
     setLoading(true);
     fetchHrAttendance({ start: date })
       .then((res) => {
-        setAttendanceData(res.data);
+        const mapped: AttendanceRecord[] = (res.data || []).map((row) => ({
+          id: row.id,
+          employee: row.name,
+          role: row.role,
+          shift: row.shift,
+          workMode: row.workMode,
+          status: row.status as AttendanceStatus,
+          marked: row.clockIn ? `In: ${row.clockIn.slice(11, 16)}` : row.marked ? "Marked" : "Absent",
+          department: row.department,
+        }));
+        setAttendanceData(mapped);
       })
       .catch((e) => {
         console.error("Failed to fetch attendance", e);
@@ -48,8 +83,25 @@ import { fetchHrAttendance } from "../../services/attendanceApi";
       .finally(() => setLoading(false));
   }, [date]);
 
+  const departments = useMemo(
+    () => [
+      "All Departments",
+      ...new Set(attendanceData.map((record) => record.department)),
+    ],
+    [attendanceData],
+  );
+
+  const employees = useMemo(
+    () => [
+      "All Employees",
+      ...new Set(attendanceData.map((record) => record.employee)),
+    ],
+    [attendanceData],
+  );
+
   const filteredRecords = useMemo(() => {
     const query = search.trim().toLowerCase();
+
     return attendanceData.filter((record) => {
       const matchesSearch =
         !query ||
@@ -78,107 +130,17 @@ import { fetchHrAttendance } from "../../services/attendanceApi";
 
   const metrics = useMemo(() => {
     const total = attendanceData.length;
-    const checkedIn = attendanceData.filter((record) => record.status !== "Absent").length;
-    const onTime = attendanceData.filter((record) => record.status === "On Time").length;
-    const late = attendanceData.filter((record) => record.status === "Late").length;
-    const absent = attendanceData.filter((record) => record.status === "Absent").length;
-    const earlyOut = attendanceData.filter((record) => record.status === "Early Out").length;
-    const rate = total ? `${Math.round((checkedIn / total) * 100)}%` : "0%";
-
-    return [
-      { label: "Total", value: total.toString(), color: "#3b82f6" },
-      { label: "Checked In", value: checkedIn.toString(), color: "#10b981" },
-      { label: "On Time", value: onTime.toString(), color: "#3b82f6" },
-      { label: "Late", value: late.toString(), color: "#f59e0b" },
-      { label: "Absent", value: absent.toString(), color: "#ef4444" },
-      { label: "Early Out", value: earlyOut.toString(), color: "#8b5cf6" },
-      { label: "Rate", value: rate, color: "#0891b2" },
-    ];
-  }, [attendanceData]);
-
-const statusOptions = ["All", "On Time", "Late", "Absent", "Early Out"];
-
-function statusStyle(status: AttendanceStatus) {
-  if (status === "On Time") {
-    return { background: "rgba(16,185,129,0.12)", color: "#10b981" };
-  }
-  if (status === "Late") {
-    return { background: "rgba(245,158,11,0.12)", color: "#f59e0b" };
-  }
-  if (status === "Early Out") {
-    return { background: "rgba(139,92,246,0.12)", color: "#8b5cf6" };
-  }
-  return { background: "rgba(239,68,68,0.12)", color: "#ef4444" };
-}
-
-export default function Attendance({ employeePortal = false }: AttendanceProps) {
-  void employeePortal;
-
-  const [search] = useTopHeaderSearch();
-  const [period, setPeriod] = useState("Today");
-  const [date, setDate] = useState("2026-06-01");
-  const [department, setDepartment] = useState("All Departments");
-  const [employee, setEmployee] = useState("All Employees");
-  const [status, setStatus] = useState("All");
-
-  const departments = useMemo(
-    () => [
-      "All Departments",
-      ...new Set(attendanceRecords.map((record) => record.department)),
-    ],
-    [],
-  );
-
-  const employees = useMemo(
-    () => [
-      "All Employees",
-      ...new Set(attendanceRecords.map((record) => record.employee)),
-    ],
-    [],
-  );
-
-  const filteredRecords = useMemo(() => {
-    const query = search.trim().toLowerCase();
-
-    return attendanceRecords.filter((record) => {
-      const matchesSearch =
-        !query ||
-        [
-          record.employee,
-          record.role,
-          record.shift,
-          record.workMode,
-          record.status,
-          record.department,
-          record.marked,
-        ]
-          .join(" ")
-          .toLowerCase()
-          .includes(query);
-
-      const matchesDepartment =
-        department === "All Departments" || record.department === department;
-      const matchesEmployee =
-        employee === "All Employees" || record.employee === employee;
-      const matchesStatus = status === "All" || record.status === status;
-
-      return matchesSearch && matchesDepartment && matchesEmployee && matchesStatus;
-    });
-  }, [department, employee, search, status]);
-
-  const metrics = useMemo(() => {
-    const total = attendanceRecords.length;
-    const checkedIn = attendanceRecords.filter(
+    const checkedIn = attendanceData.filter(
       (record) => record.status !== "Absent",
     ).length;
-    const onTime = attendanceRecords.filter(
+    const onTime = attendanceData.filter(
       (record) => record.status === "On Time",
     ).length;
-    const late = attendanceRecords.filter((record) => record.status === "Late").length;
-    const absent = attendanceRecords.filter(
+    const late = attendanceData.filter((record) => record.status === "Late").length;
+    const absent = attendanceData.filter(
       (record) => record.status === "Absent",
     ).length;
-    const earlyOut = attendanceRecords.filter(
+    const earlyOut = attendanceData.filter(
       (record) => record.status === "Early Out",
     ).length;
     const rate = total ? `${Math.round((checkedIn / total) * 100)}%` : "0%";
@@ -192,7 +154,7 @@ export default function Attendance({ employeePortal = false }: AttendanceProps) 
       { label: "Early Out", value: earlyOut.toString(), color: "#8b5cf6" },
       { label: "Rate", value: rate, color: "#0891b2" },
     ];
-  }, []);
+  }, [attendanceData]);
 
   const exportCSV = () => {
     const headers = [
