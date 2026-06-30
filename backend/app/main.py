@@ -69,12 +69,12 @@ from app.api.routes import (
     work_attendance,
     whatsapp,
     whatsapp_meeting,
-    announcement as announcements,
+    announcement as announcement_routes,
     announcements_whatsapp,
     project,
     team,
 )
-from app.api.v1.routes import announcements, candidate, applications as candidate_applications
+from app.api.v1.routes import announcements as announcements_v1, candidate, applications as candidate_applications
 from app.core.config import CORS_ORIGINS, CORS_ORIGIN_REGEX
 from app.core.errors import ApiException, api_exception_handler
 from app.core.import_paths import configure_legacy_import_paths
@@ -154,7 +154,8 @@ app.include_router(training.router)
 app.include_router(work_attendance.router)
 app.include_router(grievances.router)
 app.include_router(onboarding.router)
-app.include_router(announcements.router)
+app.include_router(announcement_routes.router)  # routes/announcement.py — JWT auth, proper field names
+app.include_router(announcements_v1.router)      # v1 legacy router (kept for backward compatibility)
 app.include_router(announcements_whatsapp.router)
 app.include_router(candidate.router)
 app.include_router(candidate_applications.router)

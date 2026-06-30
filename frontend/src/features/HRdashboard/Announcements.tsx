@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Edit3, Plus, Save, Trash2, X } from "lucide-react";
 import { useTopHeaderSearch } from "../../hooks/useTopHeaderSearch";
+import api from "../../utils/axiosInstance";
 import {
   btnPrimary,
   card,
@@ -20,101 +21,56 @@ type Priority = "High" | "Medium" | "Low";
 type AnnouncementStatus = "Published" | "Draft";
 
 type Announcement = {
-  id: number | string;
+  id: string;
   title: string;
   message: string;
   priority: Priority;
   status: AnnouncementStatus;
-  target: string;
-  expires: string;
-  published: string;
+  targetType: string;
+  expiresAt: string;
+  createdAt: string;
 };
 
-const initialAnnouncements: Announcement[] = [
-  {
-    id: 1,
-    title: "Mandatory Weekly Team meeting",
-    message:
-      "Everyone kindly join from your respective desk at 6:00 PM Meeting Link - https://meet.google.com/ozf-zwp-vcc",
-    priority: "Medium",
-    status: "Published",
-    target: "all",
-    expires: "06/02/2026",
-    published: "06/02/2026",
-  },
-  {
-    id: 2,
-    title: "Sales Performance is Degrading",
-    message: "Need immediate attention and productive work to avoid any escalations.",
-    priority: "Medium",
-    status: "Published",
-    target: "department",
-    expires: "04/12/2025",
-    published: "03/12/2025",
-  },
-  {
-    id: 3,
-    title: "Welcome Onboard to Vected EMS - Beta Version",
-    message:
-      "Feel free to report any bugs identified while working with the platform",
-    priority: "Medium",
-    status: "Published",
-    target: "all",
-    expires: "12/12/2025",
-    published: "29/11/2025",
-  },
-];
-
-const emptyAnnouncement: Omit<Announcement, "id"> = {
+const emptyDraft = {
   title: "",
   message: "",
-  priority: "Medium",
-  status: "Published",
-  target: "All Employees",
-  expires: "",
-  published: "",
+  priority: "Medium" as Priority,
+  status: "Published" as AnnouncementStatus,
+  targetType: "All Employees",
+  expiresAt: "",
 };
 
 function Announcements() {
   const [search] = useTopHeaderSearch();
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [editingId, setEditingId] = useState<string | number | null>(null);
-  const [draft, setDraft] = useState(emptyAnnouncement);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  async function loadAnnouncements() {
-    try {
-      setIsLoading(true);
-      setError("");
-      const data = await announcementApi.fetchAnnouncements();
-      const formatted = data.map(mapApiToFrontend);
-      setAnnouncements(formatted);
-    } catch (err) {
-      console.error("Failed to load announcements:", err);
-      setError("Failed to load announcements from database.");
-    } finally {
-      setIsLoading(false);
-    }
-  }
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [draft, setDraft] = useState(emptyDraft);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     void loadAnnouncements();
   }, []);
 
+  const loadAnnouncements = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get<Announcement[]>("/api/announcements");
+      const data = Array.isArray(res.data) ? res.data : [];
+      setAnnouncements(data);
+    } catch {
+      // silently keep empty list on error
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const filteredAnnouncements = useMemo(() => {
     const query = search.trim().toLowerCase();
     if (!query) return announcements;
-
-    return announcements.filter((announcement) =>
-      [
-        announcement.title,
-        announcement.message,
-        announcement.priority,
-        announcement.status,
-        announcement.target,
-      ]
+    return announcements.filter((a) =>
+      [a.title, a.message, a.priority, a.status, a.targetType]
         .join(" ")
         .toLowerCase()
         .includes(query),
@@ -122,7 +78,7 @@ function Announcements() {
   }, [announcements, search]);
 
   const openCreateModal = () => {
-    setDraft(emptyAnnouncement);
+    setDraft(emptyDraft);
     setEditingId(null);
     setShowModal(true);
   };
@@ -133,9 +89,8 @@ function Announcements() {
       message: announcement.message,
       priority: announcement.priority,
       status: announcement.status,
-      target: announcement.target,
-      expires: announcement.expires,
-      published: announcement.published,
+      targetType: announcement.targetType ?? "All Employees",
+      expiresAt: announcement.expiresAt ?? "",
     });
     setEditingId(announcement.id);
     setShowModal(true);
@@ -143,32 +98,40 @@ function Announcements() {
 
   const saveAnnouncement = async () => {
     if (!draft.title.trim() || !draft.message.trim()) return;
-
     try {
-      setError("");
-      const apiPayload = mapFrontendToApi(draft);
+      setSaving(true);
+      const payload = {
+        title: draft.title.trim(),
+        message: draft.message.trim(),
+        targetType: draft.targetType,
+        priority: draft.priority,
+        status: draft.status,
+        expiresAt: draft.expiresAt || null,
+      };
+
       if (editingId) {
-        const response = await announcementApi.updateAnnouncement(String(editingId), apiPayload);
-        const updated = mapApiToFrontend(response.announcement);
-        setAnnouncements((prev) =>
-          prev.map((announcement) =>
-            announcement.id === editingId
-              ? { ...announcement, ...updated }
-              : announcement,
-          ),
-        );
+        await api.put(`/api/announcements/${editingId}`, payload);
       } else {
-        const response = await announcementApi.createAnnouncement(apiPayload);
-        const created = mapApiToFrontend(response.announcement);
-        setAnnouncements((prev) => [created, ...prev]);
+        await api.post("/api/announcements", payload);
       }
 
       setShowModal(false);
       setEditingId(null);
-      setDraft(emptyAnnouncement);
-    } catch (err) {
-      console.error("Failed to save announcement:", err);
-      setError("Failed to save announcement. Please try again.");
+      setDraft(emptyDraft);
+      await loadAnnouncements();
+    } catch {
+      // keep modal open on error
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteAnnouncement = async (id: string) => {
+    try {
+      await api.delete(`/api/announcements/${id}`);
+      setAnnouncements((prev) => prev.filter((a) => a.id !== id));
+    } catch {
+      // silently ignore
     }
   };
 
@@ -196,94 +159,97 @@ function Announcements() {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
-          {filteredAnnouncements.map((announcement) => (
-            <article
-              key={announcement.id}
-              className="rounded-lg p-5 min-h-47.5 shadow-sm"
-              style={{
-                ...card,
-                borderColor: "rgba(16,185,129,0.45)",
-              }}
-            >
-              <div className="flex items-start justify-between gap-3 mb-3">
-                <h2 className="text-lg font-bold leading-6" style={textPrimary}>
-                  {announcement.title}
-                </h2>
+        {loading ? (
+          <div className="flex justify-center items-center h-40" style={{ color: "var(--text-secondary)" }}>
+            Loading announcements...
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+            {filteredAnnouncements.map((announcement) => (
+              <article
+                key={announcement.id}
+                className="rounded-lg p-5 min-h-47.5 shadow-sm"
+                style={{
+                  ...card,
+                  borderColor: "rgba(16,185,129,0.45)",
+                }}
+              >
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <h2 className="text-lg font-bold leading-6" style={textPrimary}>
+                    {announcement.title}
+                  </h2>
 
-                <div className="flex items-center gap-2 shrink-0">
-                  <button
-                    onClick={() => openEditModal(announcement)}
-                    className="w-8 h-8 rounded-lg inline-flex items-center justify-center"
-                    style={getStatusStyle("In Progress")}
-                    aria-label={`Edit ${announcement.title}`}
-                  >
-                    <Edit3 size={14} />
-                  </button>
-                  <button
-                    onClick={async () => {
-                      try {
-                        setError("");
-                        await announcementApi.deleteAnnouncement(String(announcement.id));
-                        setAnnouncements((prev) =>
-                          prev.filter((item) => item.id !== announcement.id),
-                        );
-                      } catch (err) {
-                        console.error("Failed to delete announcement:", err);
-                        setError("Failed to delete announcement.");
-                      }
-                    }}
-                    className="w-8 h-8 rounded-lg inline-flex items-center justify-center"
-                    style={getStatusStyle("Rejected")}
-                    aria-label={`Delete ${announcement.title}`}
-                  >
-                    <Trash2 size={14} />
-                  </button>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      onClick={() => openEditModal(announcement)}
+                      className="w-8 h-8 rounded-lg inline-flex items-center justify-center"
+                      style={getStatusStyle("In Progress")}
+                      aria-label={`Edit ${announcement.title}`}
+                    >
+                      <Edit3 size={14} />
+                    </button>
+                    <button
+                      onClick={() => deleteAnnouncement(announcement.id)}
+                      className="w-8 h-8 rounded-lg inline-flex items-center justify-center"
+                      style={getStatusStyle("Rejected")}
+                      aria-label={`Delete ${announcement.title}`}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 </div>
-              </div>
 
-              <div className="flex flex-wrap gap-2 mb-4">
-                <span
-                  className="px-3 py-1 rounded-full text-xs font-bold uppercase"
-                  style={getPriorityStyle(announcement.priority)}
-                >
-                  {announcement.priority}
-                </span>
-                <span
-                  className="px-3 py-1 rounded-full text-xs font-bold"
-                  style={getStatusStyle(announcement.status)}
-                >
-                  {announcement.status}
-                </span>
-              </div>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <span
+                    className="px-3 py-1 rounded-full text-xs font-bold uppercase"
+                    style={getPriorityStyle(announcement.priority)}
+                  >
+                    {announcement.priority}
+                  </span>
+                  <span
+                    className="px-3 py-1 rounded-full text-xs font-bold"
+                    style={getStatusStyle(announcement.status)}
+                  >
+                    {announcement.status}
+                  </span>
+                </div>
 
-              <p className="text-sm leading-6 mb-5" style={textPrimary}>
-                {announcement.message}
-              </p>
-
-              <div className="space-y-1 text-xs" style={textSecondary}>
-                <p>
-                  Target: <span style={textPrimary}>{announcement.target}</span>
+                <p className="text-sm leading-6 mb-5" style={textPrimary}>
+                  {announcement.message}
                 </p>
-                <p>
-                  Expires: <span style={textPrimary}>{announcement.expires || "-"}</span>
-                </p>
-                <p>
-                  Published:{" "}
-                  <span style={textPrimary}>{announcement.published || "-"}</span>
+
+                <div className="space-y-1 text-xs" style={textSecondary}>
+                  <p>
+                    Target: <span style={textPrimary}>{announcement.targetType}</span>
+                  </p>
+                  <p>
+                    Expires: <span style={textPrimary}>{announcement.expiresAt || "-"}</span>
+                  </p>
+                  <p>
+                    Published:{" "}
+                    <span style={textPrimary}>
+                      {announcement.createdAt
+                        ? new Date(announcement.createdAt).toLocaleDateString("en-IN", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                          })
+                        : "-"}
+                    </span>
+                  </p>
+                </div>
+              </article>
+            ))}
+
+            {filteredAnnouncements.length === 0 && (
+              <div className="xl:col-span-2 rounded-lg py-16 text-center" style={card}>
+                <p className="text-sm" style={textSecondary}>
+                  No announcements found
                 </p>
               </div>
-            </article>
-          ))}
-
-          {filteredAnnouncements.length === 0 && (
-            <div className="xl:col-span-2 rounded-lg py-16 text-center" style={card}>
-              <p className="text-sm" style={textSecondary}>
-                No announcements found
-              </p>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
 
         {showModal && (
           <div className="fixed inset-0 bg-black/45 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -315,9 +281,7 @@ function Announcements() {
                   </span>
                   <input
                     value={draft.title}
-                    onChange={(event) =>
-                      setDraft({ ...draft, title: event.target.value })
-                    }
+                    onChange={(e) => setDraft({ ...draft, title: e.target.value })}
                     placeholder="Mandatory Weekly Team meeting"
                     className="w-full rounded-lg px-4 py-3 outline-none"
                     style={inputMuted}
@@ -330,9 +294,7 @@ function Announcements() {
                   </span>
                   <textarea
                     value={draft.message}
-                    onChange={(event) =>
-                      setDraft({ ...draft, message: event.target.value })
-                    }
+                    onChange={(e) => setDraft({ ...draft, message: e.target.value })}
                     placeholder="Everyone kindly join from your respective desk at 6:00 PM"
                     className="w-full rounded-lg px-4 py-3 outline-none min-h-33 resize-y"
                     style={inputMuted}
@@ -344,10 +306,8 @@ function Announcements() {
                     Target Type *
                   </span>
                   <select
-                    value={draft.target}
-                    onChange={(event) =>
-                      setDraft({ ...draft, target: event.target.value })
-                    }
+                    value={draft.targetType}
+                    onChange={(e) => setDraft({ ...draft, targetType: e.target.value })}
                     className="w-full rounded-lg px-4 py-3 outline-none"
                     style={inputMuted}
                   >
@@ -364,9 +324,7 @@ function Announcements() {
                   </span>
                   <select
                     value={draft.priority}
-                    onChange={(event) =>
-                      setDraft({ ...draft, priority: event.target.value as Priority })
-                    }
+                    onChange={(e) => setDraft({ ...draft, priority: e.target.value as Priority })}
                     className="w-full rounded-lg px-4 py-3 outline-none"
                     style={inputMuted}
                   >
@@ -383,11 +341,8 @@ function Announcements() {
                     </span>
                     <select
                       value={draft.status}
-                      onChange={(event) =>
-                        setDraft({
-                          ...draft,
-                          status: event.target.value as AnnouncementStatus,
-                        })
+                      onChange={(e) =>
+                        setDraft({ ...draft, status: e.target.value as AnnouncementStatus })
                       }
                       className="w-full rounded-lg px-4 py-3 outline-none"
                       style={inputMuted}
@@ -402,11 +357,9 @@ function Announcements() {
                       Expires
                     </span>
                     <input
-                      value={draft.expires}
-                      onChange={(event) =>
-                        setDraft({ ...draft, expires: event.target.value })
-                      }
-                      placeholder="06/02/2026"
+                      value={draft.expiresAt}
+                      onChange={(e) => setDraft({ ...draft, expiresAt: e.target.value })}
+                      placeholder="DD/MM/YYYY"
                       className="w-full rounded-lg px-4 py-3 outline-none"
                       style={inputMuted}
                     />
@@ -415,11 +368,12 @@ function Announcements() {
 
                 <button
                   onClick={saveAnnouncement}
+                  disabled={saving}
                   className="w-full rounded-lg py-2.5 font-semibold inline-flex justify-center items-center gap-2"
                   style={btnPrimary}
                 >
                   <Save size={16} />
-                  {editingId ? "Update Announcement" : "Save Announcement"}
+                  {saving ? "Saving..." : editingId ? "Update Announcement" : "Save Announcement"}
                 </button>
               </div>
             </div>
@@ -441,4 +395,3 @@ function getPriorityStyle(priority: Priority) {
 }
 
 export default Announcements;
-

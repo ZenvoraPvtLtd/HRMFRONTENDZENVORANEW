@@ -701,6 +701,25 @@ const ProfilePage: React.FC = () => {
       {activeTab === "security" && (
         <div className="rounded-2xl p-5 sm:p-6" style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)" }}>
           <h3 className="text-base sm:text-lg font-bold mb-4" style={{ color: "var(--accent)" }}>Security Settings</h3>
+          {/*
+            Honeypot fields: Chrome's credential autofill looks for a username field near
+            password fields. These invisible, non-interactive inputs absorb that autofill
+            so the visible password inputs stay empty.
+          */}
+          <input
+            type="text"
+            autoComplete="username email"
+            aria-hidden="true"
+            tabIndex={-1}
+            style={{ position: "absolute", opacity: 0, width: "1px", height: "1px", pointerEvents: "none", overflow: "hidden" }}
+          />
+          <input
+            type="password"
+            autoComplete="current-password"
+            aria-hidden="true"
+            tabIndex={-1}
+            style={{ position: "absolute", opacity: 0, width: "1px", height: "1px", pointerEvents: "none", overflow: "hidden" }}
+          />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl">
             {/* Dummy input to catch browser credentials autofill and prevent it from targetting the top header search bar */}
             <input type="text" style={{ display: "none" }} autoComplete="username" />
@@ -710,6 +729,7 @@ const ProfilePage: React.FC = () => {
               onChange={(value) => setPasswordForm({ ...passwordForm, currentPassword: value })}
               visible={showCurrentPassword}
               onToggle={() => setShowCurrentPassword((prev) => !prev)}
+              autoComplete="new-password"
             />
             <PasswordField
               label="New Password"
@@ -717,6 +737,7 @@ const ProfilePage: React.FC = () => {
               onChange={(value) => setPasswordForm({ ...passwordForm, newPassword: value })}
               visible={showNewPassword}
               onToggle={() => setShowNewPassword((prev) => !prev)}
+              autoComplete="new-password"
             />
             <PasswordField
               label="Confirm New Password"
@@ -724,6 +745,7 @@ const ProfilePage: React.FC = () => {
               onChange={(value) => setPasswordForm({ ...passwordForm, confirmPassword: value })}
               visible={showConfirmPassword}
               onToggle={() => setShowConfirmPassword((prev) => !prev)}
+              autoComplete="new-password"
             />
           </div>
           <p className="text-xs italic mt-3" style={{ color: "var(--text-secondary)" }}>
@@ -979,13 +1001,23 @@ function PasswordField({
   onChange,
   visible,
   onToggle,
+  autoComplete,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   visible: boolean;
   onToggle: () => void;
+  autoComplete: string;
 }) {
+  // readOnly is true on mount so Chrome's autofill scan sees non-editable fields
+  // and skips them. It is removed after mount and on focus so the user can type normally.
+  const [isReadOnly, setIsReadOnly] = useState(true);
+  useEffect(() => {
+    const t = setTimeout(() => setIsReadOnly(false), 100);
+    return () => clearTimeout(t);
+  }, []);
+
   return (
     <label className="block">
       <span className="block text-xs font-semibold mb-2" style={{ color: "var(--text-secondary)" }}>{label}</span>
@@ -994,7 +1026,10 @@ function PasswordField({
           type={visible ? "text" : "password"}
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          readOnly={isReadOnly}
+          onFocus={() => setIsReadOnly(false)}
           placeholder={`Enter your ${label.toLowerCase()}`}
+          autoComplete={autoComplete}
           className="w-full rounded-xl px-3 py-2.5 pr-10 text-sm outline-none"
           style={{ background: "var(--bg-primary)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
         />

@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useTheme } from "../../context/ThemeContext";
 import {
   Users,
   Zap,
@@ -8,7 +9,6 @@ import {
   FileText,
   CheckCircle2,
   X,
-  Megaphone,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import EmployeeChatbot from "../chatbot/EmployeeChatbot";
@@ -139,6 +139,247 @@ export const mockPayslips: MockPayslip[] = [
   },
 ];
 
+// ─── PDF download helper ─────────────────────────────────────────────────────
+async function downloadPayslipPDF(payslip: MockPayslip) {
+  const { jsPDF } = await import("jspdf");
+  const doc = new jsPDF({ unit: "mm", format: "a4" });
+
+  const pageW = doc.internal.pageSize.getWidth();
+  const margin = 18;
+  const rightEdge = pageW - margin;
+  const col2 = pageW / 2 + 4;
+  const employeeName = localStorage.getItem("userName") || "Zenvora Member";
+
+  // ── Green header bar ──────────────────────────────────────────────────────
+  doc.setFillColor(16, 185, 129);
+  doc.rect(0, 0, pageW, 16, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(15);
+  doc.text("SALARY SLIP", pageW / 2, 10.5, { align: "center" });
+
+  // ── Sub-header: month + ID ─────────────────────────────────────────────────
+  let y = 24;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.setTextColor(80, 80, 80);
+  doc.text(`${payslip.month} ${payslip.year}`, margin, y);
+  doc.text(payslip.id, rightEdge, y, { align: "right" });
+
+  // ── Divider ───────────────────────────────────────────────────────────────
+  y += 5;
+  doc.setDrawColor(220, 220, 220);
+  doc.line(margin, y, rightEdge, y);
+
+  // ── Employee info grid ────────────────────────────────────────────────────
+  y += 8;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(7.5);
+  doc.setTextColor(140, 140, 140);
+  doc.text("EMPLOYEE NAME", margin, y);
+  doc.text("STATUS", col2, y);
+
+  y += 5;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.setTextColor(30, 30, 30);
+  doc.text(employeeName, margin, y);
+  doc.setTextColor(16, 185, 129);
+  doc.text(payslip.status.toUpperCase(), col2, y);
+  doc.setTextColor(30, 30, 30);
+
+  y += 8;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(7.5);
+  doc.setTextColor(140, 140, 140);
+  doc.text("PAYMENT DATE", margin, y);
+  doc.text("PAYMENT METHOD", col2, y);
+
+  y += 5;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.setTextColor(30, 30, 30);
+  doc.text(payslip.date, margin, y);
+  doc.text("Direct Deposit", col2, y);
+
+  // ── Divider ───────────────────────────────────────────────────────────────
+  y += 8;
+  doc.setDrawColor(220, 220, 220);
+  doc.line(margin, y, rightEdge, y);
+
+  // ── Earnings ──────────────────────────────────────────────────────────────
+  y += 8;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.setTextColor(140, 140, 140);
+  doc.text("EARNINGS", margin, y);
+
+  const lineItem = (label: string, value: string, yPos: number, valueColor?: [number, number, number]) => {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(50, 50, 50);
+    doc.text(label, margin + 4, yPos);
+    if (valueColor) doc.setTextColor(...valueColor);
+    else doc.setTextColor(30, 30, 30);
+    doc.text(value, rightEdge, yPos, { align: "right" });
+    doc.setTextColor(30, 30, 30);
+  };
+
+  y += 7;  lineItem("Basic Salary",  `$${payslip.basic.toLocaleString()}`,     y);
+  y += 7;  lineItem("HRA",           `$${payslip.hra.toLocaleString()}`,        y);
+  y += 7;  lineItem("Allowances",    `$${payslip.allowance.toLocaleString()}`,  y);
+
+  // ── Divider ───────────────────────────────────────────────────────────────
+  y += 8;
+  doc.setDrawColor(220, 220, 220);
+  doc.line(margin, y, rightEdge, y);
+
+  // ── Deductions ────────────────────────────────────────────────────────────
+  y += 8;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.setTextColor(140, 140, 140);
+  doc.text("DEDUCTIONS", margin, y);
+
+  y += 7;  lineItem("Taxes & PF", `-$${payslip.deductions.toLocaleString()}`, y, [220, 50, 50]);
+
+  // ── Double divider before net salary ─────────────────────────────────────
+  y += 9;
+  doc.setDrawColor(180, 180, 180);
+  doc.line(margin, y,       rightEdge, y);
+  doc.line(margin, y + 1.2, rightEdge, y + 1.2);
+
+  // ── Net salary ────────────────────────────────────────────────────────────
+  y += 10;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.setTextColor(30, 30, 30);
+  doc.text("NET SALARY", margin, y);
+  doc.setTextColor(16, 185, 129);
+  doc.text(`$${payslip.net.toLocaleString()}`, rightEdge, y, { align: "right" });
+
+  // ── Footer ────────────────────────────────────────────────────────────────
+  y += 16;
+  doc.setFont("helvetica", "italic");
+  doc.setFontSize(7.5);
+  doc.setTextColor(180, 180, 180);
+  doc.text("This is a system-generated salary slip. No signature required.", pageW / 2, y, { align: "center" });
+
+  doc.save(`Payslip-${payslip.id}.pdf`);
+}
+
+// ─── Salary Slip modal — exported so EmployeePayslipsPage can reuse it ───────
+export function PayslipModal({
+  payslip,
+  onClose,
+}: {
+  payslip: MockPayslip;
+  onClose: () => void;
+}) {
+  const { isDark } = useTheme();
+  return (
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+      <div
+        className="w-full max-w-lg rounded-3xl p-6 relative"
+        style={{
+          background: "var(--bg-primary)",
+          border: "1px solid var(--border)",
+          color: "var(--text-primary)",
+        }}
+      >
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-hover transition-colors"
+          style={{ color: "var(--text-secondary)", border: "none", background: "none", cursor: "pointer" }}
+        >
+          <X size={18} />
+        </button>
+
+        <div className="flex items-center gap-3 mb-6 pb-4 border-b" style={{ borderColor: "var(--border)" }}>
+          <div
+            className="w-10 h-10 rounded-xl flex items-center justify-center"
+            style={{ background: "rgba(16,185,129,0.12)", color: "#10b981" }}
+          >
+            <FileText size={20} />
+          </div>
+          <div>
+            <h3 className="font-bold text-base">Salary Slip</h3>
+            <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
+              {payslip.month} {payslip.year} • {payslip.id}
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-4 text-sm mb-6">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <span className="text-xs block mb-1" style={{ color: "var(--text-secondary)" }}>Employee Name</span>
+              <span className="font-semibold">{localStorage.getItem("userName") || "Zenvora Member"}</span>
+            </div>
+            <div>
+              <span className="text-xs block mb-1" style={{ color: "var(--text-secondary)" }}>Status</span>
+              <span className="inline-block text-[10px] uppercase font-bold px-2 py-0.5 rounded-full" style={{ background: "rgba(16,185,129,0.12)", color: "#10b981" }}>
+                {payslip.status}
+              </span>
+            </div>
+            <div>
+              <span className="text-xs block mb-1" style={{ color: "var(--text-secondary)" }}>Payment Date</span>
+              <span>{payslip.date}</span>
+            </div>
+            <div>
+              <span className="text-xs block mb-1" style={{ color: "var(--text-secondary)" }}>Payment Method</span>
+              <span>Direct Deposit</span>
+            </div>
+          </div>
+
+          <div className="mt-4 pt-4 border-t" style={{ borderColor: "var(--border)" }}>
+            <h4 className="font-bold text-xs uppercase mb-3" style={{ color: "var(--text-secondary)" }}>Earnings</h4>
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span>Basic Salary</span>
+                <span className="font-medium">${payslip.basic.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>HRA</span>
+                <span className="font-medium">${payslip.hra.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Allowances</span>
+                <span className="font-medium">${payslip.allowance.toLocaleString()}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-2">
+            <h4 className="font-bold text-xs uppercase mb-3" style={{ color: "var(--text-secondary)" }}>Deductions</h4>
+            <div className="flex justify-between">
+              <span>Taxes & Pf</span>
+              <span className="font-medium text-red-500">-${payslip.deductions.toLocaleString()}</span>
+            </div>
+          </div>
+
+          <div className="mt-4 pt-4 border-t flex justify-between items-center font-bold text-base" style={{ borderColor: "var(--border)" }}>
+            <span>Net Salary</span>
+            <span style={{ color: "var(--accent)" }}>${payslip.net.toLocaleString()}</span>
+          </div>
+        </div>
+
+        <button
+          onClick={() => { void downloadPayslipPDF(payslip); }}
+          className="w-full py-2.5 rounded-xl font-semibold text-sm transition-opacity hover:opacity-90 cursor-pointer"
+          style={{
+            background: isDark ? "#ffffff" : "#000000",
+            color: isDark ? "#000000" : "#ffffff",
+            border: "none",
+          }}
+        >
+          Download PDF
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 export function DashboardOverview() {
   const navigate = useNavigate();
@@ -161,9 +402,6 @@ export function DashboardOverview() {
   const [recentSprints, setRecentSprints] = useState<DashboardSprint[]>([]);
   const [lastSession, setLastSession] = useState(() => getLastWorkSession());
   const [selectedPayslip, setSelectedPayslip] = useState<MockPayslip | null>(null);
-  const [announcements, setAnnouncements] = useState<any[]>([]);
-  const [announcementsLoading, setAnnouncementsLoading] = useState(true);
-
   const [weeklyWorkMs, setWeeklyWorkMs] = useState(() => getThisWeekWorkMs());
 
   const [leavesLoading, setLeavesLoading] = useState(true);
@@ -297,31 +535,6 @@ export function DashboardOverview() {
       window.removeEventListener("focus", loadEmployeeStats);
     };
   }, []);
-  useEffect(() => {
-    let isMounted = true;
-    async function loadAnnouncements() {
-      setAnnouncementsLoading(true);
-      try {
-        const token = localStorage.getItem("accessToken") || "";
-        const res = await fetch(`${getApiBaseUrl()}/api/announcements`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (isMounted) {
-            setAnnouncements(Array.isArray(data) ? data : []);
-          }
-        }
-      } catch (err) {
-        console.error("Failed to load announcements:", err);
-      } finally {
-        if (isMounted) {
-          setAnnouncementsLoading(false);
-        }
-      }
-    }
-    void loadAnnouncements();
-  }, []);
   // ── Derived values ──
   const breakBudgetMin = 60;
   const breakUsedMin = Math.floor(getElapsedBreakSeconds("On-site") / 60);
@@ -365,46 +578,12 @@ export function DashboardOverview() {
       .slice(0, 6);
   }, [query, recentSprints]);
 
-  const filteredAnnouncements = useMemo(() => {
-    const list = announcements.length > 0 ? announcements : [
-      {
-        id: "dummy-1",
-        title: "Mandatory Weekly Team Meeting",
-        message: "Everyone kindly join from your respective desk at 6:00 PM. Meeting Link - https://meet.google.com/ozf-zwp-vcc",
-        priority: "Medium",
-        published: "28 Jun 2026",
-      },
-      {
-        id: "dummy-2",
-        title: "Sales Performance Notice",
-        message: "Need immediate attention and productive work to avoid any escalations.",
-        priority: "High",
-        published: "27 Jun 2026",
-      },
-      {
-        id: "dummy-3",
-        title: "Welcome Onboard to Vected EMS - Beta Version",
-        message: "Feel free to report any bugs identified while working with the platform.",
-        priority: "Low",
-        published: "26 Jun 2026",
-      }
-    ];
-
-    if (!query) return list;
-    return list.filter((ann) =>
-      [ann.title, ann.message || ann.content || "", ann.priority].some((v) =>
-        String(v).toLowerCase().includes(query)
-      )
-    );
-  }, [query, announcements]);
-
   const showPayslips =
     !query || "recent payslips no payslips available payslip salary".includes(query);
   const hasResults =
     filteredStats.length > 0 ||
     filteredSprints.length > 0 ||
-    showPayslips ||
-    filteredAnnouncements.length > 0;
+    showPayslips;
 
   return (
     <div className="flex flex-col md:flex-row gap-5 h-full" style={{ minHeight: 0 }}>
@@ -703,7 +882,15 @@ export function DashboardOverview() {
                 Recent Payslips
               </h2>
               <button
-                onClick={() => setSelectedPayslip(mockPayslips[0])}
+                onClick={() =>
+                  location.pathname.startsWith("/dashboard")
+                    ? navigate("/dashboard/payslips")
+                    : location.pathname.startsWith("/manager")
+                    ? navigate("/manager/payslips")
+                    : location.pathname.startsWith("/admin")
+                    ? setSelectedPayslip(mockPayslips[0])
+                    : navigate("/payslips")
+                }
                 className="flex items-center gap-1 text-xs font-semibold"
                 style={{ color: "var(--accent)", background: "none", border: "none", cursor: "pointer" }}
               >
@@ -767,109 +954,7 @@ export function DashboardOverview() {
       </div>
 
       {selectedPayslip && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-          <div
-            className="w-full max-w-lg rounded-3xl p-6 relative"
-            style={{
-              background: "var(--bg-primary)",
-              border: "1px solid var(--border)",
-              color: "var(--text-primary)",
-            }}
-          >
-            {/* Close button */}
-            <button
-              onClick={() => setSelectedPayslip(null)}
-              className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-hover transition-colors"
-              style={{ color: "var(--text-secondary)", border: "none", background: "none", cursor: "pointer" }}
-            >
-              <X size={18} />
-            </button>
-
-            {/* Header */}
-            <div className="flex items-center gap-3 mb-6 pb-4 border-b" style={{ borderColor: "var(--border)" }}>
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center"
-                style={{ background: "rgba(16,185,129,0.12)", color: "#10b981" }}
-              >
-                <FileText size={20} />
-              </div>
-              <div>
-                <h3 className="font-bold text-base">Salary Slip</h3>
-                <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
-                  {selectedPayslip.month} {selectedPayslip.year} • {selectedPayslip.id}
-                </p>
-              </div>
-            </div>
-
-            {/* Details Grid */}
-            <div className="space-y-4 text-sm mb-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <span className="text-xs block mb-1" style={{ color: "var(--text-secondary)" }}>Employee Name</span>
-                  <span className="font-semibold">{localStorage.getItem("userName") || "Zenvora Member"}</span>
-                </div>
-                <div>
-                  <span className="text-xs block mb-1" style={{ color: "var(--text-secondary)" }}>Status</span>
-                  <span className="inline-block text-[10px] uppercase font-bold px-2 py-0.5 rounded-full" style={{ background: "rgba(16,185,129,0.12)", color: "#10b981" }}>
-                    {selectedPayslip.status}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-xs block mb-1" style={{ color: "var(--text-secondary)" }}>Payment Date</span>
-                  <span>{selectedPayslip.date}</span>
-                </div>
-                <div>
-                  <span className="text-xs block mb-1" style={{ color: "var(--text-secondary)" }}>Payment Method</span>
-                  <span>Direct Deposit</span>
-                </div>
-              </div>
-
-              {/* Financial Breakdowns */}
-              <div className="mt-4 pt-4 border-t" style={{ borderColor: "var(--border)" }}>
-                <h4 className="font-bold text-xs uppercase mb-3" style={{ color: "var(--text-secondary)" }}>Earnings</h4>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span>Basic Salary</span>
-                    <span className="font-medium">${selectedPayslip.basic.toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>HRA</span>
-                    <span className="font-medium">${selectedPayslip.hra.toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Allowances</span>
-                    <span className="font-medium">${selectedPayslip.allowance.toLocaleString()}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-2">
-                <h4 className="font-bold text-xs uppercase mb-3" style={{ color: "var(--text-secondary)" }}>Deductions</h4>
-                <div className="flex justify-between">
-                  <span>Taxes & Pf</span>
-                  <span className="font-medium text-red-500">-${selectedPayslip.deductions.toLocaleString()}</span>
-                </div>
-              </div>
-
-              <div className="mt-4 pt-4 border-t flex justify-between items-center font-bold text-base" style={{ borderColor: "var(--border)" }}>
-                <span>Net Salary</span>
-                <span style={{ color: "var(--accent)" }}>${selectedPayslip.net.toLocaleString()}</span>
-              </div>
-            </div>
-
-            {/* Action button */}
-            <button
-              onClick={() => {
-                alert("Downloading Payslip PDF...");
-                setSelectedPayslip(null);
-              }}
-              className="w-full py-2.5 rounded-xl font-semibold text-sm transition-opacity hover:opacity-90 cursor-pointer"
-              style={{ background: "var(--accent)", color: "#fff", border: "none" }}
-            >
-              Download PDF
-            </button>
-          </div>
-        </div>
+        <PayslipModal payslip={selectedPayslip} onClose={() => setSelectedPayslip(null)} />
       )}
 
       {/* Floating Chatbot */}

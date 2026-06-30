@@ -59,6 +59,8 @@ const routeMeta: { pattern: RegExp; icon: ReactNode; label: string; placeholder:
   { pattern: /^\/dashboard\/organization/, icon: <Users size={18} />, label: "Organization", placeholder: "Search members..." },
   { pattern: /^\/dashboard\/chatbot/, icon: <Bot size={18} />, label: "Employee Chatbot", placeholder: "Search..." },
   { pattern: /^\/dashboard\/chat/, icon: <MessageCircle size={18} />, label: "Chat", placeholder: "Search conversations..." },
+  { pattern: /^\/dashboard\/events/, icon: <Calendar size={18} />, label: "Events", placeholder: "Search events..." },
+  { pattern: /^\/dashboard\/announcements/, icon: <MessageSquare size={18} />, label: "Announcements", placeholder: "Search announcements..." },
   { pattern: /^\/dashboard\/profile/, icon: <UserCircle size={18} />, label: "Profile", placeholder: "Search..." },
   { pattern: /^\/manager\/profile/, icon: <UserCircle size={18} />, label: "Profile", placeholder: "Search..." },
   { pattern: /^\/hr\/profile/, icon: <UserCircle size={18} />, label: "Profile", placeholder: "Search..." },

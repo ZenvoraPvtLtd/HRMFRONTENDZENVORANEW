@@ -76,6 +76,46 @@ const tabs = [
   "Range",
 ];
 
+// Pure utility — no component state dependency, so kept outside the component
+// to avoid stale-closure issues in useEffect deps.
+const getDateRange = (tab: string, selectedDate: string) => {
+  const start = selectedDate;
+  const end = selectedDate;
+
+  if (tab === "Today") {
+    const todayStr = new Date().toISOString().split('T')[0];
+    return { start: todayStr, end: todayStr };
+  } else if (tab === "This Week") {
+    const curr = new Date();
+    const first = curr.getDate() - curr.getDay() + 1; // Monday
+    const last = first + 6; // Sunday
+    // Use separate Date objects to avoid mutation causing wrong-month Sunday
+    const mondayDate = new Date(curr);
+    mondayDate.setDate(first);
+    const sundayDate = new Date(curr);
+    sundayDate.setDate(last);
+    const monday = mondayDate.toISOString().split('T')[0];
+    const sunday = sundayDate.toISOString().split('T')[0];
+    return { start: monday, end: sunday };
+  } else if (tab === "This Month") {
+    const curr = new Date();
+    const firstDay = new Date(curr.getFullYear(), curr.getMonth(), 1).toISOString().split('T')[0];
+    const lastDay = new Date(curr.getFullYear(), curr.getMonth() + 1, 0).toISOString().split('T')[0];
+    return { start: firstDay, end: lastDay };
+  } else if (tab === "Day") {
+    return { start: selectedDate, end: selectedDate };
+  } else if (tab === "Range") {
+    const baseDate = new Date(selectedDate);
+    if (!isNaN(baseDate.getTime())) {
+      const startRange = new Date(baseDate);
+      startRange.setDate(startRange.getDate() - 30);
+      const startStr = startRange.toISOString().split('T')[0];
+      return { start: startStr, end: selectedDate };
+    }
+  }
+  return { start, end };
+};
+
 export default function AttendancePage() {
   const [activeTab, setActiveTab] = useState("Today");
   const [search, setSearch] = useState("");
@@ -88,7 +128,7 @@ export default function AttendancePage() {
     const dd = String(today.getDate()).padStart(2, '0');
     return `${yyyy}-${mm}-${dd}`;
   });
-  
+
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [members, setMembers] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
@@ -165,8 +205,8 @@ export default function AttendancePage() {
           } else {
             setMetrics({
               total: list.length,
-              checkedIn: list.filter((e: EmployeeAttendance) => e.clockIn !== "Absent").length,
-              active: list.filter((e: EmployeeAttendance) => e.status === "On Time" || e.status === "Late" || e.status === "Present").length,
+              checkedIn: list.filter((e) => e.clockIn !== "Absent").length,
+              active: list.filter((e) => e.status === "On Time" || e.status === "Late" || e.status === "Present").length,
             });
           }
         }
@@ -183,8 +223,6 @@ export default function AttendancePage() {
       isMounted = false;
     };
   }, [activeTab, date, statusFilter, teamMember, search]);
-
-  const filteredEmployees = employees;
 
   // RESET
   const handleReset = () => {
@@ -204,7 +242,7 @@ export default function AttendancePage() {
   return (
     <div className="min-h-screen font-[Inter]" style={{ background: "var(--bg-primary)", color: "var(--text-primary)" }}>
 
-     
+
 
       <main className="px-4 sm:px-6 lg:px-10 py-6">
 
@@ -235,6 +273,7 @@ export default function AttendancePage() {
         return (
           <button
             key={tab}
+            type="button"
             onClick={() => setActiveTab(tab)}
             className="px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap"
             style={
@@ -276,6 +315,7 @@ export default function AttendancePage() {
         onChange={(e) => setDate(e.target.value)}
         className="outline-none text-sm font-medium bg-transparent"
         style={{ color: "var(--text-primary)", minWidth: 110 }}
+        aria-label="Filter date"
       />
     </div>
 
@@ -285,6 +325,7 @@ export default function AttendancePage() {
         value={teamMember}
         onChange={(e) => setTeamMember(e.target.value)}
         className="rounded-xl px-3 py-2 text-sm cursor-pointer"
+        aria-label="Team member filter"
         style={{
           background: "var(--bg-primary)",
           color: "var(--text-primary)",
@@ -319,6 +360,7 @@ export default function AttendancePage() {
         value={statusFilter}
         onChange={(e) => setStatusFilter(e.target.value)}
         className="rounded-xl px-3 py-2 text-sm cursor-pointer"
+        aria-label="Status filter"
         style={{
           background: "var(--bg-primary)",
           color: "var(--text-primary)",
@@ -359,7 +401,9 @@ export default function AttendancePage() {
 
                   <span className="font-semibold" style={{ color: "var(--text-primary)" }}>
                     {(() => {
-                      const dObj = new Date(date);
+                      // Append T00:00:00 to parse as local time instead of UTC midnight,
+                      // which would shift the displayed date in UTC- timezones.
+                      const dObj = new Date(date + 'T00:00:00');
                       return isNaN(dObj.getTime())
                         ? date
                         : dObj.toLocaleDateString("en-US", {
@@ -383,6 +427,7 @@ export default function AttendancePage() {
             {/* ACTIONS */}
             <div className="flex flex-wrap items-center gap-3">
               <button
+                type="button"
                 onClick={handleReset}
                 className="px-4 py-2 rounded-xl text-sm font-medium"
                 style={{
@@ -402,7 +447,7 @@ export default function AttendancePage() {
               <Loader2 className="animate-spin text-purple-600" size={32} />
               <span className="text-sm" style={{ color: "var(--text-secondary)" }}>Loading attendance records...</span>
             </div>
-          ) : filteredEmployees.length === 0 ? (
+          ) : employees.length === 0 ? (
             <div className="p-16 text-center text-sm" style={{ color: "var(--text-secondary)" }}>
               No attendance records found for this selection.
             </div>
@@ -424,8 +469,8 @@ export default function AttendancePage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredEmployees.map((employee, index) => (
-                      <tr key={index} className="border-b transition" style={{ borderBottom: "1px solid var(--border)" }}>
+                    {employees.map((employee, index) => (
+                      <tr key={employee.id || String(index)} className="border-b transition" style={{ borderBottom: "1px solid var(--border)" }}>
                         <td className="px-6 py-5 font-semibold">{employee.name}</td>
                         <td className="px-6 py-5" style={{ color: "var(--text-secondary)" }}>{employee.role}</td>
                         <td className="px-6 py-5" style={{ color: "var(--text-secondary)" }}>{employee.shift}</td>
@@ -446,8 +491,8 @@ export default function AttendancePage() {
 
               {/* MOBILE CARDS */}
               <div className="lg:hidden p-4 space-y-4">
-                {filteredEmployees.map((employee, index) => (
-                  <div key={index} className="rounded-3xl p-5" style={{ border: "1px solid var(--border)", background: "var(--bg-secondary)" }}>
+                {employees.map((employee, index) => (
+                  <div key={employee.id || String(index)} className="rounded-3xl p-5" style={{ border: "1px solid var(--border)", background: "var(--bg-secondary)" }}>
                     <div className="flex items-start justify-between">
                       <div>
                         <h3 className="font-semibold text-lg" style={{ color: "var(--text-primary)" }}>{employee.name}</h3>
@@ -476,18 +521,19 @@ export default function AttendancePage() {
 function StatusBadge({
   status,
 }: {
-  status: string;
+  status?: string;
 }) {
+  const s = status ?? "";
   return (
     <span
       className="px-3 py-1 rounded-full text-xs font-medium"
       style={
-        status === "On Time"
+        s === "On Time"
           ? {
               background: "var(--accent)",
               color: "var(--accent-text)",
             }
-          : status === "Late"
+          : s === "Late"
           ? {
               background: "rgba(245,158,11,0.12)",
               color: "#F59E0B",
@@ -498,7 +544,7 @@ function StatusBadge({
             }
       }
     >
-      {status}
+      {s || "—"}
     </span>
   );
 }
@@ -507,12 +553,12 @@ function StatusBadge({
 function WorkModeBadge({
   mode,
 }: {
-  mode: string;
+  mode?: string;
 }) {
   return (
     <span className="rounded-full px-3 py-1 text-xs"
       style={{ border: "1px solid var(--border)", color: "var(--text-primary)" }}>
-      {mode}
+      {mode ?? "—"}
     </span>
   );
 }
@@ -523,7 +569,7 @@ function MobileInfo({
   value,
 }: {
   label: string;
-  value: string;
+  value?: string;
 }) {
   return (
     <div className="flex justify-between">
@@ -532,9 +578,8 @@ function MobileInfo({
       </span>
 
       <span className="font-medium">
-        {value}
+        {value ?? "—"}
       </span>
     </div>
   );
 }
-
