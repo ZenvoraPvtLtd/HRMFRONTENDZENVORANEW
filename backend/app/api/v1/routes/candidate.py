@@ -67,10 +67,26 @@ def get_candidate_applications(request: Request):
                 or "Unknown"
             )
 
-            resume_url = app.get("resumeUrl", "")
-            orig_name = app.get("resumeOriginalName", "")
-            if not orig_name and resume_url:
-                orig_name = os.path.basename(resume_url)
+            resume_payload = app.get("resume") or {}
+            resume_url = (
+                resume_payload.get("url")
+                or app.get("resumeUrl")
+                or ""
+            )
+            resume_original_name = (
+                resume_payload.get("originalName")
+                or app.get("resumeOriginalName")
+                or ""
+            )
+            resume_mime_type = (
+                resume_payload.get("mimeType")
+                or app.get("resumeMimeType")
+                or resume_payload.get("mimetype")
+                or ""
+            )
+            if not resume_original_name and resume_url:
+                resume_original_name = os.path.basename(resume_url)
+
 
             applied_date = app.get("createdAt") or app.get("appliedAt") or app.get("appliedDate")
 
@@ -85,8 +101,17 @@ def get_candidate_applications(request: Request):
                 "role": app.get("jobTitle") or app.get("role") or "",
                 "company": app.get("company", ""),
                 "status": app.get("status", "pending"),
+
+                # New nested resume payload (Cloudinary URL preferred)
+                "resume": {
+                    "url": resume_url,
+                    "originalName": resume_original_name,
+                    "mimeType": resume_mime_type,
+                },
+
                 "resumeUrl": resume_url,
-                "resumeOriginalName": orig_name,
+                "resumeOriginalName": resume_original_name,
+
                 "portfolio": app.get("portfolio", ""),
                 "linkedin": app.get("linkedin", ""),
                 "coverLetter": app.get("coverLetter", ""),
@@ -100,6 +125,26 @@ def get_candidate_applications(request: Request):
 
         for rec in recruitment_col.find({}).sort("createdAt", -1):
             applied_date = rec.get("createdAt") or rec.get("appliedAt") or rec.get("applied") or ""
+            resume_payload_rec = rec.get("resume") or {}
+            resume_url_rec = (
+                resume_payload_rec.get("url")
+                or rec.get("resumeUrl")
+                or ""
+            )
+            resume_original_name_rec = (
+                resume_payload_rec.get("originalName")
+                or rec.get("resumeOriginalName")
+                or ""
+            )
+            resume_mime_type_rec = (
+                resume_payload_rec.get("mimeType")
+                or rec.get("resumeMimeType")
+                or resume_payload_rec.get("mimetype")
+                or ""
+            )
+            if not resume_original_name_rec and resume_url_rec:
+                resume_original_name_rec = os.path.basename(resume_url_rec)
+
             out.append({
                 "id": _str_id(rec.get("_id")),
                 "name": rec.get("name") or "Unknown",
@@ -108,8 +153,17 @@ def get_candidate_applications(request: Request):
                 "role": rec.get("role") or rec.get("jobTitle") or "",
                 "company": rec.get("company", ""),
                 "status": rec.get("status", "Applied"),
-                "resumeUrl": rec.get("resumeUrl", ""),
-                "resumeOriginalName": rec.get("resumeOriginalName", ""),
+
+                "resume": {
+                    "url": resume_url_rec,
+                    "originalName": resume_original_name_rec,
+                    "mimeType": resume_mime_type_rec,
+                },
+
+                "resumeUrl": resume_url_rec,
+                "resumeOriginalName": resume_original_name_rec,
+
+
                 "portfolio": rec.get("portfolio", ""),
                 "linkedin": rec.get("linkedin", ""),
                 "coverLetter": "",

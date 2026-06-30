@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   BrainCircuit,
   CheckCircle2,
@@ -13,7 +14,7 @@ import {
 import axiosInstance from "../../utils/axiosInstance";
 import { SEARCH_EVENT } from "../../components/layout/TopHeader";
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+// ─── Types 
 
 type Candidate = {
   id: string;
@@ -186,7 +187,8 @@ const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
 };
 
 function StatusBadge({ status }: { status: string }) {
-  const col = STATUS_COLORS[status] || STATUS_COLORS.Pending;
+  const normalizedStatus = normalizeStatus(status);
+  const col = STATUS_COLORS[normalizedStatus] || STATUS_COLORS.Pending;
   return (
     <span
       style={{
@@ -199,7 +201,7 @@ function StatusBadge({ status }: { status: string }) {
         whiteSpace: "nowrap",
       }}
     >
-      {status.charAt(0).toUpperCase() + status.slice(1)}
+      {normalizedStatus}
     </span>
   );
 }
@@ -272,15 +274,83 @@ interface StatusDropdownProps {
 
 const STATUS_OPTIONS = ["Shortlisted", "Review", "Rejected"];
 
+function normalizeStatus(status: string) {
+  const s = status.trim().toLowerCase();
+  if (s === "shortlist" || s === "shortlisted") return "Shortlisted";
+  if (s === "review" || s === "under review") return "Review";
+  if (s === "reject" || s === "rejected") return "Rejected";
+  if (s === "pending") return "Pending";
+  if (s === "applied") return "Applied";
+  return status.charAt(0).toUpperCase() + status.slice(1);
+}
+
 function StatusDropdown({ candidateId, currentStatus, isUpdating, onStatusChange }: StatusDropdownProps) {
   const [open, setOpen] = useState(false);
-  const col = STATUS_COLORS[currentStatus] || STATUS_COLORS.Pending;
+  const [menuStyle, setMenuStyle] = useState<React.CSSProperties | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  const displayStatus = normalizeStatus(currentStatus);
+  const col = STATUS_COLORS[displayStatus] || STATUS_COLORS.Pending;
+
+  useEffect(() => {
+    if (!open) return;
+
+    const updatePosition = () => {
+      const trigger = triggerRef.current;
+      if (!trigger) return;
+
+      const rect = trigger.getBoundingClientRect();
+      const menuWidth = 152;
+      const margin = 8;
+      const viewportWidth = window.innerWidth;
+      const left = Math.min(Math.max(margin, rect.left), Math.max(margin, viewportWidth - menuWidth - margin));
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      const openUpward = spaceBelow < 180 && spaceAbove > spaceBelow;
+
+      setMenuStyle({
+        position: "fixed",
+        left,
+        top: openUpward ? undefined : rect.bottom + 4,
+        bottom: openUpward ? Math.max(margin, window.innerHeight - rect.top + 4) : undefined,
+        zIndex: 9999,
+        background: "var(--bg-secondary)",
+        border: "1px solid var(--border)",
+        borderRadius: "0.625rem",
+        overflow: "hidden",
+        minWidth: menuWidth,
+        boxShadow: "0 4px 20px rgba(0,0,0,0.12)",
+      });
+    };
+
+    const handlePointerDown = (event: MouseEvent) => {
+      const target = event.target as Node | null;
+      if (triggerRef.current?.contains(target) || menuRef.current?.contains(target)) return;
+      setOpen(false);
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open]);
 
   return (
-    <div style={{ position: "relative" }} tabIndex={0} onBlur={(e) => {
-      if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setOpen(false);
-    }}>
+    <div style={{ position: "relative" }}>
       <button
+        ref={triggerRef}
         disabled={isUpdating}
         onClick={() => setOpen((o) => !o)}
         style={{
@@ -300,24 +370,11 @@ function StatusDropdown({ candidateId, currentStatus, isUpdating, onStatusChange
         }}
       >
         {isUpdating ? <Loader2 size={12} style={{ animation: "spin 1s linear infinite" }} /> : null}
-        {currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1)}
+        {displayStatus}
         <ChevronDown size={12} />
       </button>
-      {open && (
-        <div
-          style={{
-            position: "absolute",
-            top: "calc(100% + 4px)",
-            left: 0,
-            zIndex: 50,
-            background: "var(--bg-secondary)",
-            border: "1px solid var(--border)",
-            borderRadius: "0.625rem",
-            overflow: "hidden",
-            minWidth: 130,
-            boxShadow: "0 4px 20px rgba(0,0,0,0.12)",
-          }}
-        >
+      {open && menuStyle && createPortal(
+        <div ref={menuRef} style={menuStyle}>
           {STATUS_OPTIONS.map((opt) => {
             const c = STATUS_COLORS[opt] || STATUS_COLORS.Pending;
             return (
@@ -332,18 +389,19 @@ function StatusDropdown({ candidateId, currentStatus, isUpdating, onStatusChange
                   fontSize: "0.8rem",
                   fontWeight: 600,
                   color: c.color,
-                  background: currentStatus === opt ? c.bg : "transparent",
+                  background: displayStatus === opt ? c.bg : "transparent",
                   border: "none",
                   cursor: "pointer",
                 }}
                 onMouseEnter={(e) => (e.currentTarget.style.background = c.bg)}
-                onMouseLeave={(e) => (e.currentTarget.style.background = currentStatus === opt ? c.bg : "transparent")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = displayStatus === opt ? c.bg : "transparent")}
               >
                 {opt}
               </button>
             );
           })}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
@@ -434,8 +492,9 @@ export default function CandidateScreeningPage() {
   // ── Status update ─────────────────────────────────────────────────────────
 
   const handleStatusChange = async (id: string, newStatus: string) => {
+    const previousStatus = candidates.find((c) => c.id === id)?.status;
     setCandidates((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, statusUpdating: true } : c))
+      prev.map((c) => (c.id === id ? { ...c, status: newStatus, statusUpdating: true } : c))
     );
     try {
       const params = new URLSearchParams({ status: newStatus });
@@ -443,12 +502,16 @@ export default function CandidateScreeningPage() {
       await axiosInstance.patch(`/api/candidates/${id}/status?${params.toString()}`);
       setCandidates((prev) =>
         prev.map((c) =>
-          c.id === id ? { ...c, status: newStatus, statusUpdating: false } : c
+          c.id === id ? { ...c, status: normalizeStatus(c.status), statusUpdating: false } : c
         )
       );
     } catch {
       setCandidates((prev) =>
-        prev.map((c) => (c.id === id ? { ...c, statusUpdating: false } : c))
+        prev.map((c) =>
+          c.id === id
+            ? { ...c, status: previousStatus || c.status, statusUpdating: false }
+            : c
+        )
       );
     }
   };
@@ -677,10 +740,10 @@ export default function CandidateScreeningPage() {
           background: "var(--bg-secondary)",
           border: "1px solid var(--border)",
           borderRadius: "0.875rem",
-          overflow: "hidden",
+          overflow: "visible",
         }}
       >
-        <div style={{ overflowX: "auto" }}>
+        <div style={{ overflowX: "auto" , overflowY: "visible"}}>
           <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "auto" }}>
             <thead>
               <tr

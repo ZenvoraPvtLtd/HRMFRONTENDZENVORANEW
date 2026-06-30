@@ -22,7 +22,7 @@ from app.core.database import db
 
 if db is not None:
     candidates_col = db["candidates"]
-    applications_col = db["candidate_applications"]
+    applications_col = db["applications"]
 else:
     candidates_col = None
     applications_col = None
@@ -182,6 +182,8 @@ async def update_candidate_status(
     job_title: Optional[str] = Query(None, description="Job title for rejection email"),
     authorization: Optional[str] = Header(default=None),
 ):
+    print("Status endpoint called")
+    print(db.list_collection_names())
     _db_check()
 
     try:
@@ -196,7 +198,13 @@ async def update_candidate_status(
 
         # Try both collections — candidates_col (shortlisted) and applications_col
         updated = None
+        print("Database:", db.name)
+        print("Candidates collection:", candidates_col.name)
+        print("Applications collection:", applications_col.name)
         for col in [candidates_col, applications_col]:
+            print("Checking collection:", col.name)
+            doc = col.find_one({"_id": oid})
+            print("Found:", doc)
             if col is None:
                 continue
             result = col.update_one({"_id": oid}, {"$set": updates})
