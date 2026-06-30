@@ -168,8 +168,6 @@ export const employeeNavSections: NavSection[] = [
       { to: "/dashboard/timesheet", icon: <Activity size={18} />, label: "Timesheet" },
       { to: "/dashboard/payslips", icon: <FileText size={18} />, label: "Payslips" },
       { to: "/dashboard/organization", icon: <Users size={18} />, label: "Organization" },
-      { to: "/dashboard/announcements", icon: <MessageSquare size={18} />, label: "Announcements" },
-      { to: "/dashboard/events", icon: <Calendar size={18} />, label: "Events" },
       { to: "/dashboard/holiday-calendar", icon: <Calendar size={18} />, label: "Holiday Calendar" },
     ],
   },
