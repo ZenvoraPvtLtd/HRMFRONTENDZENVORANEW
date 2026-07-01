@@ -247,6 +247,14 @@ function CreatePIPModal({
     status: "Active",
   });
 
+  const [employees, setEmployees] = useState<any[]>([]);
+
+  useEffect(() => {
+    api.get("/api/employees").then((res) => {
+      setEmployees(res.data.employees || res.data || []);
+    }).catch(console.error);
+  }, []);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-6">
       <div className="w-full max-w-md rounded-lg" style={card}>
@@ -261,16 +269,32 @@ function CreatePIPModal({
 
         <div className="max-h-[72vh] overflow-y-auto px-5 py-4">
           <div className="space-y-4">
-            <InputField
-              label="Employee Name"
-              value={form.employee_name}
-              onChange={(value) => setForm({ ...form, employee_name: value })}
-            />
-            <InputField
-              label="Employee ID"
-              value={form.employee_id}
-              onChange={(value) => setForm({ ...form, employee_id: value })}
-            />
+            <label className="block">
+              <span className="mb-1 block text-xs font-semibold" style={textPrimary}>Employee</span>
+              <select
+                value={form.employee_id}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  const emp = employees.find(emp => emp.employeeId === val || String(emp.id) === val);
+                  if (emp) {
+                    setForm({
+                      ...form,
+                      employee_id: emp.employeeId || String(emp.id),
+                      employee_name: emp.name || emp.fullName || "",
+                    });
+                  }
+                }}
+                className="h-10 w-full rounded-lg px-3 text-sm outline-none"
+                style={input}
+              >
+                <option value="" disabled>Select an employee</option>
+                {employees.map((emp) => (
+                  <option key={emp.id || emp.employeeId} value={emp.employeeId || String(emp.id)}>
+                    {emp.name || emp.fullName} ({emp.employeeId || emp.id})
+                  </option>
+                ))}
+              </select>
+            </label>
             <TextAreaField
               label="Issue Description"
               rows={4}

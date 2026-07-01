@@ -599,15 +599,6 @@ export default function ModernLeaveManagement() {
             </tbody>
           </table>
         </div>
-        {totalPages > 1 && (
-          <PaginationControls
-            currentPage={effectivePage}
-            totalItems={filteredLeaves.length}
-            pageSize={PAGE_SIZE}
-            itemLabel="leave requests"
-            onPageChange={setCurrentPage}
-          />
-        )}
       </div>
 
       {/* MOBILE CARDS */}
