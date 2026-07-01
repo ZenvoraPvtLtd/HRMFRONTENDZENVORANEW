@@ -78,7 +78,7 @@ export default function LeaveRequestCard({ request }: LeaveRequestCardProps) {
       ? 'Rejected'
       : 'Pending';
   const hrStatus =
-    ist === 'admin_pending' || ist === 'approved' ? 'Approved' : ist === 'rejected' ? 'Rejected' : 'Pending';
+    ist === 'manager_approved' || ist === 'hr_pending' || ist === 'admin_pending' || ist === 'approved' ? 'Approved' : ist === 'rejected' || ist === 'manager_rejected' ? 'Rejected' : 'Pending';
   const managerDone = managerStatus !== 'Pending';
   const managerRejected = managerStatus === 'Rejected';
   const hrDone = hrStatus !== 'Pending';
