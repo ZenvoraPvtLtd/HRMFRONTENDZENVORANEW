@@ -59,6 +59,13 @@ export default function TeamManagementPage() {
   const [modalError, setModalError] = useState<string | null>(null);
   const [team, setTeam] = useState<TeamData | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
+  const [allEmployees, setAllEmployees] = useState<any[]>([]);
+
+  useEffect(() => {
+    api.get("/api/employees")
+      .then((res) => setAllEmployees(res.data.employees || res.data || []))
+      .catch((err) => console.error("Failed to fetch employees", err));
+  }, []);
 
   const [form, setForm] = useState({
     name: "",
@@ -606,6 +613,37 @@ export default function TeamManagementPage() {
               {modalError && (
                 <div className="text-red-500 text-xs px-2 font-medium">{modalError}</div>
               )}
+              
+              <select
+                value={form.employeeId}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  const emp = allEmployees.find(emp => emp.employeeId === val || String(emp.id) === val);
+                  if (emp) {
+                    setForm({
+                      ...form,
+                      employeeId: emp.employeeId || String(emp.id),
+                      name: emp.name || emp.fullName || "",
+                      email: emp.email || "",
+                      contact: emp.contactNumber || emp.phone || form.contact
+                    });
+                  }
+                }}
+                className="w-full h-11 px-4 rounded-xl outline-none text-sm mb-4"
+                style={{
+                  background: "var(--bg-secondary)",
+                  border: "1px solid var(--border)",
+                  color: "var(--text-primary)",
+                }}
+              >
+                <option value="" disabled>Select Employee</option>
+                {allEmployees.map(emp => (
+                  <option key={emp.id || emp.employeeId} value={emp.employeeId || String(emp.id)}>
+                    {emp.name || emp.fullName} ({emp.employeeId || String(emp.id)})
+                  </option>
+                ))}
+              </select>
+
               <ModalInput
                 placeholder="Full Name"
                 value={form.name}
