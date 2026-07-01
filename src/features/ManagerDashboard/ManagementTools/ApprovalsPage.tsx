@@ -64,6 +64,12 @@ export default function ApprovalsPage() {
     return () => clearTimeout(id);
   }, []);
 
+  useEffect(() => {
+    const handleLeaveUpdate = () => { void load(); };
+    window.addEventListener("zenvora-leave-updated", handleLeaveUpdate);
+    return () => window.removeEventListener("zenvora-leave-updated", handleLeaveUpdate);
+  }, []);
+
   function openReviewDialog(leave: LeaveWithStatus, status: DecisionStatus) {
     setReviewDialog({ leave, status });
     setReviewReason("");
@@ -105,10 +111,12 @@ export default function ApprovalsPage() {
     }
   }
 
+  const pendingLeaves = leaves.filter((l) => !l.decision && (!l.internal_status || l.internal_status === "manager_pending" || l.internal_status === "pending" || l.status === "Pending"));
+
   const q = search.trim().toLowerCase();
   const filteredLeaves = q
-    ? leaves.filter((l) => [(l.employee ?? ""), (l.type ?? ""), (l.department ?? "")].some((v) => v.toLowerCase().includes(q)))
-    : leaves;
+    ? pendingLeaves.filter((l) => [(l.employee ?? ""), (l.type ?? ""), (l.department ?? "")].some((v) => v.toLowerCase().includes(q)))
+    : pendingLeaves;
 
   const totalLeavePages = Math.max(1, Math.ceil(filteredLeaves.length / PAGE_SIZE));
   const effectiveLeavePage = Math.min(leavePage, totalLeavePages);
@@ -117,8 +125,8 @@ export default function ApprovalsPage() {
     effectiveLeavePage * PAGE_SIZE,
   );
 
-  const needsAction = leaves.filter((l) => !l.decision && (!l.internal_status || l.internal_status === "manager_pending")).length;
-  const total = leaves.length;
+  const needsAction = pendingLeaves.length;
+  const total = pendingLeaves.length;
 
   // Optimized percentage widths summing perfectly to 100%
   const columns = [

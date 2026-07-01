@@ -161,26 +161,22 @@ export default function ModernLeaveManagement() {
 
   const filteredLeaves = useMemo(() => {
     return leaveRequests.filter((leave) => {
+      const ist = leave.internal_status;
+      if (ist !== "manager_approved" && ist !== "hr_pending" && ist !== "admin_pending") {
+        return false;
+      }
+
       const matchesSearch =
         leave.employee.toLowerCase().includes(search.toLowerCase()) ||
         leave.department.toLowerCase().includes(search.toLowerCase()) ||
         leave.type.toLowerCase().includes(search.toLowerCase());
 
-      const ist = leave.internal_status;
-      const matchesStatus =
-        statusFilter === "All" ||
-        (statusFilter === "Mgr Pending" && ist === "manager_pending") ||
-        (statusFilter === "Mgr Approved" && (ist === "manager_approved" || ist === "hr_pending" || ist === "admin_pending")) ||
-        (statusFilter === "Mgr Rejected" && ist === "manager_rejected") ||
-        (statusFilter === "Approved" && ist === "approved") ||
-        (statusFilter === "Rejected" && ist === "rejected");
-
       const matchesYear =
         yearFilter === "All" || getLeaveYear(leave.date) === yearFilter;
 
-      return matchesSearch && matchesStatus && matchesYear;
+      return matchesSearch && matchesYear;
     });
-  }, [leaveRequests, search, statusFilter, yearFilter]);
+  }, [leaveRequests, search, yearFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filteredLeaves.length / PAGE_SIZE));
   const effectivePage = Math.min(currentPage, totalPages);
@@ -389,20 +385,6 @@ export default function ModernLeaveManagement() {
         </p>
 
         <div className="flex flex-wrap items-center gap-3 justify-end mb-4">
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2.5 rounded-2xl text-sm outline-none min-w-[160px]"
-            style={inputMuted}
-          >
-            <option value="All">All Status</option>
-            <option value="Mgr Pending">Mgr Pending</option>
-            <option value="Mgr Approved">Mgr Approved</option>
-            <option value="Mgr Rejected">Mgr Rejected</option>
-            <option value="Approved">HR Approved</option>
-            <option value="Rejected">HR Rejected</option>
-          </select>
-
           <div className="relative">
             <CalendarDays
               size={15}
@@ -550,13 +532,34 @@ export default function ModernLeaveManagement() {
 
                     <td className="px-5 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        {_isApproved || _ist === 'manager_approved' || _ist === 'hr_pending' || _ist === 'admin_pending' ? (
-                          <span className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg" style={{ background: "rgba(16,185,129,0.12)", color: "#10b981" }}><CheckCircle2 size={13} /> Approved</span>
-                        ) : _isRejected || _ist === 'manager_rejected' ? (
-                          <span className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg" style={{ background: "rgba(239,68,68,0.12)", color: "#ef4444" }}><XCircle size={13} /> Rejected</span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg" style={{ background: "rgba(245,158,11,0.12)", color: "#f59e0b" }}><Clock3 size={13} /> Pending</span>
-                        )}
+                        <button
+                          onClick={() => _canAct ? openModal(leave.id, "Approved", leave.employee, leave.type) : undefined}
+                          disabled={!_canAct || submitting === leave.id}
+                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-opacity"
+                          style={
+                            _isApproved
+                              ? { background: "rgba(16,185,129,0.18)", color: "#10b981", border: "1px solid rgba(16,185,129,0.4)" }
+                              : _canAct
+                                ? { background: "rgba(16,185,129,0.12)", color: "#10b981", border: "1px solid rgba(16,185,129,0.25)", cursor: "pointer" }
+                                : { background: "transparent", color: "var(--text-secondary)", border: "1px solid var(--border)", opacity: 0.4, cursor: "default" }
+                          }
+                        >
+                          <CheckCircle2 size={13} /> Approve
+                        </button>
+                        <button
+                          onClick={() => _canAct ? openModal(leave.id, "Rejected", leave.employee, leave.type) : undefined}
+                          disabled={!_canAct || submitting === leave.id}
+                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-opacity"
+                          style={
+                            _isRejected
+                              ? { background: "rgba(239,68,68,0.18)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.4)" }
+                              : _canAct
+                              ? { background: "rgba(239,68,68,0.12)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.25)", cursor: "pointer" }
+                              : { background: "transparent", color: "var(--text-secondary)", border: "1px solid var(--border)", opacity: 0.4, cursor: "default" }
+                          }
+                        >
+                          <XCircle size={13} /> Reject
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -674,19 +677,34 @@ export default function ModernLeaveManagement() {
               </div>
 
               <div className="flex gap-2 mt-4">
-                {_mIsApproved || _mist === 'manager_approved' || _mist === 'hr_pending' || _mist === 'admin_pending' ? (
-                  <div className="flex-1 flex items-center justify-center gap-1 py-2.5 rounded-xl text-sm font-semibold" style={{ background: "rgba(16,185,129,0.12)", color: "#10b981" }}>
-                    <CheckCircle2 size={14} /> Approved
-                  </div>
-                ) : _mIsRejected || _mist === 'manager_rejected' ? (
-                  <div className="flex-1 flex items-center justify-center gap-1 py-2.5 rounded-xl text-sm font-semibold" style={{ background: "rgba(239,68,68,0.12)", color: "#ef4444" }}>
-                    <XCircle size={14} /> Rejected
-                  </div>
-                ) : (
-                  <div className="flex-1 flex items-center justify-center gap-1 py-2.5 rounded-xl text-sm font-semibold" style={{ background: "rgba(245,158,11,0.12)", color: "#f59e0b" }}>
-                    <Clock3 size={14} /> Pending
-                  </div>
-                )}
+                <button
+                  onClick={() => _mCanAct ? openModal(leave.id, "Approved", leave.employee, leave.type) : undefined}
+                  disabled={!_mCanAct || submitting === leave.id}
+                  className="flex-1 flex items-center justify-center gap-1 py-2.5 rounded-xl text-sm font-semibold transition-opacity"
+                  style={
+                    _mIsApproved
+                      ? { background: "rgba(16,185,129,0.18)", color: "#10b981", border: "1px solid rgba(16,185,129,0.4)" }
+                      : _mCanAct
+                      ? { background: "rgba(16,185,129,0.12)", color: "#10b981", border: "1px solid rgba(16,185,129,0.25)", cursor: "pointer" }
+                      : { background: "transparent", color: "var(--text-secondary)", border: "1px solid var(--border)", opacity: 0.4, cursor: "default" }
+                  }
+                >
+                  <CheckCircle2 size={14} /> Approve
+                </button>
+                <button
+                  onClick={() => _mCanAct ? openModal(leave.id, "Rejected", leave.employee, leave.type) : undefined}
+                  disabled={!_mCanAct || submitting === leave.id}
+                  className="flex-1 flex items-center justify-center gap-1 py-2.5 rounded-xl text-sm font-semibold transition-opacity"
+                  style={
+                    _mIsRejected
+                      ? { background: "rgba(239,68,68,0.18)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.4)" }
+                      : _mCanAct
+                      ? { background: "rgba(239,68,68,0.12)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.25)", cursor: "pointer" }
+                      : { background: "transparent", color: "var(--text-secondary)", border: "1px solid var(--border)", opacity: 0.4, cursor: "default" }
+                  }
+                >
+                  <XCircle size={14} /> Reject
+                </button>
               </div>
             </div>
           );
