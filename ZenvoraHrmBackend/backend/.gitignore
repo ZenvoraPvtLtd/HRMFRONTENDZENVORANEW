@@ -1,0 +1,73 @@
+ # Node
+node_modules/
+*.tsbuildinfo
+
+# Python
+__pycache__/
+*.pyc
+
+# Build
+dist/
+build/
+
+# Environment
+.env
+.env.local
+﻿node_modules/
+.env
+.env.local
+.env.*.local
+dist/
+build/
+coverage/
+.DS_Store
+/src/generated/prisma
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# python virtual environments
+env/
+ENV/
+
+# python cache
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# logs
+logs/
+*.log
+
+# runtime uploads
+uploads/
+
+# temp files
+*.tmp
+*.temp
+.venv/
+venv/
+__pycache__
+__pycache__/
+
+.vscode/
+app/api/routes/__pycache__
+app/api/__pycache__
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+*.pyc
+.env
+token.json
+credentials.json
+uploads/
+token.json
+credentials.json
