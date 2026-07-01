@@ -52,7 +52,7 @@ const statusIcons: Record<string, ReactNode> = {
 // Derive manager status from internal_status
 function getManagerStatus(ist?: string, employeeRole?: string): string {
   if (employeeRole === "hr" || employeeRole === "manager") return "N/A";
-  if (ist === "manager_approved" || ist === "approved" || ist === "rejected") return "Approved";
+  if (ist === "manager_approved" || ist === "hr_pending" || ist === "admin_pending" || ist === "approved" || ist === "rejected") return "Approved";
   if (ist === "manager_rejected") return "Rejected";
   return "Pending";
 }
@@ -71,11 +71,11 @@ function canUserAct(internalStatus?: string, employeeRole?: string) {
     return internalStatus === "admin_pending";
   }
 
-  // HR can approve Manager's requests at hr_pending stage, and Employee's requests at manager_approved stage
+  // HR can approve Manager's requests at hr_pending stage, and Employee's requests at manager_approved or hr_pending stage
   if (employeeRole === "manager") {
     return internalStatus === "hr_pending";
   }
-  return internalStatus === "manager_approved";
+  return internalStatus === "manager_approved" || internalStatus === "hr_pending";
 }
 
 function getHrStatus(status?: string, employeeRole?: string): string {
@@ -89,7 +89,7 @@ function getOverallStatus(status?: string) {
   if (status === "approved") return "Approved";
   if (status === "rejected") return "Rejected";
 
-  if (status === "manager_approved") {
+  if (status === "manager_approved" || status === "hr_pending" || status === "admin_pending") {
     return "Mgr Approved";
   }
 
@@ -170,7 +170,7 @@ export default function ModernLeaveManagement() {
       const matchesStatus =
         statusFilter === "All" ||
         (statusFilter === "Mgr Pending" && ist === "manager_pending") ||
-        (statusFilter === "Mgr Approved" && ist === "manager_approved") ||
+        (statusFilter === "Mgr Approved" && (ist === "manager_approved" || ist === "hr_pending" || ist === "admin_pending")) ||
         (statusFilter === "Mgr Rejected" && ist === "manager_rejected") ||
         (statusFilter === "Approved" && ist === "approved") ||
         (statusFilter === "Rejected" && ist === "rejected");
