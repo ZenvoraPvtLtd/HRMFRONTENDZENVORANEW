@@ -229,7 +229,8 @@ export default function AdminUserManagement() {
       <div className="flex items-center gap-3 justify-end">
         <button
           onClick={openCreateModal}
-          className="flex items-center gap-2 px-4 py-2.5 bg-zinc-900 dark:bg-zinc-100 hover:bg-zinc-850 dark:hover:bg-zinc-200 text-white dark:text-black rounded-xl font-semibold text-sm transition cursor-pointer border border-zinc-800 dark:border-zinc-200"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition cursor-pointer"
+          style={{ background: "var(--accent)", color: "var(--accent-text)", border: "none" }}
         >
           <UserPlus className="w-4 h-4" /> Add New User
         </button>

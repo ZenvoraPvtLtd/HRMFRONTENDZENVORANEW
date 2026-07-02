@@ -466,7 +466,8 @@ const ProfilePage: React.FC = () => {
                 setEditAllValues(vals);
                 setIsEditingAll(true);
               }}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-zinc-900 dark:bg-zinc-100 hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black border border-zinc-800 dark:border-zinc-200 transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
+              style={{ background: "var(--accent)", color: "var(--accent-text)", border: "none" }}
             >
               <Edit2 size={14} /> Edit Profile
             </button>
@@ -696,7 +697,7 @@ const ProfilePage: React.FC = () => {
               {passwordMessage}
             </p>
           )}
-          <button type="button" onClick={updatePassword} disabled={passwordSaving} className="mt-4 px-4 py-2.5 rounded-xl text-sm font-semibold bg-zinc-900 dark:bg-zinc-100 hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-black border border-zinc-800 dark:border-zinc-200 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+          <button type="button" onClick={updatePassword} disabled={passwordSaving} className="mt-4 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" style={{ background: "var(--accent)", color: "var(--accent-text)", border: "none" }}>
             {passwordSaving ? "Updating..." : "Update Password"}
           </button>
         </div>
