@@ -473,11 +473,13 @@ export async function updateHrLeaveStatus(leaveId: string, status: "Approved" | 
     return;
   }
 
+  const backendStatus = status === "Approved" ? "approved" : "rejected";
+
   const response = await fetch(`${FASTAPI_BASE_URL}/api/leaves/${leaveId}/status`, {
     method: "PATCH",
     headers: getAuthHeaders(),
 
-    body: JSON.stringify({ status, comment: comment || "" }),
+    body: JSON.stringify({ status: backendStatus, comment: comment || "" }),
   });
 
   if (!response.ok) throw new Error("Unable to update leave status");
