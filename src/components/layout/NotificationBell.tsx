@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bell, Briefcase, FileText, Calendar, CheckCheck, CheckCircle2, MessageSquare, Trash2, Clock, Inbox } from "lucide-react";
 import api from "../../utils/axiosInstance";
@@ -239,7 +239,7 @@ export default function NotificationBell() {
           background: "transparent",
           border: "none",
           cursor: "pointer",
-          color: "var(--text-secondary)",
+          color: "rgba(255, 255, 255, 0.7)",
           display: "flex",
           padding: "8px",
           borderRadius: "50%",
@@ -247,12 +247,12 @@ export default function NotificationBell() {
           transition: "background-color 0.2s, color 0.2s",
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = "var(--bg-hover)";
-          e.currentTarget.style.color = "var(--text-primary)";
+          e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.1)";
+          e.currentTarget.style.color = "#ffffff";
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.backgroundColor = "transparent";
-          e.currentTarget.style.color = "var(--text-secondary)";
+          e.currentTarget.style.color = "rgba(255, 255, 255, 0.7)";
         }}
       >
         <Bell size={18} />

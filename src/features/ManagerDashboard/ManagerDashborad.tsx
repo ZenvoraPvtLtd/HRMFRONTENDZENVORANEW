@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Users,
   Zap,
@@ -319,8 +319,8 @@ export function  ManagerDashboard() {
                 onClick={() => { handleClockIn(); navigate("/manager/timesheet"); }}
                 className="flex items-center justify-center gap-2 text-sm font-semibold py-2.5 rounded-xl transition-opacity hover:opacity-80 w-full"
                 style={{
-                  background: "#000000",
-                  color: "#ffffff",
+                  background: "var(--accent)",
+                  color: "var(--accent-text)",
                   border: "none",
                   cursor: "pointer",
                 }}

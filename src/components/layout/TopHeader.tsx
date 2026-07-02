@@ -304,14 +304,14 @@ export default function TopHeader({ userName, profilePath, onSearch, navSections
         <div
           className="top-header-icon"
           style={{
-            background: "var(--icon-accent-bg)",
-            border: "1px solid var(--border)",
-            color: "var(--text-primary)",
+            background: "transparent",
+            border: "none",
+            color: "var(--accent-text)",
           }}
         >
           {meta.icon}
         </div>
-        <span className="top-header-title" style={{ color: "var(--text-primary)" }}>
+        <span className="top-header-title" style={{ color: "var(--accent-text)" }}>
           {meta.label}
         </span>
       </div>
@@ -328,7 +328,7 @@ export default function TopHeader({ userName, profilePath, onSearch, navSections
           style={{
             position: "absolute",
             left: "0.75rem",
-            color: "var(--text-secondary)",
+            color: "rgba(255, 255, 255, 0.5)",
             pointerEvents: "none",
             flexShrink: 0,
           }}
@@ -346,15 +346,15 @@ export default function TopHeader({ userName, profilePath, onSearch, navSections
             paddingLeft: "2.25rem",
             paddingRight: query ? "2.25rem" : "0.875rem",
             borderRadius: "0.625rem",
-            border: "1px solid var(--border)",
-            background: "var(--icon-accent-bg)",
-            color: "var(--text-primary)",
+            border: "1px solid rgba(255, 255, 255, 0.2)",
+            background: "rgba(255, 255, 255, 0.1)",
+            color: "#ffffff",
             fontSize: "0.85rem",
             outline: "none",
             transition: "border-color 0.15s",
           }}
-          onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
-          onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
+          onFocus={(e) => (e.currentTarget.style.borderColor = "#ffffff")}
+          onBlur={(e) => (e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.2)")}
         />
         {query && (
           <button
@@ -391,17 +391,17 @@ export default function TopHeader({ userName, profilePath, onSearch, navSections
           }}
         >
           <div className="top-header-profile-text" style={{ textAlign: "right" }}>
-            <div style={{ fontSize: "0.7rem", color: "var(--text-secondary)", lineHeight: 1.2 }}>Welcome back</div>
-            <div style={{ fontSize: "0.82rem", fontWeight: 700, color: "var(--text-primary)", lineHeight: 1.2 }}>{userName}</div>
+            <div style={{ fontSize: "0.7rem", color: "rgba(255, 255, 255, 0.7)", lineHeight: 1.2 }}>Welcome back</div>
+            <div style={{ fontSize: "0.82rem", fontWeight: 700, color: "var(--accent-text)", lineHeight: 1.2 }}>{userName}</div>
           </div>
           <div
             style={{
               width: 36, height: 36, borderRadius: "50%",
               display: "flex", alignItems: "center", justifyContent: "center",
               fontWeight: 700, fontSize: "0.9rem",
-              background: "var(--icon-accent-bg)",
-              border: "1px solid var(--border)",
-              color: "var(--text-primary)",
+              background: "rgba(255, 255, 255, 0.1)",
+              border: "1px solid rgba(255, 255, 255, 0.2)",
+              color: "var(--accent-text)",
               flexShrink: 0,
             }}
           >

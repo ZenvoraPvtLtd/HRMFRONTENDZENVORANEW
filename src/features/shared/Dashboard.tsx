@@ -368,8 +368,8 @@ export function PayslipModal({
           onClick={() => { void downloadPayslipPDF(payslip); }}
           className="w-full py-2.5 rounded-xl font-semibold text-sm transition-opacity hover:opacity-90 cursor-pointer"
           style={{
-            background: isDark ? "#ffffff" : "#000000",
-            color: isDark ? "#000000" : "#ffffff",
+            background: "var(--accent)",
+            color: "var(--accent-text)",
             border: "none",
           }}
         >

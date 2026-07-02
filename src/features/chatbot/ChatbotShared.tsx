@@ -738,7 +738,7 @@ export function FloatingTriggerButton({ onOpen, showBadge = true }: FloatingTrig
                 className="card hover-effect"
                 style={{
                     width: '64px', height: '64px', borderRadius: '50%',
-                    background: '#000000', border: 'none', color: '#ffffff',
+                    background: 'var(--accent)', border: 'none', color: 'var(--accent-text)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     cursor: 'pointer', boxShadow: '0 12px 28px rgba(0,0,0,0.2)',
                     position: 'relative', transition: 'all 0.3s cubic-bezier(0.16,1,0.3,1)'
@@ -754,7 +754,7 @@ export function FloatingTriggerButton({ onOpen, showBadge = true }: FloatingTrig
                         background: 'var(--bg-primary)', color: 'var(--text-primary)',
                         borderRadius: '50%', width: '20px', height: '20px',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        border: '2px solid #000000', animation: 'pulse 2s infinite'
+                        border: '2px solid var(--accent)', animation: 'pulse 2s infinite'
                     }}>
                         <Sparkles size={10} />
                     </div>

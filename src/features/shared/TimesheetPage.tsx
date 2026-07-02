@@ -1256,8 +1256,8 @@ export default function TimesheetPage() {
   );
 
   const accentBtn = {
-    background: isDark ? "#ffffff" : "#000000",
-    color: isDark ? "#000000" : "#ffffff",
+    background: "var(--accent)",
+    color: "var(--accent-text)",
     border: "none",
   };
 

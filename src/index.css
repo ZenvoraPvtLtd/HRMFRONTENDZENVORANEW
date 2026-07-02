@@ -256,9 +256,9 @@ body {
   min-height: 72px;
   padding: 0 1.25rem;
   margin: 0.75rem 1rem 0;
-  border: 1px solid var(--border);
+  border: none;
   border-radius: 1rem;
-  background: var(--bg-secondary);
+  background: var(--accent);
   flex-shrink: 0;
   position: sticky;
   top: 0.75rem;
