@@ -24,24 +24,15 @@ function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString("en-GB");
 }
 
-function getStatusInfo(internalStatus?: string): { label: string; style: React.CSSProperties } {
-  switch (internalStatus) {
-    case "hr_pending":
-      return { label: "Pending HR Approval", style: { background: "rgba(245,158,11,0.12)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.25)" } };
-    case "manager_pending":
-      return { label: "Pending Mgr Approval", style: { background: "rgba(245,158,11,0.12)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.25)" } };
-    case "admin_pending":
-      return { label: "Pending Admin Approval", style: { background: "rgba(245,158,11,0.12)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.25)" } };
-    case "manager_approved":
-      return { label: "Mgr Approved", style: { background: "rgba(16,185,129,0.12)", color: "#10bsu81", border: "1px solid rgba(16,185,129,0.25)" } };
-    case "manager_rejected":
-      return { label: "Mgr Rejected", style: { background: "rgba(239,68,68,0.12)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.25)" } };
-    case "approved":
-      return { label: "Approved", style: { background: "rgba(16,185,129,0.12)", color: "#10b981", border: "1px solid rgba(16,185,129,0.25)" } };
-    case "rejected":
-      return { label: "Rejected", style: { background: "rgba(239,68,68,0.12)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.25)" } };
+function getStatusInfo(ist?: string): { label: string; style: React.CSSProperties } {
+  switch (ist) {
+    case 'approved':
+      return { label: 'Approved', style: { background: 'rgba(16,185,129,0.12)', color: '#10b981', border: '1px solid rgba(16,185,129,0.25)' } };
+    case 'rejected':
+    case 'manager_rejected':
+      return { label: 'Rejected', style: { background: 'rgba(239,68,68,0.12)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.25)' } };
     default:
-      return { label: "Pending", style: { background: "rgba(245,158,11,0.12)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.25)" } };
+      return { label: 'Pending', style: { background: 'rgba(245,158,11,0.12)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.25)' } };
   }
 }
 
@@ -491,44 +482,7 @@ export default function LeavePage() {
                       </p>
                     )}
 
-                    {/* Progress steps: Submitted → Manager → HR */}
-                    <div className="mt-3 flex items-center gap-1.5 text-xs flex-wrap">
-                      {/* Submitted */}
-                      <span className="flex items-center gap-1" style={{ color: "#10b981" }}>
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                        Submitted
-                      </span>
-                      <span style={{ color: "var(--border)" }}>—</span>
 
-                      {/* Manager */}
-                      <span className="flex items-center gap-1" style={{ color: managerRejected ? "#ef4444" : managerDone ? "#10b981" : "var(--text-secondary)" }}>
-                        {managerDone ? (
-                          managerRejected ? (
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                          ) : (
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                          )
-                        ) : (
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/></svg>
-                        )}
-                        Manager
-                      </span>
-                      <span style={{ color: "var(--border)" }}>—</span>
-
-                      {/* HR */}
-                      <span className="flex items-center gap-1" style={{ color: hrRejected ? "#ef4444" : hrDone ? "#10b981" : "var(--text-secondary)" }}>
-                        {hrDone ? (
-                          hrRejected ? (
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                          ) : (
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                          )
-                        ) : (
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/></svg>
-                        )}
-                        HR
-                      </span>
-                    </div>
 
                     {/* Actions */}
                     <div className="mt-3 flex items-center justify-end gap-2">
