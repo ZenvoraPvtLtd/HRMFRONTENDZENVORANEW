@@ -279,9 +279,9 @@ export default function AttendancePage() {
             style={
               active
                 ? {
-                    background: "var(--text-primary)",
-                    color: "var(--bg-primary)",
-                    border: "1px solid var(--text-primary)",
+                    background: "var(--accent)",
+                    color: "var(--accent-text)",
+                    border: "1px solid var(--accent)",
                   }
                 : {
                     background: "transparent",

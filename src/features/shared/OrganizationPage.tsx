@@ -539,9 +539,9 @@ export default function OrganizationPage() {
                 cursor: "pointer",
                 fontSize: "0.78rem",
                 fontWeight: 600,
-                background: view === v ? "var(--text-primary)" : "transparent",
+                background: view === v ? "var(--accent)" : "transparent",
                 color:
-                  view === v ? "var(--bg-primary)" : "var(--text-secondary)",
+                  view === v ? "var(--accent-text)" : "var(--text-secondary)",
                 transition: "all 0.15s",
               }}
             >

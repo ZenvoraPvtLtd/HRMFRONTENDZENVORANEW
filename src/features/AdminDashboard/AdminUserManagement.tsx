@@ -10,7 +10,9 @@ import {
   Lock, 
   AlertTriangle,
   CheckCircle,
-  ShieldAlert
+  ShieldAlert,
+  Eye,
+  EyeOff
 } from "lucide-react";
 import api from "../../utils/axiosInstance";
 import Button from "../../components/button/Button";
@@ -48,6 +50,7 @@ export default function AdminUserManagement() {
   const [formRole, setFormRole] = useState("employee");
   const [formStatus, setFormStatus] = useState("Active");
   const [formPassword, setFormPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const [formErrors, setFormErrors] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -501,14 +504,26 @@ export default function AdminUserManagement() {
                 <div className="relative">
                   <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--text-secondary)" }} />
                   <input
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     placeholder={modalMode === "create" ? "Minimum 6 characters" : "Enter new password"}
                     value={formPassword}
                     onChange={(e) => setFormPassword(e.target.value)}
-                    className="w-full border rounded-xl pl-10 pr-4 py-2.5 outline-none text-sm transition"
+                    className="w-full border rounded-xl pl-10 pr-10 py-2.5 outline-none text-sm transition"
                     style={{ borderColor: "var(--border)", background: "var(--bg-hover)", color: "var(--text-primary)" }}
                     required={modalMode === "create"}
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 cursor-pointer"
+                    style={{ background: "transparent", border: "none", padding: 0 }}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-4 h-4" style={{ color: "var(--text-secondary)" }} />
+                    ) : (
+                      <Eye className="w-4 h-4" style={{ color: "var(--text-secondary)" }} />
+                    )}
+                  </button>
                 </div>
               </div>
 
@@ -529,8 +544,8 @@ export default function AdminUserManagement() {
                   style={{ 
                     width: "auto", 
                     padding: "0.5rem 1.5rem", 
-                    background: "var(--text-primary)", 
-                    color: "var(--bg-secondary)" 
+                    background: "var(--accent)", 
+                    color: "var(--accent-text)" 
                   }}
                 >
                   Save User

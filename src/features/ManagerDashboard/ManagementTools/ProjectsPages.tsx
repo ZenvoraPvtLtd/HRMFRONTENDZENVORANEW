@@ -1,4 +1,4 @@
-﻿import {
+import {
   Plus,
   ChevronDown,
   FolderKanban,
@@ -248,7 +248,7 @@ export default function ProjectsPage() {
               <button
                 onClick={handleSave}
                 disabled={saving}
-                style={{ padding: "0.6rem 1.5rem", borderRadius: "0.6rem", border: "none", background: "var(--text-primary)", color: "var(--bg-primary)", fontSize: "0.875rem", fontWeight: 700, cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.65 : 1, display: "flex", alignItems: "center", gap: "0.4rem" }}
+                style={{ padding: "0.6rem 1.5rem", borderRadius: "0.6rem", border: "none", background: "var(--accent)", color: "var(--accent-text)", fontSize: "0.875rem", fontWeight: 700, cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.65 : 1, display: "flex", alignItems: "center", gap: "0.4rem" }}
               >
                 {saving && <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} />}
                 {saving ? "Saving…" : editingId ? "Save Changes" : "Create Project"}
@@ -307,7 +307,7 @@ export default function ProjectsPage() {
           </div>
           <button
             onClick={openCreate}
-            style={{ display: "flex", alignItems: "center", gap: "0.4rem", padding: "0.6rem 1.25rem", borderRadius: "0.65rem", border: "none", background: "var(--text-primary)", color: "var(--bg-primary)", fontSize: "0.875rem", fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}
+            style={{ display: "flex", alignItems: "center", gap: "0.4rem", padding: "0.6rem 1.25rem", borderRadius: "0.65rem", border: "none", background: "var(--accent)", color: "var(--accent-text)", fontSize: "0.875rem", fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}
           >
             <Plus size={16} /> New Project
           </button>

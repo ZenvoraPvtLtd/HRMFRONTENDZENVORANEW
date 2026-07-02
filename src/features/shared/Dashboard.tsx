@@ -698,7 +698,7 @@ export function DashboardOverview() {
                 onClick={() => { handleClockIn(); navigate(`${portalBasePath}/timesheet`); }}
                 className="flex items-center justify-center gap-2 text-sm font-semibold py-2.5 rounded-xl transition-opacity hover:opacity-80 w-full"
                 style={{
-                  background: "#000000",
+                  background: "var(--accent)",
                   color: "#ffffff",
                   border: "none",
                   cursor: "pointer",

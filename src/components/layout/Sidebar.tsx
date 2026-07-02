@@ -389,9 +389,9 @@ const Sidebar = ({
           <button
             onClick={() => setIsCollapsed(false)}
             style={{
-              background: "var(--text-primary)",
+              background: "var(--accent)",
               border: "none",
-              color: "var(--bg-secondary)",
+              color: "var(--accent-text)",
               cursor: "pointer",
               display: "flex",
               padding: "0.5rem",

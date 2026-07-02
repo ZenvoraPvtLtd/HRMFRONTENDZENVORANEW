@@ -625,7 +625,7 @@ export default function Employee() {
                     className="h-10 px-4 rounded-lg text-sm font-medium transition-all"
                     style={
                       inviteForm.role === role
-                        ? { background: "var(--text-primary)", color: "var(--bg-primary)", border: "none" }
+                        ? { background: "var(--accent)", color: "var(--accent-text)", border: "none" }
                         : { background: "var(--bg-hover)", color: "var(--text-primary)", border: "1px solid var(--border)" }
                     }
                   >

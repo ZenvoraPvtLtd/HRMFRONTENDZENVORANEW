@@ -552,6 +552,7 @@ const ProfilePage: React.FC = () => {
                       {field.label}
                     </div>
                     <input
+                      type={field.key === "joiningDate" ? "date" : "text"}
                       autoFocus={field.key === "name"}
                       value={editAllValues[field.key] || ""}
                       onChange={(e) =>

@@ -37,9 +37,9 @@ const darkInput = {
   color: "var(--text-primary)",
 };
 const darkBtnSecondary = {
-  background: "var(--text-primary)",
-  border: "1px solid var(--border)",
-  color: "var(--bg-primary)",
+  background: "var(--accent)",
+  border: "1px solid var(--accent)",
+  color: "var(--accent-text)",
 };
 
 type TimesheetRecord = {
