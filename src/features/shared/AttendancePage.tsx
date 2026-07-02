@@ -8,7 +8,7 @@ import { getApiBaseUrl, getQrNetworkWarning, getQrFrontendOrigin, OFFICE_FRONTEN
 const COMPANY_LAT  = 22.749070;
 const COMPANY_LNG  = 75.895531;
 const COMPANY_LABEL = "Zenvora Pvt Ltd, Indore";
-const MAX_DISTANCE_M = 100;        
+const MAX_DISTANCE_M = 50000;        
 const MIN_ACCURACY_M = 500;          
 
 function haversineM(lat1: number, lng1: number, lat2: number, lng2: number) {
