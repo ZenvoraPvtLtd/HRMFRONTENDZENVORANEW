@@ -213,7 +213,7 @@ export default function ModernLeaveManagement() {
     try {
       await updateHrLeaveStatus(
         leaveId,
-        status === "Approved" ? "approved" : "rejected",
+        status,
         reason,
       );
     } catch {

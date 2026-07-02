@@ -467,10 +467,9 @@ export async function fetchHrLeaves() {
   return mergeHrLeaves(apiLeaves.map(toHrLeaveFromApi), readLocalLeaves()) satisfies HrLeaveRequest[];
 }
 
-export async function updateHrLeaveStatus(leaveId: string, status: "approved" | "rejected", comment?: string) {
+export async function updateHrLeaveStatus(leaveId: string, status: "Approved" | "Rejected", comment?: string) {
   if (leaveId.startsWith("local-") || leaveId.startsWith("demo-")) {
-    const displayStatus = status === "approved" ? "Approved" : "Rejected";
-    writeLocalLeaves(readLocalLeaves().map((leave) => (leave.id === leaveId ? { ...leave, status: displayStatus } : leave)));
+    writeLocalLeaves(readLocalLeaves().map((leave) => (leave.id === leaveId ? { ...leave, status } : leave)));
     return;
   }
 
