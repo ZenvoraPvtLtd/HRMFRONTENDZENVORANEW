@@ -33,8 +33,8 @@ export default function Button({
         border: "none",
         cursor: disabled || loading ? "not-allowed" : "pointer",
         opacity: disabled || loading ? 0.6 : 1,
-        background: isDark ? "#ffffff" : "#000000",
-        color: isDark ? "#000000" : "#ffffff",
+        background: "var(--accent)",
+        color: "var(--accent-text)",
         transition: "background 0.2s, opacity 0.2s",
         ...style,
       }}
