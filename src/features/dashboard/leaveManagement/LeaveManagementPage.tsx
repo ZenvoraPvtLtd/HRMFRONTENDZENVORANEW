@@ -86,7 +86,7 @@ export default function LeaveManagementPage() {
   useEffect(() => { if (tab === "balances") void loadBalances(); }, [tab, loadBalances]);
 
   // ── HR approve / reject ───────────────────────────────────────────────────
-  const handleAction = async (id: string, action: "approved" | "rejected") => {
+  const handleAction = async (id: string, action: "Approved" | "Rejected") => {
     setActionLoading(id);
     setActionMsg("");
     try {
@@ -306,14 +306,14 @@ export default function LeaveManagementPage() {
                             <div style={{ display: "flex", gap: "0.4rem" }}>
                               <button
                                 disabled={actionLoading === leave.id}
-                                onClick={() => handleAction(leave.id, "approved")}
+                                onClick={() => handleAction(leave.id, "Approved")}
                                 style={{ padding: "0.3rem 0.7rem", borderRadius: "0.4rem", border: "none", background: "rgba(16,185,129,0.15)", color: "#10b981", fontSize: "0.72rem", fontWeight: 700, cursor: "pointer", opacity: actionLoading === leave.id ? 0.5 : 1 }}
                               >
                                 Approve
                               </button>
                               <button
                                 disabled={actionLoading === leave.id}
-                                onClick={() => handleAction(leave.id, "rejected")}
+                                onClick={() => handleAction(leave.id, "Rejected")}
                                 style={{ padding: "0.3rem 0.7rem", borderRadius: "0.4rem", border: "none", background: "rgba(239,68,68,0.12)", color: "#ef4444", fontSize: "0.72rem", fontWeight: 700, cursor: "pointer", opacity: actionLoading === leave.id ? 0.5 : 1 }}
                               >
                                 Reject
