@@ -119,8 +119,8 @@ const isClockedIn = localStorage.getItem(clockedInKey) === "true";
   const totalHoursWorked = "32h 60m";
   const daysPresent = entries.filter((entry) => entry.clockIn !== "-").length;
   const lateCount = entries.filter((entry) => entry.status === "Late").length;
-  const tableHeaderBgColor = isDark ? "#ffffff" : "#000000";
-  const tableHeaderTextColor = isDark ? "#000000" : "#ffffff";
+  const tableHeaderBgColor = "#1a0fa3";
+  const tableHeaderTextColor = "#ffffff";
   const filteredEntries = entries.filter((entry) => {
     const q = query.trim().toLowerCase();
     if (!q) return true;

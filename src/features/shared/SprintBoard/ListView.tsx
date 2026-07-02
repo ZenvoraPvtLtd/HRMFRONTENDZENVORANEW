@@ -45,7 +45,7 @@ export default function ListView({ columns, onTaskClick, onStatusChange }: Props
   const [dropdown, setDropdown] = useState<DropdownState | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const headerBg = isDark ? "#1f1f1f" : "#000000";
+  const headerBg = "#1a0fa3";
 
   const total = columns.reduce((a, c) => a + c.tasks.length, 0);
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
