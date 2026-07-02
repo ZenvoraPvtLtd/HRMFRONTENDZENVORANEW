@@ -75,7 +75,6 @@ export default function LeaveRequestCard({ request }: LeaveRequestCardProps) {
 
         <StatusBadge internalStatus={request.internal_status} />
       </div>
-      </div>
     </div>
   );
 }
