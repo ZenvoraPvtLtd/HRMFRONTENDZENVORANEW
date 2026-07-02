@@ -29,48 +29,7 @@ type DocumentRecord = {
   uploadedDate: string;
 };
 
-const initialDocuments: DocumentRecord[] = [
-  {
-    id: 1,
-    employee: "Shubham Kushwaha",
-    email: "shubham.kushwaha@vectedtech.com",
-    documentType: "Id Proof",
-    fileName: "IMG_20231126_09215...",
-    status: "Pending For Review",
-    expiryDate: "-",
-    uploadedDate: "06/02/2026",
-  },
-  {
-    id: 2,
-    employee: "Shubham Kushwaha",
-    email: "shubham.kushwaha@vectedtech.com",
-    documentType: "Bank Details",
-    fileName: "IMG_20231126_09301...",
-    status: "Pending For Review",
-    expiryDate: "-",
-    uploadedDate: "06/02/2026",
-  },
-  {
-    id: 3,
-    employee: "Mayank Vishwakarma",
-    email: "mayank.vishwakarma@vectedtech.com",
-    documentType: "Id Proof",
-    fileName: "IMAGE_WO_17623251...",
-    status: "Pending For Review",
-    expiryDate: "-",
-    uploadedDate: "06/02/2026",
-  },
-  {
-    id: 4,
-    employee: "Aanchal Malviya",
-    email: "aanchal@vectedtech.com",
-    documentType: "Offer Letter",
-    fileName: "offer_letter_aanchal.pdf",
-    status: "Approved",
-    expiryDate: "-",
-    uploadedDate: "02/02/2026",
-  },
-];
+const initialDocuments: DocumentRecord[] = [];
 
 const documentTypes = [
   "Offer Letter",
@@ -101,7 +60,7 @@ export default function Documents() {
     try {
       const response = await api.get("/api/documents");
       setDocuments(response.data.map(mapDocumentFromApi));
-    } catch {
+    } catch (error) {
       // API fail ho to koi message show nahi hoga.
     }
   }, []);
