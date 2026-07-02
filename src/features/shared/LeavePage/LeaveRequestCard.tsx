@@ -6,7 +6,8 @@ interface LeaveRequestCardProps {
 }
 
 function getStatusInfo(ist?: string): { label: string; style: React.CSSProperties } {
-  switch (ist) {
+  const status = ist?.toLowerCase();
+  switch (status) {
     case 'approved':
       return { label: 'Approved', style: { background: 'rgba(16,185,129,0.12)', color: '#10b981', border: '1px solid rgba(16,185,129,0.25)' } };
     case 'rejected':
