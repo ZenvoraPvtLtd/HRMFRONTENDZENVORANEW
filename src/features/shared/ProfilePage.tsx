@@ -424,9 +424,9 @@ const ProfilePage: React.FC = () => {
               fontWeight: 600,
               cursor: "pointer",
               border: "none",
-              background: activeTab === tab.key ? "var(--text-primary)" : "var(--bg-secondary)",
-              color: activeTab === tab.key ? "var(--bg-primary)" : "var(--text-secondary)",
-              borderBottom: activeTab === tab.key ? "2px solid var(--text-primary)" : "2px solid transparent",
+              background: activeTab === tab.key ? "var(--accent)" : "var(--bg-secondary)",
+              color: activeTab === tab.key ? "var(--accent-text)" : "var(--text-secondary)",
+              borderBottom: activeTab === tab.key ? "2px solid var(--accent)" : "2px solid transparent",
             }}
           >
             {tab.label}
@@ -592,7 +592,7 @@ const ProfilePage: React.FC = () => {
             <input value={profileForm.emergencyContactName} onChange={(e) => setProfileForm({ ...profileForm, emergencyContactName: e.target.value })} placeholder="Emergency Contact Name" className="rounded-xl px-3 py-2.5 text-sm outline-none" style={{ background: "var(--bg-primary)", border: "1px solid var(--border)", color: "var(--text-primary)" }} />
             <input value={profileForm.emergencyContactPhone} onChange={(e) => setProfileForm({ ...profileForm, emergencyContactPhone: e.target.value })} placeholder="Emergency Contact Phone" className="rounded-xl px-3 py-2.5 text-sm outline-none" style={{ background: "var(--bg-primary)", border: "1px solid var(--border)", color: "var(--text-primary)" }} />
           </div>
-          <button type="button" onClick={saveProfileSection} disabled={saving} className="mt-4 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-blue-600">Save Changes</button>
+          <button type="button" onClick={saveProfileSection} disabled={saving} className="mt-4 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors" style={{ background: "var(--accent)", color: "var(--accent-text)", border: "none" }}>Save Changes</button>
         </div>
       )}
 
@@ -600,7 +600,7 @@ const ProfilePage: React.FC = () => {
         <div className="rounded-2xl p-5 sm:p-6" style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)" }}>
           <h3 className="text-base sm:text-lg font-bold mb-4" style={{ color: "var(--accent)" }}>Finance</h3>
           <textarea value={profileForm.bankAccountDetails} onChange={(e) => setProfileForm({ ...profileForm, bankAccountDetails: e.target.value })} placeholder="Bank account details" rows={4} className="w-full rounded-xl px-3 py-2.5 text-sm outline-none" style={{ background: "var(--bg-primary)", border: "1px solid var(--border)", color: "var(--text-primary)" }} />
-          <button type="button" onClick={saveProfileSection} disabled={saving} className="mt-4 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-blue-600">Save Changes</button>
+          <button type="button" onClick={saveProfileSection} disabled={saving} className="mt-4 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors" style={{ background: "var(--accent)", color: "var(--accent-text)", border: "none" }}>Save Changes</button>
         </div>
       )}
 
@@ -633,11 +633,11 @@ const ProfilePage: React.FC = () => {
               className="flex-1 rounded-xl px-3 py-2.5 text-sm outline-none"
               style={{ background: "var(--bg-primary)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
             />
-            <button type="button" onClick={addSkill} className="px-4 py-2.5 rounded-xl text-sm font-semibold inline-flex items-center justify-center gap-1" style={{ border: "1px solid var(--border)", color: "var(--text-primary)" }}>
+            <button type="button" onClick={addSkill} className="px-4 py-2.5 rounded-xl text-sm font-semibold inline-flex items-center justify-center gap-1 transition-colors cursor-pointer" style={{ border: "1px solid var(--border)", color: "var(--text-primary)" }}>
               <Plus size={14} /> Add
             </button>
           </div>
-          <button type="button" onClick={saveProfileSection} disabled={saving} className="px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-blue-600">Save Changes</button>
+          <button type="button" onClick={saveProfileSection} disabled={saving} className="px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors cursor-pointer" style={{ background: "var(--accent)", color: "var(--accent-text)", border: "none" }}>Save Changes</button>
         </div>
       )}
 
@@ -831,7 +831,8 @@ const ProfilePage: React.FC = () => {
             type="button"
             onClick={uploadDocument}
             disabled={uploadingDocument || !selectedFile}
-            className="mt-4 w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="mt-4 w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ background: "var(--accent)", color: "var(--accent-text)", border: "none" }}
           >
             <Upload size={16} />
             {uploadingDocument ? "Uploading..." : "Upload Document"}

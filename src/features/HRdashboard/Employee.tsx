@@ -673,10 +673,9 @@ export default function Employee() {
                     }`}
                   >
                     <div className={`w-5 h-5 rounded flex items-center justify-center ${
-                      inviteForm.accessPermissions.includes(option.id)
-                        ? "bg-blue-600 text-white"
+                        ? ""
                         : "border border-[var(--border)] bg-[var(--bg-secondary)]"
-                    }`}>
+                    }`} style={{ background: inviteForm.accessPermissions.includes(option.id) ? "var(--accent)" : undefined, color: inviteForm.accessPermissions.includes(option.id) ? "var(--accent-text)" : undefined }}>
                       {inviteForm.accessPermissions.includes(option.id) && <Check size={14} />}
                     </div>
                     <span className="text-[var(--text-secondary)]">{option.icon}</span>
@@ -703,7 +702,8 @@ export default function Employee() {
             <button
               onClick={sendInvite}
               disabled={isSaving}
-              className="h-11 px-6 rounded-lg font-semibold bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+              className="h-11 px-6 rounded-lg font-semibold transition-colors disabled:opacity-50 flex items-center gap-2"
+              style={{ background: "var(--accent)", color: "var(--accent-text)" }}
             >
               {isSaving ? (
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
