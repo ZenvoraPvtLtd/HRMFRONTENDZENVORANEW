@@ -24,7 +24,7 @@ type TerminationEventType =
   | "paste_detected_terminated";
 
 const PROCTORING_MESSAGES = {
-  multiple_faces: "Multiple faces detected. Only one candidate is allowed.",
+  multiple_faces: "Multiple people have been detected in front of the camera. Only the candidate is allowed during the interview. If another person is detected again, your interview will be terminated automatically.",
   no_face: "Candidate not visible on camera.",
   background_voice: "Background voice detected. External assistance is not allowed.",
   tab_switch: "Tab switching detected. Leaving interview tab is not allowed.",
@@ -33,10 +33,10 @@ const PROCTORING_MESSAGES = {
 } as const;
 
 const TERMINATION_REASONS = {
-  multiple_faces: "Interview terminated due to repeated multiple face violations.",
+  multiple_faces: "Your interview has been terminated because multiple people were detected during the assessment after a warning was issued. This violates the interview guidelines.",
   no_face: "Interview terminated because candidate left the camera multiple times.",
   background_voice: "Interview terminated due to repeated background voice violations.",
-  tab_switch: "Interview terminated due to repeated tab switching.",
+  tab_switch: "Your interview has been automatically terminated because you switched away from the interview window or browser tab. To maintain assessment integrity, tab switching is strictly prohibited.",
   fullscreen_exit: "Interview terminated due to repeated fullscreen violations.",
   paste_detected: "Interview terminated due to repeated paste violations.",
 } as const;
@@ -632,21 +632,26 @@ export default function InterviewRoom() {
   // ---- tab switch / visibility detection ----
   useEffect(() => {
     if (terminated) return;
+    
+    const triggerTabTermination = () => {
+      terminateForProctoring("tab_switch", "tab_switch_terminated", TERMINATION_REASONS.tab_switch);
+    };
+
     const onVis = () => {
       if (document.visibilityState !== "visible") {
-        setCheatWarning("Warning: tab switched or minimized. Please stay on the interview tab.");
-        tabCheatTriggeredRef.current = true;
-        startCheatTimerIfNeeded("tab");
-      } else {
-        tabCheatTriggeredRef.current = false;
-        if (!pausedByCheat) setCheatWarning("");
-        clearCheatTimer();
+        triggerTabTermination();
       }
     };
 
+    const onBlur = () => {
+      triggerTabTermination();
+    };
+
     document.addEventListener("visibilitychange", onVis);
+    window.addEventListener("blur", onBlur);
     return () => {
       document.removeEventListener("visibilitychange", onVis);
+      window.removeEventListener("blur", onBlur);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pausedByCheat, terminated]);

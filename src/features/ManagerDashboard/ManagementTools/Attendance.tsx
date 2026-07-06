@@ -17,12 +17,25 @@ interface Employee {
 
 function formatTimeDisplay(val?: string): string {
   if (!val || val === "Absent" || val === "--" || val === "None") return val || "--";
+  
+  // Directly format time-only strings without using new Date()
+  const timeRegex = /^(\d{1,2}):(\d{2})(?::\d{2})?\s*(AM|PM)?$/i;
+  const match = val.trim().match(timeRegex);
+  if (match) {
+    const hr = match[1].padStart(2, "0");
+    const min = match[2];
+    const ampm = match[3] ? ` ${match[3].toUpperCase()}` : "";
+    return `${hr}:${min}${ampm}`;
+  }
+
+  // Fallback for full ISO dates
   try {
     const d = new Date(val);
     if (!isNaN(d.getTime())) {
       return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
     }
   } catch {}
+  
   return val;
 }
 
@@ -81,36 +94,52 @@ const tabs = [
 const getDateRange = (tab: string, selectedDate: string) => {
   const start = selectedDate;
   const end = selectedDate;
+  
+  // Create a timezone-independent local date representing "Today" at noon
+  const today = new Date();
+  today.setHours(12, 0, 0, 0);
+  
+  // Helper to format Date to YYYY-MM-DD locally
+  const toLocalString = (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
 
   if (tab === "Today") {
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = toLocalString(today);
     return { start: todayStr, end: todayStr };
   } else if (tab === "This Week") {
-    const curr = new Date();
-    const first = curr.getDate() - curr.getDay() + 1; // Monday
-    const last = first + 6; // Sunday
-    // Use separate Date objects to avoid mutation causing wrong-month Sunday
-    const mondayDate = new Date(curr);
-    mondayDate.setDate(first);
-    const sundayDate = new Date(curr);
-    sundayDate.setDate(last);
-    const monday = mondayDate.toISOString().split('T')[0];
-    const sunday = sundayDate.toISOString().split('T')[0];
-    return { start: monday, end: sunday };
+    // Week should strictly be Monday to Sunday
+    const dayOfWeek = today.getDay() || 7; // Convert Sunday (0) to 7
+    
+    const mondayDate = new Date(today.getTime());
+    mondayDate.setDate(today.getDate() - dayOfWeek + 1);
+    
+    const sundayDate = new Date(mondayDate.getTime());
+    sundayDate.setDate(mondayDate.getDate() + 6);
+    
+    return { start: toLocalString(mondayDate), end: toLocalString(sundayDate) };
   } else if (tab === "This Month") {
-    const curr = new Date();
-    const firstDay = new Date(curr.getFullYear(), curr.getMonth(), 1).toISOString().split('T')[0];
-    const lastDay = new Date(curr.getFullYear(), curr.getMonth() + 1, 0).toISOString().split('T')[0];
-    return { start: firstDay, end: lastDay };
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1, 12);
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0, 12);
+    return { start: toLocalString(firstDay), end: toLocalString(lastDay) };
   } else if (tab === "Day") {
     return { start: selectedDate, end: selectedDate };
   } else if (tab === "Range") {
-    const baseDate = new Date(selectedDate);
-    if (!isNaN(baseDate.getTime())) {
-      const startRange = new Date(baseDate);
-      startRange.setDate(startRange.getDate() - 30);
-      const startStr = startRange.toISOString().split('T')[0];
-      return { start: startStr, end: selectedDate };
+    // For range ending on selectedDate (last 30 calendar days inclusive)
+    const parts = selectedDate.split('-');
+    if (parts.length === 3) {
+      const y = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10);
+      const d = parseInt(parts[2], 10);
+      if (!isNaN(y) && !isNaN(m) && !isNaN(d)) {
+        const baseDate = new Date(y, m - 1, d, 12, 0, 0);
+        const startRange = new Date(baseDate.getTime());
+        startRange.setDate(baseDate.getDate() - 29); // Include today -> 30 days total
+        return { start: toLocalString(startRange), end: selectedDate };
+      }
     }
   }
   return { start, end };
@@ -144,38 +173,7 @@ export default function AttendancePage() {
     return () => window.removeEventListener(SEARCH_EVENT, handleSearch);
   }, []);
 
-  const getDateRange = (tab: string, selectedDate: string) => {
-    const start = selectedDate;
-    const end = selectedDate;
 
-    if (tab === "Today") {
-      const todayStr = new Date().toISOString().split('T')[0];
-      return { start: todayStr, end: todayStr };
-    } else if (tab === "This Week") {
-      const curr = new Date();
-      const first = curr.getDate() - curr.getDay() + 1; // Monday
-      const last = first + 6; // Sunday
-      const monday = new Date(curr.setDate(first)).toISOString().split('T')[0];
-      const sunday = new Date(curr.setDate(last)).toISOString().split('T')[0];
-      return { start: monday, end: sunday };
-    } else if (tab === "This Month") {
-      const curr = new Date();
-      const firstDay = new Date(curr.getFullYear(), curr.getMonth(), 1).toISOString().split('T')[0];
-      const lastDay = new Date(curr.getFullYear(), curr.getMonth() + 1, 0).toISOString().split('T')[0];
-      return { start: firstDay, end: lastDay };
-    } else if (tab === "Day") {
-      return { start: selectedDate, end: selectedDate };
-    } else if (tab === "Range") {
-      const baseDate = new Date(selectedDate);
-      if (!isNaN(baseDate.getTime())) {
-        const startRange = new Date(baseDate);
-        startRange.setDate(startRange.getDate() - 30);
-        const startStr = startRange.toISOString().split('T')[0];
-        return { start: startStr, end: selectedDate };
-      }
-    }
-    return { start, end };
-  };
 
   useEffect(() => {
     let isMounted = true;

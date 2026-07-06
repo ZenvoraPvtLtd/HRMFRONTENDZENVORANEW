@@ -560,6 +560,7 @@ export async function updateManagerLeaveStatus(leaveId: string, status: "manager
 export type ApiLeaveBalance = {
   id: string;
   employee_id: string;
+  display_id?: string;
   employee_name: string;
   department: string;
   year: number;

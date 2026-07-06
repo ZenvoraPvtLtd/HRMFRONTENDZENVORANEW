@@ -54,6 +54,11 @@ function projectsText(projects: string | string[] | undefined): string {
 export default function TeamManagementPage() {
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [editMember, setEditMember] = useState<Member | null>(null);
+  const [deleteMember, setDeleteMember] = useState<Member | null>(null);
+  const [editForm, setEditForm] = useState({ contact: "", projects: "", skills: "", shift: "" });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [modalError, setModalError] = useState<string | null>(null);
@@ -233,6 +238,62 @@ export default function TeamManagementPage() {
     }
   }
 
+  // ── Edit and Delete Handlers ─────────────────────────────────────────────
+
+  function handleEditClick(member: Member) {
+    setEditMember(member);
+    setEditForm({
+      contact: member.contact || "",
+      projects: projectsText(member.projects),
+      skills: member.skills?.join(", ") || "",
+      shift: member.shift || ""
+    });
+    setModalError(null);
+    setShowEditModal(true);
+  }
+
+  function handleDeleteClick(member: Member) {
+    setDeleteMember(member);
+    setModalError(null);
+    setShowDeleteModal(true);
+  }
+
+  async function handleEditSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setModalError(null);
+    if (!editMember) return;
+    try {
+      const res = await api.put<{ success: boolean }>(`/api/teams/${editMember._id}`, editForm);
+      if (res.data?.success) {
+        setShowEditModal(false);
+        fetchTeam();
+      } else {
+        setModalError("Failed to update team member.");
+      }
+    } catch (err: any) {
+      console.error(err);
+      setModalError(err.response?.data?.detail || err.message || "Failed to update team member.");
+    }
+  }
+
+  async function handleDeleteSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setModalError(null);
+    if (!deleteMember) return;
+    try {
+      const res = await api.delete<{ success: boolean }>(`/api/teams/${deleteMember._id}`);
+      if (res.data?.success) {
+        setShowDeleteModal(false);
+        fetchTeam();
+      } else {
+        setModalError("Failed to remove team member.");
+      }
+    } catch (err: any) {
+      console.error(err);
+      setModalError(err.response?.data?.detail || err.message || "Failed to remove team member.");
+    }
+  }
+
   // ── Leader display info ──────────────────────────────────────────────────
 
   const leaderName =
@@ -409,6 +470,7 @@ export default function TeamManagementPage() {
                     <th className="px-4 py-4 text-left">Projects</th>
                     <th className="px-4 py-4 text-left">Skills</th>
                     <th className="px-4 py-4 text-left">Shift</th>
+                    <th className="px-4 py-4 text-center">Actions</th>
                   </tr>
                 </thead>
 
@@ -501,6 +563,23 @@ export default function TeamManagementPage() {
                       >
                         {member.shift || "—"}
                       </td>
+
+                      <td className="px-4 py-4 text-center">
+                        <div className="flex items-center justify-center gap-3">
+                          <button
+                            onClick={() => handleEditClick(member)}
+                            className="text-indigo-500 hover:text-indigo-600 transition-colors text-xs font-medium flex items-center gap-1"
+                          >
+                            <span>✏️</span> Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteClick(member)}
+                            className="text-red-500 hover:text-red-600 transition-colors text-xs font-medium flex items-center gap-1"
+                          >
+                            <span>🗑️</span> Delete
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -579,6 +658,21 @@ export default function TeamManagementPage() {
                           ))
                         : <span className="text-[11px]" style={{ color: "var(--text-secondary)" }}>—</span>}
                     </div>
+                  </div>
+
+                  <div className="mt-4 pt-4 flex items-center justify-end gap-3" style={{ borderTop: "1px solid var(--border)" }}>
+                    <button
+                      onClick={() => handleEditClick(member)}
+                      className="text-indigo-500 hover:text-indigo-600 transition-colors text-xs font-medium flex items-center gap-1"
+                    >
+                      <span>✏️</span> Edit
+                    </button>
+                    <button
+                      onClick={() => handleDeleteClick(member)}
+                      className="text-red-500 hover:text-red-600 transition-colors text-xs font-medium flex items-center gap-1"
+                    >
+                      <span>🗑️</span> Delete
+                    </button>
                   </div>
                 </div>
               ))}
@@ -686,6 +780,115 @@ export default function TeamManagementPage() {
                 style={{ background: "var(--accent)", color: "var(--accent-text)" }}
               >
                 Add Member
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Member Modal */}
+      {showEditModal && editMember && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div
+            className="w-full max-w-lg rounded-3xl p-6"
+            style={{
+              background: "var(--bg-primary)",
+              border: "1px solid var(--border)",
+            }}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h2
+                className="text-lg font-semibold"
+                style={{ color: "var(--text-primary)" }}
+              >
+                Edit Member
+              </h2>
+              <button onClick={() => setShowEditModal(false)}>
+                <X size={20} style={{ color: "var(--text-primary)" }} />
+              </button>
+            </div>
+
+            <form onSubmit={handleEditSubmit} className="space-y-4">
+              {modalError && (
+                <div className="text-red-500 text-xs px-2 font-medium">{modalError}</div>
+              )}
+
+              <div className="space-y-3 opacity-60 pointer-events-none">
+                <ModalInput placeholder="Full Name" value={editMember.name} onChange={() => {}} />
+                <ModalInput placeholder="Email" value={editMember.email} onChange={() => {}} />
+                <ModalInput placeholder="Employee ID" value={editMember.employeeId} onChange={() => {}} />
+              </div>
+
+              <ModalInput
+                placeholder="Contact"
+                value={editForm.contact}
+                onChange={(v) => setEditForm({ ...editForm, contact: v })}
+              />
+              <ModalInput
+                placeholder="Projects"
+                value={editForm.projects}
+                onChange={(v) => setEditForm({ ...editForm, projects: v })}
+              />
+              <ModalInput
+                placeholder="Skills (React, Node)"
+                value={editForm.skills}
+                onChange={(v) => setEditForm({ ...editForm, skills: v })}
+              />
+              <ModalInput
+                placeholder="Shift"
+                value={editForm.shift}
+                onChange={(v) => setEditForm({ ...editForm, shift: v })}
+              />
+
+              <button
+                type="submit"
+                className="w-full h-11 rounded-xl text-sm font-medium"
+                style={{ background: "var(--accent)", color: "var(--accent-text)" }}
+              >
+                Save Changes
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && deleteMember && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div
+            className="w-full max-w-md rounded-3xl p-6 text-center"
+            style={{
+              background: "var(--bg-primary)",
+              border: "1px solid var(--border)",
+            }}
+          >
+            <h2 className="text-lg font-semibold mb-2" style={{ color: "var(--text-primary)" }}>
+              Remove Team Member
+            </h2>
+            <p className="text-sm mb-6" style={{ color: "var(--text-secondary)" }}>
+              Are you sure you want to remove <strong>{deleteMember.name}</strong> from your team?
+            </p>
+            {modalError && (
+              <div className="text-red-500 text-xs px-2 font-medium mb-4">{modalError}</div>
+            )}
+            <form onSubmit={handleDeleteSubmit} className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowDeleteModal(false)}
+                className="flex-1 h-11 rounded-xl text-sm font-medium"
+                style={{
+                  background: "var(--bg-secondary)",
+                  color: "var(--text-primary)",
+                  border: "1px solid var(--border)",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="flex-1 h-11 rounded-xl text-sm font-medium bg-red-500 text-white hover:bg-red-600 transition-colors border-none"
+              >
+                Delete
               </button>
             </form>
           </div>

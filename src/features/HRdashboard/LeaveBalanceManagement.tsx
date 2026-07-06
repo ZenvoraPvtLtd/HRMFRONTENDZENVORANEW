@@ -34,6 +34,7 @@ import {
 type LeaveBalance = {
   id: string;
   employee_id: string;
+  display_id: string;
   name: string;
   email: string;
   department: string;
@@ -49,6 +50,7 @@ function mapApiToLocal(api: ApiLeaveBalance): LeaveBalance {
   return {
     id: api.id || api.employee_id,
     employee_id: api.employee_id,
+    display_id: api.display_id || api.employee_id,
     name: api.employee_name || "Unknown",
     email: "",
     department: api.department || "",
@@ -139,7 +141,7 @@ export default function LeaveBalanceManagement() {
       "Effective Balance",
     ];
     const csvRows = filteredRows.map((row) => [
-      row.employee_id,
+      row.display_id,
       row.name,
       row.department,
       row.leavesPerMonth,
@@ -358,7 +360,7 @@ export default function LeaveBalanceManagement() {
                     {...rowHover}
                   >
                     <td className="px-4 py-4 text-sm" style={textSecondary}>
-                      {row.employee_id.slice(-8)}
+                      {row.display_id}
                     </td>
                     <td className="px-4 py-4 text-sm font-semibold" style={textPrimary}>
                       {row.name}
@@ -436,7 +438,7 @@ export default function LeaveBalanceManagement() {
             </div>
             <div className="mb-4">
               <p className="text-sm font-semibold" style={textPrimary}>{editingRow.name}</p>
-              <p className="text-xs" style={textSecondary}>{editingRow.employee_id}</p>
+              <p className="text-xs" style={textSecondary}>{editingRow.display_id}</p>
             </div>
             <div className="mb-4">
               <label className="mb-1 block text-sm font-semibold" style={textPrimary}>Earned Leaves</label>
@@ -588,14 +590,14 @@ export default function LeaveBalanceManagement() {
                               {employee.name}
                             </span>
                             <span className="block text-xs" style={textSecondary}>
-                              {employee.department || employee.employee_id.slice(-8)}
+                              {employee.department || employee.display_id}
                             </span>
                           </span>
                           <span className="text-xs" style={textSecondary}>
                             {selectedEmployeeIds.includes(employee.employee_id) ? (
                               <Check size={16} />
                             ) : (
-                              employee.employee_id.slice(-6)
+                              employee.display_id
                             )}
                           </span>
                         </button>
