@@ -80,22 +80,26 @@ function canUserAct(internalStatus?: string, employeeRole?: string) {
 
 function getHrStatus(status?: string, employeeRole?: string): string {
   if (employeeRole === "hr") return "N/A";
-  if (status === "approved") return "Approved";
-  if (status === "rejected") return "Rejected";
+  const normalized = status?.toLowerCase();
+  if (normalized === "approved") return "Approved";
+  if (normalized === "rejected") return "Rejected";
   return "Pending";
 }
 
 function getOverallStatus(status?: string) {
-  if (status === "approved") return "Approved";
-  if (status === "rejected") return "Rejected";
+  const normalized = status?.toLowerCase();
+  if (normalized === "approved") return "Approved";
+  if (normalized === "rejected") return "Rejected";
 
-  if (status === "manager_approved" || status === "hr_pending" || status === "admin_pending") {
+  if (normalized === "manager_approved" || normalized === "hr_pending" || normalized === "admin_pending") {
     return "Mgr Approved";
   }
 
-  if (status === "manager_rejected") {
+  if (normalized === "manager_rejected") {
     return "Mgr Rejected";
   }
+  
+  if (normalized === "admin_approved") return "Approved";
 
   return "Pending";
 }
@@ -161,10 +165,8 @@ export default function ModernLeaveManagement() {
 
   const filteredLeaves = useMemo(() => {
     return leaveRequests.filter((leave) => {
-      const ist = leave.internal_status;
-      if (ist !== "manager_approved" && ist !== "hr_pending" && ist !== "admin_pending") {
-        return false;
-      }
+      // Allow HR to see all leaves (pending, approved, rejected)
+      // Removing the hardcoded filter that was incorrectly hiding processed leaves
 
       const matchesSearch =
         leave.employee.toLowerCase().includes(search.toLowerCase()) ||
@@ -421,6 +423,7 @@ export default function ModernLeaveManagement() {
                   "Employee",
                   "Leave Type",
                   "Period",
+                  "Reason",
                   "Status",
                   "Manager",
                   "HR",
@@ -440,8 +443,6 @@ export default function ModernLeaveManagement() {
               {paginatedLeaves.map((leave) => {
                 const _ist = leave.internal_status;
                 const _canAct = canUserAct(_ist, leave.employee_role);
-                const _isApproved = _ist === "approved";
-                const _isRejected = _ist === "rejected";
                 return (
                   <tr
                     key={leave.id}
@@ -498,6 +499,10 @@ export default function ModernLeaveManagement() {
                       </div>
                     </td>
 
+                    <td className="px-5 py-4 text-sm truncate max-w-[150px]" style={textSecondary} title={leave.reason}>
+                      {leave.reason || "—"}
+                    </td>
+
                     <td className="px-5 py-4">
                       {(() => {
                         const overall = getOverallStatus(leave.internal_status);
@@ -537,7 +542,7 @@ export default function ModernLeaveManagement() {
                           disabled={!_canAct || submitting === leave.id}
                           className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-opacity"
                           style={
-                            _isApproved
+                            leave.internal_status?.toLowerCase() === "approved"
                               ? { background: "rgba(16,185,129,0.18)", color: "#10b981", border: "1px solid rgba(16,185,129,0.4)" }
                               : _canAct
                                 ? { background: "rgba(16,185,129,0.12)", color: "#10b981", border: "1px solid rgba(16,185,129,0.25)", cursor: "pointer" }
@@ -551,7 +556,7 @@ export default function ModernLeaveManagement() {
                           disabled={!_canAct || submitting === leave.id}
                           className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-opacity"
                           style={
-                            _isRejected
+                            leave.internal_status?.toLowerCase() === "rejected"
                               ? { background: "rgba(239,68,68,0.18)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.4)" }
                               : _canAct
                               ? { background: "rgba(239,68,68,0.12)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.25)", cursor: "pointer" }
@@ -570,7 +575,7 @@ export default function ModernLeaveManagement() {
               {filteredLeaves.length === 0 && (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={8}
                     className="text-center py-10 text-sm"
                     style={textSecondary}
                   >
@@ -672,6 +677,15 @@ export default function ModernLeaveManagement() {
 
                   <p className="text-sm" style={textPrimary}>
                     {leave.employee_id || "Employee ID unavailable"}
+                  </p>
+                </div>
+
+                <div className="col-span-2">
+                  <p className="text-xs mb-1" style={textSecondary}>
+                    Reason
+                  </p>
+                  <p className="text-sm" style={textPrimary}>
+                    {leave.reason || "—"}
                   </p>
                 </div>
               </div>

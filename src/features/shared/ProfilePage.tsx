@@ -360,6 +360,23 @@ const ProfilePage: React.FC = () => {
     }
   };
 
+  const handleDownload = async (doc: UploadedDocument) => {
+    if (!doc.file_url) return;
+    try {
+      const response = await api.get(doc.file_url, { responseType: "blob" });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", doc.file_name || "download");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Download failed", error);
+    }
+  };
+
   // â”€â”€ Loading State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (loading) {
     return (
@@ -873,11 +890,10 @@ const ProfilePage: React.FC = () => {
 
                 <div className="flex flex-wrap items-center gap-2">
                   {document.file_url && (
-                    <a
-                      href={document.file_url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold"
+                    <button
+                      type="button"
+                      onClick={() => handleDownload(document)}
+                      className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer"
                       style={{
                         border: "1px solid var(--border)",
                         color: "var(--text-primary)",
@@ -885,7 +901,7 @@ const ProfilePage: React.FC = () => {
                     >
                       <Download size={14} />
                       Download
-                    </a>
+                    </button>
                   )}
 
                   <label

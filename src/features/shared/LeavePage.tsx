@@ -187,9 +187,12 @@ export default function LeavePage() {
     setShowModal(true);
   };
 
-  const isManagerPending = (request: LeaveRequest) =>
-    request.internal_status === "manager_pending" ||
-    (!request.internal_status && request.status === "Pending" && request.id.startsWith("local-"));
+  const isManagerPending = (request: LeaveRequest) => {
+    const mgrStatus = (request as any).managerStatus || request.manager_status;
+    if (mgrStatus) return mgrStatus === "Pending";
+    return request.internal_status === "manager_pending" ||
+      (!request.internal_status && request.status === "Pending" && request.id.startsWith("local-"));
+  };
 
   const openEditModal = (request: LeaveRequest) => {
     if (!isManagerPending(request)) {
@@ -317,7 +320,9 @@ export default function LeavePage() {
                   <th className="px-3 py-3">Days</th>
                   <th className="px-3 py-3 hidden sm:table-cell">Reason</th>
                   <th className="px-3 py-3">Manager</th>
+                  <th className="px-3 py-3 hidden md:table-cell">Mgr Remark</th>
                   <th className="px-3 py-3">HR</th>
+                  <th className="px-3 py-3 hidden md:table-cell">HR Remark</th>
                   <th className="px-3 py-3">Overall Status</th>
                   <th className="rounded-r-lg px-3 py-3 text-center">Action</th>
                 </tr>
@@ -333,25 +338,16 @@ export default function LeavePage() {
                   ))
                 ) : paginatedRequests.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="py-16 text-center text-sm" style={{ color: "var(--text-secondary)" }}>
+                    <td colSpan={11} className="py-16 text-center text-sm" style={{ color: "var(--text-secondary)" }}>
                       No leave requests found
                     </td>
                   </tr>
                 ) : (
                   paginatedRequests.map((request, index) => {
-                    const ist = request.internal_status;
-                    const managerStatus =
-                      ist === "manager_approved" || ist === "approved" || ist === "rejected"
-                        ? "Approved"
-                        : ist === "manager_rejected"
-                        ? "Rejected"
-                        : "Pending";
-                    const hrStatus =
-                      ist === "approved"
-                        ? "Approved"
-                        : ist === "rejected"
-                        ? "Rejected"
-                        : "Pending";
+                    const apiManagerStatus = (request as any).managerStatus || request.manager_status;
+                    const apiHrStatus = (request as any).hrStatus || request.hr_status;
+                    const managerStatus = apiManagerStatus || "Pending";
+                    const hrStatus = managerStatus === "Rejected" ? "—" : (apiHrStatus || "Pending");
                     const managerColor = managerStatus === "Approved" ? "#10b981" : managerStatus === "Rejected" ? "#ef4444" : "#f59e0b";
                     const hrColor = hrStatus === "Approved" ? "#10b981" : hrStatus === "Rejected" ? "#ef4444" : "#f59e0b";
                     const canEdit = isManagerPending(request);
@@ -375,10 +371,20 @@ export default function LeavePage() {
                           {managerStatus}
                         </span>
                       </td>
+                      <td className="px-3 py-3 hidden md:table-cell text-xs" style={{ color: "var(--text-secondary)", maxWidth: "150px" }}>
+                        <div className="truncate" title={request.manager_comment || ""}>
+                          {isManagerPending(request) ? "—" : (request.manager_comment || "—")}
+                        </div>
+                      </td>
                       <td className="px-3 py-3">
                         <span className="text-xs font-semibold" style={{ color: hrColor }}>
                           {hrStatus}
                         </span>
+                      </td>
+                      <td className="px-3 py-3 hidden md:table-cell text-xs" style={{ color: "var(--text-secondary)", maxWidth: "150px" }}>
+                        <div className="truncate" title={request.hr_comment || ""}>
+                          {hrStatus === "Pending" ? "—" : (request.hr_comment || "—")}
+                        </div>
                       </td>
                       <td className="px-3 py-3">
                         <LeaveStatusBadge internalStatus={request.internal_status} />
@@ -428,22 +434,13 @@ export default function LeavePage() {
               </div>
             ) : (
               paginatedRequests.map((request) => {
-                const cist = request.internal_status;
-                const cardManagerStatus =
-                  cist === "manager_approved" || cist === "approved" || cist === "rejected"
-                    ? "Approved"
-                    : cist === "manager_rejected"
-                    ? "Rejected"
-                    : "Pending";
-                const cardHrStatus =
-                  cist === "approved"
-                    ? "Approved"
-                    : cist === "rejected"
-                    ? "Rejected"
-                    : "Pending";
+                const apiManagerStatus = (request as any).managerStatus || request.manager_status;
+                const apiHrStatus = (request as any).hrStatus || request.hr_status;
+                const cardManagerStatus = apiManagerStatus || "Pending";
+                const cardHrStatus = cardManagerStatus === "Rejected" ? "—" : (apiHrStatus || "Pending");
                 const managerDone = cardManagerStatus !== "Pending";
                 const managerRejected = cardManagerStatus === "Rejected";
-                const hrDone = cardHrStatus !== "Pending";
+                const hrDone = cardHrStatus !== "Pending" && cardHrStatus !== "—";
                 const hrRejected = cardHrStatus === "Rejected";
                 const canEdit = isManagerPending(request);
 

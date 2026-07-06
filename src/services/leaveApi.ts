@@ -24,6 +24,8 @@ type ApiLeave = {
   hr_reviewed_at?: string | null;
   manager_comment?: string | null;
   hr_comment?: string | null;
+  managerStatus?: string;
+  hrStatus?: string;
 };
 
 export type LeavePayload = Pick<LeaveRequest, "leave_type" | "duration_type" | "leave_date" | "days" | "reason">;
@@ -111,6 +113,8 @@ function normalizeLeave(leave: ApiLeave): LeaveRequest {
     manager_comment: leave.manager_comment ?? null,
     hr_comment: leave.hr_comment ?? null,
     employee_role: leave.employee_role,
+    manager_status: leave.managerStatus,
+    hr_status: leave.hrStatus,
   };
 }
 
@@ -340,6 +344,8 @@ export async function createLeave(payload: LeavePayload) {
       submitted_at: new Date().toISOString(),
       manager_reviewed_at: null,
       hr_reviewed_at: null,
+      manager_status: "Pending",
+      hr_status: "Pending",
     } satisfies LeaveRequest;
   }
 }
@@ -384,6 +390,8 @@ export async function updateLeave(leaveId: string, payload: LeavePayload) {
     submitted_at: new Date().toISOString(),
     manager_reviewed_at: null,
     hr_reviewed_at: null,
+    manager_status: "Pending",
+    hr_status: "Pending",
   } satisfies LeaveRequest;
 }
 
@@ -434,6 +442,8 @@ export async function fetchMyLeaves() {
         submitted_at: new Date().toISOString(),
         manager_reviewed_at: null,
         hr_reviewed_at: null,
+        manager_status: l.status === "Approved" ? "Approved" : l.status === "Rejected" ? "Rejected" : "Pending",
+        hr_status: l.status === "Approved" ? "Approved" : l.status === "Rejected" ? "Rejected" : "Pending",
       }));
     return localLeaves;
   }
@@ -457,8 +467,9 @@ export async function fetchLeaveBalance() {
 }
 
 export async function fetchHrLeaves() {
-  const response = await fetch(`${FASTAPI_BASE_URL}/api/leaves/?limit=100`, {
+  const response = await fetch(`${FASTAPI_BASE_URL}/api/leaves/?limit=100&t=${Date.now()}`, {
     headers: getAuthHeaders(),
+    cache: "no-store",
   });
 
   if (!response.ok) throw new Error("Unable to fetch HR leaves");

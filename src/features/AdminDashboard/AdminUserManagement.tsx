@@ -172,14 +172,13 @@ export default function AdminUserManagement() {
       setIsModalOpen(false);
       fetchUsers();
       setTimeout(() => setSuccessMsg(null), 4000);
-    } catch (err: unknown) {
+    } catch (err: any) {
       console.error(err);
       let errorMessage = "An error occurred while saving the user.";
-      if (err instanceof Error) {
+      if (err?.response?.data?.detail) {
+        errorMessage = err.response.data.detail;
+      } else if (err instanceof Error) {
         errorMessage = err.message;
-      } else if (typeof err === "object" && err !== null && "response" in err) {
-        const response = (err as { response?: { data?: { detail?: string } } }).response;
-        errorMessage = response?.data?.detail || errorMessage;
       }
       setFormErrors(errorMessage);
     } finally {

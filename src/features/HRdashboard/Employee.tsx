@@ -70,7 +70,7 @@ const accessOptions = [
 
 const roleLabels: Record<string, string> = {
   admin: "Admin",
-  manager: "Manager", 
+  manager: "Manager",
   hr: "HR",
   employee: "Employee",
 };
@@ -414,7 +414,7 @@ export default function Employee() {
           <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
             {/* Search */}
             <div className="relative min-w-0 flex-1">
-           
+
             </div>
 
             {/* Filter Dropdowns */}
@@ -422,7 +422,7 @@ export default function Employee() {
               <FilterDropdown className="w-full" value={departmentFilter} options={departments} onChange={setDepartmentFilter} icon={<Building2 size={16} />} />
               <FilterDropdown className="w-full" value={roleFilter} options={roles} onChange={setRoleFilter} icon={<UserCircle size={16} />} />
               <FilterDropdown className="w-full" value={statusFilter} options={statuses} onChange={setStatusFilter} icon={<Filter size={16} />} />
-              
+
               {(search || roleFilter !== "All Roles" || statusFilter !== "All Status" || departmentFilter !== "All Departments") && (
                 <button
                   onClick={resetFilters}
@@ -666,16 +666,14 @@ export default function Employee() {
                     key={option.id}
                     type="button"
                     onClick={() => toggleAccess(option.id)}
-                    className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
-                      inviteForm.accessPermissions.includes(option.id)
+                    className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${inviteForm.accessPermissions.includes(option.id)
                         ? "border-blue-500 bg-blue-500/10"
                         : "border-[var(--border)] bg-[var(--bg-primary)] hover:bg-[var(--bg-hover)]"
-                    }`}
+                      }`}
                   >
-                    <div className={`w-5 h-5 rounded flex items-center justify-center ${
-                        ? ""
-                        : "border border-[var(--border)] bg-[var(--bg-secondary)]"
-                    }`} style={{ background: inviteForm.accessPermissions.includes(option.id) ? "var(--accent)" : undefined, color: inviteForm.accessPermissions.includes(option.id) ? "var(--accent-text)" : undefined }}>
+                    <div className={`w-5 h-5 rounded flex items-center justify-center ${inviteForm.accessPermissions.includes(option.id)
+                        ? "border border-blue-500 bg-blue-500" : "border border-[var(--border)] bg-[var(--bg-secondary)]"
+                      }`} style={{ background: inviteForm.accessPermissions.includes(option.id) ? "var(--accent)" : undefined, color: inviteForm.accessPermissions.includes(option.id) ? "var(--accent-text)" : undefined }}>
                       {inviteForm.accessPermissions.includes(option.id) && <Check size={14} />}
                     </div>
                     <span className="text-[var(--text-secondary)]">{option.icon}</span>
@@ -829,9 +827,8 @@ function FilterDropdown({
             <button
               key={opt}
               onClick={() => { onChange(opt); setOpen(false); }}
-              className={`w-full px-4 py-2.5 text-left text-sm hover:bg-[var(--bg-hover)] transition-colors ${
-                value === opt ? "font-semibold text-blue-500" : "text-[var(--text-primary)]"
-              }`}
+              className={`w-full px-4 py-2.5 text-left text-sm hover:bg-[var(--bg-hover)] transition-colors ${value === opt ? "font-semibold text-blue-500" : "text-[var(--text-primary)]"
+                }`}
             >
               {opt}
             </button>

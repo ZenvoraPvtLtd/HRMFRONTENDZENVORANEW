@@ -340,6 +340,7 @@ const AppRoutes = () => (
         <Route path="organization" element={<OrganizationPage />} />
         <Route path="profile" element={<ProfilePage />} />
         <Route path="my-pip" element={<MyPIPPage />} />
+        <Route path="payslips" element={<EmployeePayslipsPage />} />
 
         {/* Manager tools */}
         <Route path="attendance" element={<ManagerAttendancePage />} />
@@ -373,6 +374,7 @@ const AppRoutes = () => (
         <Route path="organization" element={<OrganizationPage />} />
         <Route path="profile" element={<ProfilePage />} />
         <Route path="my-pip" element={<MyPIPPage />} />
+        <Route path="payslips" element={<EmployeePayslipsPage />} />
         <Route path="attendance" element={<ManagerAttendancePage />} />
         <Route path="approvals" element={<ApprovalsPage />} />
         <Route path="productivity" element={<ProductivityPage />} />

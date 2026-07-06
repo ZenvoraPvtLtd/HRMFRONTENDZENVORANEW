@@ -781,12 +781,20 @@ function EmployeeActionPanel({
 
               {activeAction === "leave" && (
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                  <div className="min-w-0 flex-1 text-sm" style={textSecondary}>
-                    {selectedLeave
-                      ? `${selectedLeave.leave_type} - ${selectedLeave.days} day(s) on ${selectedLeave.leave_date}${
-                          selectedLeave.internal_status === "manager_approved" ? "" : " (waiting for manager approval)"
-                        }`
-                      : "No pending leave request"}
+                  <div className="min-w-0 flex-1 text-sm flex flex-col gap-1" style={textSecondary}>
+                    {selectedLeave ? (
+                      <>
+                        <span>
+                          {selectedLeave.leave_type} - {selectedLeave.days} day(s) on {selectedLeave.leave_date}
+                          {selectedLeave.internal_status === "manager_approved" ? "" : " (waiting for manager approval)"}
+                        </span>
+                        {selectedLeave.reason && (
+                          <span className="italic">Reason: {selectedLeave.reason}</span>
+                        )}
+                      </>
+                    ) : (
+                      "No pending leave request"
+                    )}
                   </div>
                   <button onClick={approveLeave} disabled={submitting || !hrReviewableLeave} className="rounded-lg px-4 py-3 text-sm font-semibold" style={btnPrimary}>
                     Approve

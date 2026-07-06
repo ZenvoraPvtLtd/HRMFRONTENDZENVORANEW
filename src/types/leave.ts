@@ -19,6 +19,8 @@ export interface LeaveRequest {
   manager_comment?: string | null;
   hr_comment?: string | null;
   employee_role?: string;
+  manager_status?: string;
+  hr_status?: string;
 }
 
 export interface LeaveBalance {

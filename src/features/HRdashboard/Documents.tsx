@@ -210,6 +210,23 @@ export default function Documents() {
 
   };
 
+  const handleDownload = async (doc: DocumentRecord) => {
+    if (!doc.fileUrl) return;
+    try {
+      const response = await api.get(doc.fileUrl, { responseType: "blob" });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", doc.fileName || "download");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Download failed", error);
+    }
+  };
+
   const handleDeleteDocument = async (documentId: string | number) => {
     const shouldDelete = window.confirm("Delete this document?");
     if (!shouldDelete) return;
@@ -345,9 +362,7 @@ export default function Documents() {
                     <td className="px-4 py-6">
                       <div className="flex justify-end gap-2">
                         <button
-                          onClick={() => {
-                            if (document.fileUrl) window.open(document.fileUrl, "_blank", "noopener,noreferrer");
-                          }}
+                          onClick={() => handleDownload(document)}
                           className="w-8 h-8 rounded-lg inline-flex items-center justify-center"
                           style={getStatusStyle("In Progress")}
                           aria-label={`Download ${document.fileName}`}
